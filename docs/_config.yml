@@ -1,0 +1,30 @@
+title: Core 시스템 문서
+description: 메탈 가공 공장 사내 물류 자동화 시스템
+lang: ko-KR
+
+# 마크다운 엔진 (GitHub Flavored Markdown)
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+# 테마 (GitHub Primer 공식 테마)
+theme: jekyll-theme-primer
+
+# .md 파일에 default 레이아웃 자동 적용 (front matter 불필요)
+# index.html은 front matter가 없으므로 정적 복사로 처리됨 (영향 없음)
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+
+# 빌드 제외
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .gitignore

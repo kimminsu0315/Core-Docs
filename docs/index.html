@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core 시스템 문서</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    background: #FAF9F5;
+    color: #2C2B28;
+    line-height: 1.6;
+    padding: 80px 20px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+
+  h1 {
+    font-family: "Tiempos Headline", "Iowan Old Style", "Apple Garamond", Georgia, "Times New Roman", serif;
+    font-size: 36px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+    color: #2C2B28;
+  }
+  .subtitle {
+    color: #8A8780;
+    font-size: 15px;
+    margin-bottom: 60px;
+  }
+
+  .section-label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #6F6E69;
+    padding: 4px 10px;
+    background: #F0EEE6;
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+
+  .links { margin-bottom: 50px; }
+  .link-item {
+    display: flex;
+    align-items: baseline;
+    padding: 18px 0;
+    border-bottom: 1px solid #E8E6DC;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left 0.2s ease, background 0.2s ease;
+  }
+  .link-item:first-child { border-top: 1px solid #E8E6DC; }
+  .link-item:hover {
+    padding-left: 8px;
+    background: linear-gradient(to right, #F5F2E8 0%, transparent 100%);
+  }
+  .link-item:hover .arrow {
+    color: #CC785C;
+    transform: translateX(4px);
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-right: 16px;
+    min-width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .tag-repo  { background: #2C2B28; color: #FAF9F5; }
+  .tag-int   { background: #6B7F5C; color: #FAF9F5; }
+  .tag-ext   { background: #A88B6B; color: #FAF9F5; }
+  .tag-draft { background: #CC785C; color: #FAF9F5; }
+
+  .badge-new {
+    display: inline-block;
+    background: #3B82F6;
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 10px;
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  .link-text {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .link-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2C2B28;
+  }
+  .link-desc {
+    font-size: 14px;
+    color: #8A8780;
+  }
+  .link-updated {
+    font-size: 12px;
+    color: #A8A59C;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    margin-left: auto;
+  }
+
+  .arrow {
+    color: #C7C4B8;
+    font-size: 18px;
+    margin-left: 12px;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .footer-note {
+    margin-top: 40px;
+    padding: 20px 22px;
+    background: #F5F2E8;
+    border: 1px solid #E8E6DC;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #6F6E69;
+  }
+  .footer-note::before {
+    content: "ℹ";
+    margin-right: 8px;
+    color: #CC785C;
+    font-weight: 700;
+  }
+
+  .folder-header {
+    display: flex;
+    align-items: baseline;
+    padding: 22px 0 6px 0;
+    color: #6F6E69;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .folder-icon {
+    margin-right: 8px;
+    font-size: 16px;
+  }
+  .folder-name {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+  }
+  .folder-desc {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #8A8780;
+    font-weight: 400;
+  }
+
+  .tree-prefix {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    color: #C7C4B8;
+    margin-right: 12px;
+    font-size: 14px;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+  }
+
+  details > summary {
+    list-style: none;
+    cursor: pointer;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::marker { display: none; }
+
+  .summary-arrow {
+    display: inline-block;
+    color: #8A8780;
+    font-size: 10px;
+    margin-right: 8px;
+    transition: transform 0.2s ease;
+  }
+  details:not([open]) > summary .summary-arrow {
+    transform: rotate(-90deg);
+  }
+
+  .timestamp {
+    margin-top: 16px;
+    text-align: right;
+    font-size: 12px;
+    color: #A8A59C;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Core 시스템 문서</h1>
+
+  <div class="section-label">주요 링크</div>
+  <div class="links">
+
+    <a href="https://github.com/kimminsu0315/Project_Core" class="link-item">
+      <span class="tag tag-repo">Repo</span>
+      <div class="link-text">
+        <span class="link-title">GitHub Repository</span>
+        <span class="link-desc">소스 저장소</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a href="./Core_RnR.html" class="link-item" data-updated="2026-07-01T20:13">
+      <span class="tag tag-int">Internal</span>
+      <span class="tag tag-draft">Draft</span>
+      <div class="link-text">
+        <span class="link-title">Core_RnR</span>
+        <span class="link-desc">R&R시스템 영역별 개발</span>
+        <span class="link-updated">최종 업데이트: 2026-07-01 20:13</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a href="./Core_SRS.html" class="link-item" data-updated="2026-07-04T14:21">
+      <span class="tag tag-int">Internal</span>
+      <span class="tag tag-draft">Draft</span>
+      <div class="link-text">
+        <span class="link-title">Core SRS</span>
+        <span class="link-desc">전체 설계 요구사항</span>
+        <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a href="./Core_SAD.html" class="link-item" data-updated="2026-07-04T14:21">
+      <span class="tag tag-int">Internal</span>
+      <span class="tag tag-draft">Draft</span>
+      <div class="link-text">
+        <span class="link-title">Core SAD</span>
+        <span class="link-desc">시스템 아키텍처 설계</span>
+        <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <details open>
+      <summary class="folder-header">
+        <span class="summary-arrow">▼</span>
+        <span class="folder-icon">📁</span>
+        <span class="folder-name">out</span>
+        <span class="folder-desc">외부 전달</span>
+      </summary>
+
+      <a href="./out/Core_SRS_AMMR.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-ext">External</span>
+        <span class="tag tag-draft">Draft</span>
+        <div class="link-text">
+          <span class="link-title">AMMR SRS</span>
+          <span class="link-desc">AMMR 관련 발췌·재구성</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./out/AMMR_Tablet_UI.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-ext">External</span>
+        <span class="tag tag-draft">Draft</span>
+        <div class="link-text">
+          <span class="link-title">AMMR Tablet UI</span>
+          <span class="link-desc">AMMR태블릿 UI 정의 제안</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./out/Core_ICD_AMMR.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">└─</span>
+        <span class="tag tag-ext">External</span>
+        <span class="tag tag-draft">Draft</span>
+        <div class="link-text">
+          <span class="link-title">Core ↔ AMMR ICD</span>
+          <span class="link-desc">통신 인터페이스 정의</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+    </details>
+
+    <details open>
+      <summary class="folder-header">
+        <span class="summary-arrow">▼</span>
+        <span class="folder-icon">📁</span>
+        <span class="folder-name">learn</span>
+        <span class="folder-desc">학습자료 (읽는 순서)</span>
+      </summary>
+
+      <a href="./learn/01_기술개념모음_기초.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">1. 기술 개념 모음</span>
+          <span class="link-desc">기초 · 큐·락·멱등성 등 일반 기술 개념 모음</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/02_DI와동시성_기초중급.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">2. DI와 동시성 해설</span>
+          <span class="link-desc">기초~중급 · DI 등록 3종 + 동시성 자료구조 4종</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/03_ASPNET_PoC_기초중급.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">3. ASPNET PoC 샘플 코드</span>
+          <span class="link-desc">기초~중급 · 본체 구조 ASP.NET Core 짧은 샘플</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/04_Channels해설_중급.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">4. Channels 해설</span>
+          <span class="link-desc">중급 · System.Threading.Channels 두 구조</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/05_권위일원화_중급.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">5. 권위 일원화 처리 구조</span>
+          <span class="link-desc">중급 · State Service 인메모리 권위 단일 패턴</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/06_어댑터입력처리_심화.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">6. 어댑터 입력처리 구조</span>
+          <span class="link-desc">심화 · 어댑터 6종 → 입력 Channel 단일 진입·분기</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/07_처리주체분기_심화.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">7. 처리 주체 분기</span>
+          <span class="link-desc">심화 · Job 결과 처리 주체 4 케이스 분기</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/08_어댑터헬스모니터_심화.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">8. 어댑터 헬스모니터 구조</span>
+          <span class="link-desc">심화 · 어댑터별 외부·AMMR 가용성 독립 감시</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/09_애플리케이션로그_중급운영.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">├─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">9. 애플리케이션 로그 구조</span>
+          <span class="link-desc">중급(운영) · Serilog 구조화 로깅 + 디버깅</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+
+      <a href="./learn/10_DB부하측정_중급운영.html" class="link-item" data-updated="2026-07-04T14:21">
+        <span class="tree-prefix">└─</span>
+        <span class="tag tag-int">Internal</span>
+        <div class="link-text">
+          <span class="link-title">10. DB 및 부하 측정</span>
+          <span class="link-desc">중급(운영) · 인메모리 vs DB 권위 + 부하 측정</span>
+          <span class="link-updated">최종 업데이트: 2026-07-04 14:21</span>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+    </details>
+
+  </div>
+
+  <div class="timestamp">
+    최종 업데이트: 2026-07-05 22:34
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var STORAGE_KEY = 'core_docs_visits';
+
+  function loadVisits() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  var visits = loadVisits();
+  var items = document.querySelectorAll('.link-item[data-updated]');
+
+  items.forEach(function(item) {
+    var fileId = item.getAttribute('href');
+    var updatedStr = item.getAttribute('data-updated');
+    var updatedTime = new Date(updatedStr).getTime();
+
+    var lastVisit = visits[fileId];
+    var lastVisitTime = lastVisit ? new Date(lastVisit).getTime() : null;
+
+    // A안: 해당 파일 방문 기록 부재(처음 방문) = NEW
+    var isNew = (lastVisitTime === null) || (updatedTime > lastVisitTime);
+
+    if (isNew) {
+      var badge = document.createElement('span');
+      badge.className = 'badge-new';
+      badge.textContent = 'NEW';
+
+      // link-desc 직후에 넣음 (설명 끝, link-updated 앞)
+      var linkText = item.querySelector('.link-text');
+      var desc = linkText ? linkText.querySelector('.link-desc') : null;
+      if (desc) {
+        desc.after(badge);
+      } else if (linkText) {
+        linkText.appendChild(badge);
+      }
+    }
+
+    // 해당 링크 클릭 시점에 그 파일의 방문 시각 갱신
+    item.addEventListener('click', function() {
+      var current = loadVisits();
+      current[fileId] = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

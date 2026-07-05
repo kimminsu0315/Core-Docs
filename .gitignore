@@ -1,0 +1,18 @@
+# Jekyll 빌드 산출물
+_site/
+.jekyll-cache/
+.jekyll-metadata
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 에디터 (집 VS Code / 회사 Visual Studio)
+.vscode/
+.vs/
+*.swp
+
+# 변경기록 원본 (슬롯 ..._변경기록.md 만 올라가게 항상 제외)
+*_변경기록_개인용.md
+*_변경기록_회사용.md
