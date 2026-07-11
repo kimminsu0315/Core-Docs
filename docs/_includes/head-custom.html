@@ -661,15 +661,18 @@ function setupScrollspy(sidebar, headers) {
   updateActive();
 }
 
-// ===== 햄버거 스크롤 숨김 =====
+// ===== 햄버거 스크롤 숨김 (아래로 스크롤 중엔 숨김·멈추거나 위로/최상단이면 재표시) =====
 function setupScrollHide() {
-  var prevY = window.scrollY;
+  var prevY = window.scrollY, idleTimer;
   window.addEventListener('scroll', function () {
     var y = window.scrollY;
     if (y < 80) document.body.classList.remove('scroll-down');
     else if (y > prevY + 5) document.body.classList.add('scroll-down');
     else if (y < prevY - 5) document.body.classList.remove('scroll-down');
     prevY = y;
+    // 스크롤이 멈추면 다시 표시 — 소섹션 도달·공간 확보 시 햄버거 복귀 (아래로 스크롤 '중'엔 숨김 유지)
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { document.body.classList.remove('scroll-down'); }, 600);
   }, { passive: true });
 }
 

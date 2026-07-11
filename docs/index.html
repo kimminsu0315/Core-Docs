@@ -196,6 +196,13 @@
     color: #A8A59C;
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
   }
+  .fold-toggle {
+    display: inline-block; margin: 0 0 20px; padding: 5px 12px;
+    background: transparent; border: 1px solid #E8E6DC; border-radius: 6px;
+    color: #6F6E69; font-size: 12px; cursor: pointer; font-family: inherit;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .fold-toggle:hover { border-color: #CC785C; color: #CC785C; background: #F5F2E8; }
 </style>
 </head>
 <body>
@@ -203,6 +210,8 @@
 <div class="container">
 
   <h1>Core 시스템 문서</h1>
+
+  <button class="fold-toggle" id="foldToggle" type="button">모두 접기</button>
 
   <div class="section-label">주요 링크</div>
   <div class="links">
@@ -416,7 +425,7 @@
   </div>
 
   <div class="timestamp">
-    최종 업데이트: 2026-07-12 04:35
+    최종 업데이트: 2026-07-12 05:15
   </div>
 
 </div>
@@ -469,6 +478,23 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
     });
   });
+})();
+
+// 폴더 모두 접기/펼치기
+(function() {
+  var btn = document.getElementById('foldToggle');
+  if (!btn) return;
+  var folders = document.querySelectorAll('details');
+  if (!folders.length) { btn.style.display = 'none'; return; }
+  function anyOpen() { var o = false; folders.forEach(function(f){ if (f.open) o = true; }); return o; }
+  function sync() { btn.textContent = anyOpen() ? '모두 접기' : '모두 펼치기'; }
+  btn.addEventListener('click', function() {
+    var close = anyOpen();
+    folders.forEach(function(f){ f.open = !close; });
+    sync();
+  });
+  folders.forEach(function(f){ f.addEventListener('toggle', sync); });
+  sync();
 })();
 </script>
 
