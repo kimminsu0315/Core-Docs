@@ -1,728 +1,689 @@
 <!-- Mermaid -->
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"></script>
 
+<!-- 홈 버튼 경로·타이틀 주입 (v1.6 buildSidebar 가 window.VIEWER_HOME/TITLE 을 읽음) -->
+<script>window.VIEWER_HOME="{{ '/' | relative_url }}";window.VIEWER_TITLE="{{ site.title }}";</script>
+
 <style>
-  /* ============================================
-     코드블록 D2Coding 폰트 (한글 모노스페이스)
-     ============================================
-     추가 이유:
-       외부전달/Core_UI정의제안_AMMRTablet_*.md §9 참고용 UI 모형은
-       ASCII 박스 문자(┌─│┐)와 한글·기호(●○·°→)를 조합한 텍스트 박스
-       결로 박혀 박혔다. 본 박스가 정합되어 보이려면 다음 가시폭 가정이
-       모두 박혀야 한다:
+/* ============================================================
+   head-custom.css — 문서 페이지 스타일 (테마 + TOC 사이드바 + 반응형)
+   local-folder-viewer 스킬. primer.css(마크다운 베이스) 위에 얹힘.
+   색·폰트는 Claude 톤. 문서 페이지가 assets/ 기준 상대경로로 링크.
+   ============================================================ */
 
-         - ASCII = 1폭
-         - 한글 = 2폭 (ASCII 2개분 폭)
-         - 박스 문자 (─│┌┐└┘├┤┬┴) = 1폭
-         - 기호 (●○·°→▶) = 1폭
+/* ---- Primer 유틸 대체 (github-markdown-css엔 레이아웃 유틸 없음) ---- */
+.container-lg { max-width: 1012px; margin-left: auto; margin-right: auto; }
+.px-3 { padding-left: 16px !important; padding-right: 16px !important; }
+.my-5 { margin-top: 24px !important; margin-bottom: 24px !important; }
 
-       GitHub Primer 테마 기본 코드블록 폰트(ui-monospace 결)는 한글
-       지원이 박지 않아 시스템 한글 폰트(맑은 고딕·Noto Sans CJK 등)로
-       폴백된다. 본 폴백 폰트는 한글을 ASCII의 정확히 2배가 아닌 약
-       2.05~2.10배 결로 박는 경우가 많아, 행마다 한글 자수가 다르면
-       슬롯 박스 우측 │가 외곽 │와 미세하게 어긋나 박힌다.
+/* ============================================
+   코드블록 D2Coding 폰트 (한글 모노스페이스)
+   ============================================
+   코드블록에 ASCII 박스(┌─│┐)와 한글을 섞은 UI 모형이 정합돼 보이려면
+   ASCII=1폭·한글=2폭 가정이 지켜져야 한다. 시스템 한글 폰트는 한글이
+   약 2.05~2.10폭이라 세로선(│)이 미세하게 어긋난다. Naver D2Coding은
+   한글을 ASCII의 정확히 2배 폭으로 그려 어긋남이 없다. 코드블록에만
+   적용하고 본문 폰트는 그대로 둔다. 라이선스: SIL OFL 1.1.
+   ============================================ */
+@font-face {
+  font-family: 'D2Coding';
+  src: url('{{ "/fonts/D2Coding.woff2" | relative_url }}') format('woff2');
+  font-display: swap;
+}
 
-       Naver D2Coding은 본 4개 가정을 모두 충족하는 한글 모노스페이스
-       폰트로(검증: Playwright 헤드리스 chromium 결로 §9 모형 4장 실측,
-       어긋남 0건), 본 자리에서 코드블록 결로만 박아 모형 정합을 박는다.
-       마크다운 본문 폰트는 그대로 두어 가독성에 영향 없음.
+/* ============================================
+   본문 클로드 스타일
+   ============================================ */
+body { background: #FAF9F5 !important; color: #2C2B28 !important; }
 
-       라이센스: SIL Open Font License 1.1 (OFL).
-       원본 / 상세 결: docs/fonts/README.md
-     ============================================ */
-  @font-face {
-    font-family: 'D2Coding';
-    src: url('{{ "/fonts/D2Coding.woff2" | relative_url }}') format('woff2');
-    font-display: swap;
-  }
+.markdown-body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif !important;
+  color: #2C2B28 !important;
+  background: #FAF9F5 !important;
+  line-height: 1.7 !important;
+  font-size: 15px !important;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3,
+.markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif !important;
+  color: #2C2B28 !important;
+}
+.markdown-body h1 {
+  font-family: "Tiempos Headline", "Iowan Old Style", "Apple Garamond", Georgia, serif !important;
+  font-size: 34px !important; font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  border-bottom: 1px solid #E8E6DC !important;
+  padding-bottom: 12px !important;
+  margin-top: 0 !important; margin-bottom: 24px !important;
+}
+.markdown-body h2 {
+  font-size: 24px !important; font-weight: 600 !important;
+  border-bottom: 1px solid #E8E6DC !important;
+  padding-bottom: 8px !important;
+  margin-top: 40px !important; margin-bottom: 16px !important;
+}
+.markdown-body h3 {
+  font-size: 19px !important; font-weight: 600 !important;
+  margin-top: 28px !important; margin-bottom: 12px !important;
+}
+.markdown-body h4 {
+  font-size: 16px !important; font-weight: 600 !important;
+  color: #4A4845 !important;
+  margin-top: 22px !important; margin-bottom: 10px !important;
+}
 
-  /* ============================================
-     본문 클로드 스타일
-     ============================================ */
-  body { background: #FAF9F5 !important; color: #2C2B28 !important; }
+.markdown-body a { color: #CC785C !important; text-decoration: none !important; }
+.markdown-body a:hover { text-decoration: underline !important; }
+.markdown-body .anchor { color: transparent !important; }
+.markdown-body h1:hover .anchor, .markdown-body h2:hover .anchor,
+.markdown-body h3:hover .anchor, .markdown-body h4:hover .anchor { color: #CC785C !important; }
 
-  .markdown-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif !important;
-    color: #2C2B28 !important;
-    background: #FAF9F5 !important;
-    line-height: 1.7 !important;
-    font-size: 15px !important;
-  }
-  .markdown-body h1, .markdown-body h2, .markdown-body h3,
-  .markdown-body h4, .markdown-body h5, .markdown-body h6 {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif !important;
-    color: #2C2B28 !important;
-  }
-  .markdown-body h1 {
-    font-family: "Tiempos Headline", "Iowan Old Style", "Apple Garamond", Georgia, serif !important;
-    font-size: 34px !important; font-weight: 500 !important;
-    letter-spacing: -0.01em !important;
-    border-bottom: 1px solid #E8E6DC !important;
-    padding-bottom: 12px !important;
-    margin-top: 0 !important; margin-bottom: 24px !important;
-  }
-  .markdown-body h2 {
-    font-size: 24px !important; font-weight: 600 !important;
-    border-bottom: 1px solid #E8E6DC !important;
-    padding-bottom: 8px !important;
-    margin-top: 40px !important; margin-bottom: 16px !important;
-  }
-  .markdown-body h3 {
-    font-size: 19px !important; font-weight: 600 !important;
-    margin-top: 28px !important; margin-bottom: 12px !important;
-  }
-  .markdown-body h4 {
-    font-size: 16px !important; font-weight: 600 !important;
-    color: #4A4845 !important;
-    margin-top: 22px !important; margin-bottom: 10px !important;
-  }
+.markdown-body table {
+  border-collapse: collapse !important;
+  margin: 16px 0 !important;
+  border: 1px solid #E8E6DC !important;
+}
+.markdown-body table th {
+  background: #F0EEE6 !important;
+  border: 1px solid #E8E6DC !important;
+  padding: 10px 14px !important;
+  font-weight: 600 !important;
+  color: #2C2B28 !important;
+}
+.markdown-body table td {
+  border: 1px solid #E8E6DC !important;
+  padding: 10px 14px !important;
+  background: transparent !important;
+}
+.markdown-body table tr:nth-child(2n) td { background: #F8F6F0 !important; }
 
-  .markdown-body a { color: #CC785C !important; text-decoration: none !important; }
-  .markdown-body a:hover { text-decoration: underline !important; }
-  .markdown-body .anchor { color: transparent !important; }
-  .markdown-body h1:hover .anchor, .markdown-body h2:hover .anchor,
-  .markdown-body h3:hover .anchor, .markdown-body h4:hover .anchor { color: #CC785C !important; }
+.markdown-body code {
+  background: #F0EEE6 !important;
+  color: #2C2B28 !important;
+  padding: 2px 6px !important;
+  border-radius: 3px !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace !important;
+  font-size: 0.88em !important;
+}
+.markdown-body pre {
+  background: #F5F2E8 !important;
+  border: 1px solid #E8E6DC !important;
+  border-radius: 6px !important;
+  padding: 16px !important;
+}
+/* 코드블록 D2Coding. line-height 1.2 로 박스 모서리(─│)가 위아래 행 사이
+   끊김 없이 이어지게 압축. */
+.markdown-body pre code {
+  background: transparent !important;
+  padding: 0 !important;
+  color: #2C2B28 !important;
+  font-family: 'D2Coding', ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace !important;
+  font-size: 0.9em !important;
+  line-height: 1.2 !important;
+}
 
+.markdown-body blockquote {
+  border-left: 4px solid #CC785C !important;
+  background: #F5F2E8 !important;
+  color: #4A4845 !important;
+  padding: 12px 18px !important;
+  margin: 16px 0 !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+.markdown-body blockquote p { color: #4A4845 !important; }
+
+.markdown-body hr {
+  border: 0 !important;
+  border-top: 1px solid #E8E6DC !important;
+  background: transparent !important;
+  margin: 32px 0 !important;
+  height: 1px !important;
+}
+
+/* 클릭(앵커) 시 제목이 상단에 딱 붙지 않게 (B) */
+.markdown-body h1, .markdown-body h2, .markdown-body h3,
+.markdown-body h4, .markdown-body h5, .markdown-body h6 { scroll-margin-top: 24px; }
+
+/* 목차 없는 페이지 사이드바 안내 (v1.6) */
+.toc-empty { color: #A8A59C; font-size: 12px; padding: 8px 10px; }
+
+/* ============== Mermaid ============== */
+.mermaid {
+  overflow-x: auto;
+  max-width: 100%;
+  background: #FFFFFF;
+  border: 1px solid #E8E6DC;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px 0;
+}
+.mermaid > svg { height: auto !important; }
+
+/* ============================================
+   TOC 사이드바 (트리 구조 + 접기/펼치기)
+   ============================================ */
+.toc-sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 300px; height: 100vh;
+  overflow-y: auto;
+  background: #FAF9F5;
+  border-right: 1px solid #E8E6DC;
+  padding: 24px 16px 24px 20px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+  font-size: 13px;
+  z-index: 100;
+}
+
+/* 홈 버튼 */
+.toc-home-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; margin-bottom: 20px;
+  background: #FFFFFF;
+  border: 1px solid #E8E6DC;
+  border-radius: 6px;
+  color: #2C2B28;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.toc-home-btn:hover {
+  background: #F5F2E8;
+  border-color: #CC785C;
+  color: #CC785C;
+}
+.toc-home-icon { font-size: 16px; color: #CC785C; flex-shrink: 0; line-height: 1; }
+
+/* 타이틀 줄 (목차 + 전체 토글 버튼) */
+.toc-header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 4px 0 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.toc-title {
+  margin-right: auto;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #6F6E69;
+}
+.toc-outline-toggle {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #E8E6DC;
+  border-radius: 4px;
+  color: #6F6E69;
+  font-size: 10.5px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.toc-outline-toggle:hover {
+  border-color: #CC785C;
+  color: #CC785C;
+  background: #F5F2E8;
+}
+
+/* 트리 리스트 */
+.toc-list, .toc-sublist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.toc-sublist {
+  margin-left: 14px;
+  border-left: 1px solid #EBE9DD;
+  padding-left: 4px;
+}
+
+.toc-item { margin: 0; }
+
+.toc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* 토글 화살표 */
+.toc-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  min-width: 16px;
+  height: 24px;
+  font-size: 9px;
+  color: #8A8780;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.toc-toggle:hover { color: #CC785C; }
+.toc-toggle.empty { visibility: hidden; cursor: default; }
+
+/* 링크 */
+.toc-row > a {
+  flex: 1;
+  display: block;
+  padding: 4px 8px;
+  color: #4A5568;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  line-height: 1.4;
+  word-break: keep-all;
+  font-size: 13px;
+}
+.toc-row > a:hover {
+  color: #CC785C;
+  background: #F5F2E8;
+}
+.toc-row > a.active {
+  color: #CC785C;
+  border-left-color: #CC785C;
+  font-weight: 600;
+  background: #F5F2E8;
+}
+
+/* 레벨별 폰트 차등 */
+.toc-h1 > .toc-row > a { font-weight: 600; font-size: 13.5px; color: #2C2B28; }
+.toc-h2 > .toc-row > a { font-weight: 500; color: #4A5568; }
+.toc-h3 > .toc-row > a { font-size: 12.5px; color: #6F6E69; }
+
+/* 접힘 처리 */
+.toc-item.collapsed > .toc-sublist { display: none; }
+
+/* ============================================
+   모바일 — 햄버거 토글 TOC
+   ============================================ */
+.toc-hamburger {
+  display: none;
+  position: fixed;
+  top: 12px; left: 12px;
+  width: 44px; height: 44px;
+  background: #FFFFFF;
+  border: 1px solid #E8E6DC;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 200;
+  color: #2C2B28;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: border-color 0.15s, color 0.15s, transform 0.25s ease;
+}
+.toc-hamburger:hover {
+  border-color: #CC785C;
+  color: #CC785C;
+}
+.toc-dim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 240;
+}
+
+/* 사이드바 상단 toolbar (데스크탑 접기 버튼 자리) */
+.toc-top-bar {
+  display: none;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.toc-collapse-btn {
+  width: 28px; height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #E8E6DC;
+  border-radius: 6px;
+  color: #6F6E69;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+.toc-collapse-btn:hover {
+  border-color: #CC785C;
+  color: #CC785C;
+}
+
+/* 데스크탑 — 사이드바 펼침 기본 */
+@media (min-width: 1101px) {
+  body.has-toc-sidebar { padding-left: 300px; }
+  .toc-top-bar { display: flex; }
+  .toc-sidebar { transition: transform 0.25s ease; }
+  body.toc-collapsed-desktop .toc-sidebar { transform: translateX(-100%); }
+  body.toc-collapsed-desktop.has-toc-sidebar { padding-left: 0; }
+  body.toc-collapsed-desktop .toc-hamburger { display: flex; }
+  body.toc-collapsed-desktop .container-lg { padding-top: 56px; }
+}
+
+/* 모바일 분기 */
+@media (max-width: 1100px) {
   .markdown-body table {
-    border-collapse: collapse !important;
-    margin: 16px 0 !important;
-    border: 1px solid #E8E6DC !important;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    overflow: visible;
   }
-  .markdown-body table th {
-    background: #F0EEE6 !important;
-    border: 1px solid #E8E6DC !important;
-    padding: 10px 14px !important;
-    font-weight: 600 !important;
-    color: #2C2B28 !important;
+  .markdown-body table code {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    font-size: 0.82em;
   }
-  .markdown-body table td {
-    border: 1px solid #E8E6DC !important;
-    padding: 10px 14px !important;
-    background: transparent !important;
-  }
-  .markdown-body table tr:nth-child(2n) td { background: #F8F6F0 !important; }
-
-  .markdown-body code {
-    background: #F0EEE6 !important;
-    color: #2C2B28 !important;
-    padding: 2px 6px !important;
-    border-radius: 3px !important;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace !important;
-    font-size: 0.88em !important;
-  }
-  .markdown-body pre {
-    background: #F5F2E8 !important;
-    border: 1px solid #E8E6DC !important;
-    border-radius: 6px !important;
-    padding: 16px !important;
-  }
-  /* 코드블록 결 D2Coding 박음 — 위 @font-face 주석 참고.
-     line-height 1.2 결로 박은 결로 D2Coding 자체 lineGap 결을 압축해
-     박스 모서리(─│)가 위아래 행 사이 끊김 없이 이어진 결로 박힘. */
-  .markdown-body pre code {
-    background: transparent !important;
-    padding: 0 !important;
-    color: #2C2B28 !important;
-    font-family: 'D2Coding', ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace !important;
-    font-size: 0.9em !important;
-    line-height: 1.2 !important;
-  }
-
-  .markdown-body blockquote {
-    border-left: 4px solid #CC785C !important;
-    background: #F5F2E8 !important;
-    color: #4A4845 !important;
-    padding: 12px 18px !important;
-    margin: 16px 0 !important;
-    border-radius: 0 4px 4px 0 !important;
-  }
-  .markdown-body blockquote p { color: #4A4845 !important; }
-
-  .markdown-body hr {
-    border: 0 !important;
-    border-top: 1px solid #E8E6DC !important;
-    background: transparent !important;
-    margin: 32px 0 !important;
-    height: 1px !important;
-  }
-
-  /* ============== Mermaid ============== */
-  .mermaid {
-    overflow-x: auto;
-    max-width: 100%;
-    background: #FFFFFF;
-    border: 1px solid #E8E6DC;
-    border-radius: 6px;
-    padding: 16px;
-    margin: 16px 0;
-  }
-  .mermaid > svg { height: auto !important; }
-
-  /* ============================================
-     TOC 사이드바 (트리 구조 + 접기/펼치기)
-     ============================================ */
+  .toc-hamburger { display: flex; }
+  body.scroll-down .toc-hamburger { transform: translateY(-120%); }
   .toc-sidebar {
-    position: fixed;
-    top: 0; left: 0;
-    width: 300px; height: 100vh;
-    overflow-y: auto;
-    background: #FAF9F5;
-    border-right: 1px solid #E8E6DC;
-    padding: 24px 16px 24px 20px;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
-    font-size: 13px;
-    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 250;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.08);
   }
-
-  /* 홈 버튼 */
-  .toc-home-btn {
-    display: flex; align-items: center; gap: 10px;
-    padding: 11px 14px; margin-bottom: 20px;
-    background: #FFFFFF;
-    border: 1px solid #E8E6DC;
-    border-radius: 6px;
-    color: #2C2B28;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 13px;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-  }
-  .toc-home-btn:hover {
-    background: #F5F2E8;
-    border-color: #CC785C;
-    color: #CC785C;
-  }
-  .toc-home-icon { font-size: 16px; color: #CC785C; flex-shrink: 0; line-height: 1; }
-
-  /* 타이틀 줄 (목차 + 전체 토글 버튼) */
-  .toc-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding: 0 4px 0 10px;
-  }
-  .toc-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #6F6E69;
-  }
-  .toc-global-toggle {
-    padding: 4px 10px;
-    background: transparent;
-    border: 1px solid #E8E6DC;
-    border-radius: 4px;
-    color: #6F6E69;
-    font-size: 10.5px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-  }
-  .toc-global-toggle:hover {
-    border-color: #CC785C;
-    color: #CC785C;
-    background: #F5F2E8;
-  }
-
-  /* 트리 리스트 */
-  .toc-list, .toc-sublist {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .toc-sublist {
-    /* 자식은 좌측 들여쓰기 */
-    margin-left: 14px;
-    border-left: 1px solid #EBE9DD;
-    padding-left: 4px;
-  }
-
-  .toc-item { margin: 0; }
-
-  .toc-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  /* 토글 화살표 */
-  .toc-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    min-width: 16px;
-    height: 24px;
-    font-size: 9px;
-    color: #8A8780;
-    cursor: pointer;
-    user-select: none;
-    flex-shrink: 0;
-    line-height: 1;
-    transition: color 0.15s;
-  }
-  .toc-toggle:hover { color: #CC785C; }
-  .toc-toggle.empty { visibility: hidden; cursor: default; }
-
-  /* 링크 */
-  .toc-row > a {
-    flex: 1;
-    display: block;
-    padding: 4px 8px;
-    color: #4A5568;
-    text-decoration: none;
-    border-left: 2px solid transparent;
-    transition: color 0.15s, background 0.15s, border-color 0.15s;
-    line-height: 1.4;
-    word-break: keep-all;
-    font-size: 13px;
-  }
-  .toc-row > a:hover {
-    color: #CC785C;
-    background: #F5F2E8;
-  }
-  .toc-row > a.active {
-    color: #CC785C;
-    border-left-color: #CC785C;
-    font-weight: 600;
-    background: #F5F2E8;
-  }
-
-  /* 레벨별 폰트 차등 */
-  .toc-h1 > .toc-row > a { font-weight: 600; font-size: 13.5px; color: #2C2B28; }
-  .toc-h2 > .toc-row > a { font-weight: 500; color: #4A5568; }
-  .toc-h3 > .toc-row > a { font-size: 12.5px; color: #6F6E69; }
-
-  /* 접힘 처리 */
-  .toc-item.collapsed > .toc-sublist { display: none; }
-
-  /* ============================================
-     모바일 — 햄버거 토글 TOC
-     ============================================ */
-  /* 햄버거 버튼 (기본 숨김 — 모바일 또는 데스크탑 접힘 상태에서 표시) */
-  .toc-hamburger {
-    display: none;
-    position: fixed;
-    top: 12px; left: 12px;
-    width: 44px; height: 44px;
-    background: #FFFFFF;
-    border: 1px solid #E8E6DC;
-    border-radius: 8px;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 200;
-    color: #2C2B28;
-    font-size: 20px;
-    line-height: 1;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    transition: border-color 0.15s, color 0.15s, transform 0.25s ease;
-  }
-  .toc-hamburger:hover {
-    border-color: #CC785C;
-    color: #CC785C;
-  }
-  /* dim 오버레이 (기본 숨김) */
-  .toc-dim {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 240;
-  }
-
-  /* 사이드바 상단 toolbar (데스크탑 접기 버튼 자리) */
-  .toc-top-bar {
-    display: none;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-  }
-  .toc-collapse-btn {
-    width: 28px; height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid #E8E6DC;
-    border-radius: 6px;
-    color: #6F6E69;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-    padding: 0;
-    font-family: inherit;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  .toc-collapse-btn:hover {
-    border-color: #CC785C;
-    color: #CC785C;
-  }
-
-  /* 데스크탑 — 사이드바 펼침 기본 */
-  @media (min-width: 1101px) {
-    body.has-toc-sidebar { padding-left: 300px; }
-    .toc-top-bar { display: flex; }
-    .toc-sidebar { transition: transform 0.25s ease; }
-    /* 데스크탑 접힘 상태 */
-    body.toc-collapsed-desktop .toc-sidebar { transform: translateX(-100%); }
-    body.toc-collapsed-desktop.has-toc-sidebar { padding-left: 0; }
-    body.toc-collapsed-desktop .toc-hamburger { display: flex; }
-  }
-
-  /* 모바일 분기 */
-  @media (max-width: 1100px) {
-    /* 표 강제 폭 맞춤 — 가로 스크롤 대신 셀 wrap (세로 늘어남) */
-    .markdown-body table {
-      display: table;
-      width: 100%;
-      table-layout: fixed;
-      overflow: visible;
-    }
-
-    /* 표 안 코드 토큰 강제 wrap + 모바일 폰트 축소 (옵션 B) */
-    .markdown-body table code {
-      word-break: break-all;
-      overflow-wrap: anywhere;
-      font-size: 0.82em;
-    }
-
-    /* 햄버거 버튼 항상 표시 */
-    .toc-hamburger { display: flex; }
-    /* 스크롤 다운 시 햄버거 숨김, 업 시 다시 표시 */
-    body.scroll-down .toc-hamburger { transform: translateY(-120%); }
-
-    /* 사이드바 = 슬라이드 방식, 기본은 화면 밖 */
-    .toc-sidebar {
-      transform: translateX(-100%);
-      transition: transform 0.25s ease;
-      z-index: 250;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.08);
-    }
-    body.toc-open .toc-sidebar { transform: translateX(0); }
-    body.toc-open .toc-dim { display: block; }
-
-    /* 모바일에서는 본문 시프트 해제 */
-    body.has-toc-sidebar { padding-left: 0; }
-  }
+  body.toc-open .toc-sidebar { transform: translateX(0); }
+  body.toc-open .toc-dim { display: block; }
+  body.has-toc-sidebar { padding-left: 0; }
+  /* 모바일 본문 상단 패딩(햄버거 자리) */
+  .container-lg { padding-top: 56px; }
+  .markdown-body h1, .markdown-body h2, .markdown-body h3,
+  .markdown-body h4, .markdown-body h5, .markdown-body h6 { scroll-margin-top: 64px; }
+}
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+/* ============================================================
+   head-custom.js — 문서 페이지 스크립트 (TOC 사이드바 + 햄버거 + mermaid)
+   local-folder-viewer 스킬 v1.6
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function () {
 
-    // ============== Mermaid ==============
-    if (typeof mermaid !== 'undefined') {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: 'default',
-        maxTextSize: 100000,
-        maxEdges: 1000,
-        securityLevel: 'loose',
-        flowchart: {
-          htmlLabels: true,
-          useMaxWidth: true,
-          curve: 'basis'
-        },
-      });
-      document.querySelectorAll('pre > code.language-mermaid').forEach(function (codeEl) {
-        var div = document.createElement('div');
-        div.className = 'mermaid';
-        div.textContent = codeEl.textContent;
-        codeEl.parentElement.replaceWith(div);
-      });
-      mermaid.run({ querySelector: '.mermaid' });
-    }
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({
+      startOnLoad: false, theme: 'default', maxTextSize: 100000, maxEdges: 1000,
+      securityLevel: 'loose', flowchart: { htmlLabels: true, useMaxWidth: true, curve: 'basis' }
+    });
+    document.querySelectorAll('pre > code.language-mermaid').forEach(function (codeEl) {
+      var div = document.createElement('div'); div.className = 'mermaid';
+      div.textContent = codeEl.textContent; codeEl.parentElement.replaceWith(div);
+    });
+    try { mermaid.run({ querySelector: '.mermaid' }); } catch (e) {}
+  }
 
-    var content = document.querySelector('.markdown-body');
-    if (!content) return;
+  var content = document.querySelector('.markdown-body');
+  if (!content) return;
+  removeBuiltInToc(content);
 
-    // ============== 본문 ## 목차 자동 제거 ==============
-    removeBuiltInToc(content);
+  var headers = content.querySelectorAll('h1[id], h2[id], h3[id]');
 
-    // ============== TOC 사이드바 ==============
-    var headers = content.querySelectorAll('h1[id], h2[id], h3[id]');
-    if (headers.length < 2) return;
+  // 사이드바는 항상 렌더 (목차 없어도 홈·햄버거는 일관되게)
+  var sidebar = buildSidebar(headers);
+  document.body.appendChild(sidebar);
+  document.body.classList.add('has-toc-sidebar');
+  setupMobileToggle(sidebar);
+  setupScrollHide();
+  setupKeyboard();
+  document.body.classList.add('toc-open');
 
-    var homePath = /\/out\//.test(window.location.pathname) ? '../' : './';
-    var sidebar = buildSidebar(headers, homePath);
-    document.body.appendChild(sidebar);
-    document.body.classList.add('has-toc-sidebar');
-
+  if (headers.length >= 2) {
     setupToggles(sidebar);
     setupHeaderClickToggle(sidebar);
-    setupGlobalToggle(sidebar);
+    setupOutlineToggle(sidebar);
     setupScrollspy(sidebar, headers);
-    setupMobileToggle(sidebar);
-    setupScrollHide();
+    collapseToOutline(sidebar);   // 진입 = 개요(섹션 보이고 소제목만 접힘)
+    syncOutlineLabel(sidebar);
+    if (window.__updateScrollspy) window.__updateScrollspy();
+  }
+});
+
+
+// ===== 공용 헬퍼 =====
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
+}
+function itemToggle(li) { return li.querySelector(':scope > .toc-row > .toc-toggle'); }
+function collapsibleItems(sidebar) {
+  return Array.prototype.filter.call(sidebar.querySelectorAll('.toc-item'), function (li) {
+    var t = itemToggle(li); return t && !t.classList.contains('empty');
+  });
+}
+function setCollapsed(li, collapsed) {
+  var t = itemToggle(li);
+  if (!t || t.classList.contains('empty')) return;
+  li.classList.toggle('collapsed', collapsed);
+  t.innerHTML = collapsed ? '▸' : '▾';
+}
+function itemLevel(li) { var m = (li.className || '').match(/toc-h(\d)/); return m ? parseInt(m[1], 10) : 0; }
+// 섹션 깊이 = 2개 이상 나오는 최상위 헤더 레벨
+function sectionDepthOf(sidebar) {
+  for (var L = 1; L <= 6; L++) { if (sidebar.querySelectorAll('.toc-h' + L).length >= 2) return L; }
+  return null;
+}
+// 접을 대상 = 섹션 깊이 항목 중 자식(소제목) 있는 것
+function subTargets(sidebar) {
+  var d = sectionDepthOf(sidebar);
+  if (d === null) return [];
+  return collapsibleItems(sidebar).filter(function (li) { return itemLevel(li) === d; });
+}
+// 개요로: 섹션 위(상위)는 펼치고 섹션 깊이만 접어 소제목 숨김 (섹션은 항상 보임)
+function collapseToOutline(sidebar) {
+  var d = sectionDepthOf(sidebar);
+  if (d === null) return;
+  collapsibleItems(sidebar).forEach(function (li) {
+    var lv = itemLevel(li);
+    if (lv < d) setCollapsed(li, false);
+    else if (lv === d) setCollapsed(li, true);
+  });
+}
+// 목차 버튼 라벨 = 소제목 접힘 상태 반영 (접을 소제목 없으면 버튼 숨김)
+function syncOutlineLabel(sidebar) {
+  var btn = sidebar.querySelector('.toc-outline-toggle');
+  if (!btn) return;
+  var t = subTargets(sidebar);
+  if (!t.length) { btn.style.display = 'none'; return; }
+  var allCol = t.every(function (li) { return li.classList.contains('collapsed'); });
+  btn.textContent = allCol ? '목차 펼치기' : '목차 접기';
+}
 
 
-  // ====================================================
-  // 모바일 햄버거 토글 + dim 오버레이
-  //   - 모바일: body.toc-open 토글
-  //   - 데스크탑(사이드바 접힘 상태): toc-collapsed-desktop 제거 = 펼침
-  // ====================================================
-  function setupMobileToggle(sidebar) {
-    var hamburger = document.createElement('button');
-    hamburger.className = 'toc-hamburger';
-    hamburger.setAttribute('aria-label', '목차 열기/닫기');
-    hamburger.innerHTML = '☰';
-    document.body.appendChild(hamburger);
+// ===== 모바일 햄버거 =====
+function setupMobileToggle(sidebar) {
+  var hamburger = document.createElement('button');
+  hamburger.className = 'toc-hamburger';
+  hamburger.setAttribute('aria-label', '목차 열기/닫기');
+  hamburger.innerHTML = '☰';
+  document.body.appendChild(hamburger);
+  var dim = document.createElement('div'); dim.className = 'toc-dim'; document.body.appendChild(dim);
+  hamburger.addEventListener('click', function () {
+    if (window.matchMedia('(max-width: 1100px)').matches) document.body.classList.toggle('toc-open');
+    else document.body.classList.remove('toc-collapsed-desktop');
+  });
+  dim.addEventListener('click', function () { document.body.classList.remove('toc-open'); });
+}
 
-    var dim = document.createElement('div');
-    dim.className = 'toc-dim';
-    document.body.appendChild(dim);
-
-    hamburger.addEventListener('click', function () {
-      if (window.matchMedia('(max-width: 1100px)').matches) {
-        document.body.classList.toggle('toc-open');
-      } else {
-        document.body.classList.remove('toc-collapsed-desktop');
-      }
-    });
-    dim.addEventListener('click', function () {
-      document.body.classList.remove('toc-open');
-    });
-
-    // TOC 링크 클릭 시 자동 닫기 (모바일 한정 의미 — 데스크탑에서는 toc-open 클래스가 안 붙으므로 무해)
-    sidebar.querySelectorAll('.toc-row > a').forEach(function (a) {
-      a.addEventListener('click', function () {
-        document.body.classList.remove('toc-open');
-      });
-    });
+// ===== 본문 ## 목차 제거 =====
+function removeBuiltInToc(content) {
+  var all = content.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  var tocHeader = null;
+  for (var i = 0; i < all.length; i++) {
+    var text = all[i].textContent.trim();
+    if (text === '목차' || text === 'Table of Contents' || text === 'TOC') { tocHeader = all[i]; break; }
   }
-
-
-  // ====================================================
-  // 본문 상단 ## 목차 섹션 제거
-  // ====================================================
-  function removeBuiltInToc(content) {
-    var all = content.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    var tocHeader = null;
-    for (var i = 0; i < all.length; i++) {
-      var text = all[i].textContent.trim();
-      if (text === '목차' || text === 'Table of Contents' || text === 'TOC') {
-        tocHeader = all[i];
-        break;
-      }
-    }
-    if (!tocHeader) return;
-
-    var lv = parseInt(tocHeader.tagName.charAt(1), 10);
-    var cur = tocHeader.nextElementSibling;
-    while (cur) {
-      if (/^H[1-6]$/.test(cur.tagName)) {
-        var curLv = parseInt(cur.tagName.charAt(1), 10);
-        if (curLv <= lv) break;
-      }
-      var next = cur.nextElementSibling;
-      cur.remove();
-      cur = next;
-    }
-    tocHeader.remove();
+  if (!tocHeader) return;
+  var lv = parseInt(tocHeader.tagName.charAt(1), 10);
+  var cur = tocHeader.nextElementSibling;
+  while (cur) {
+    if (/^H[1-6]$/.test(cur.tagName)) { var curLv = parseInt(cur.tagName.charAt(1), 10); if (curLv <= lv) break; }
+    var next = cur.nextElementSibling; cur.remove(); cur = next;
   }
+  tocHeader.remove();
+}
 
+// ===== 사이드바 DOM (목차<2 면 '목차 없음') =====
+function buildSidebar(headers) {
+  var sidebar = document.createElement('nav'); sidebar.className = 'toc-sidebar';
 
-  // ====================================================
-  // 트리 구조 사이드바 DOM 생성
-  // ====================================================
-  function buildSidebar(headers, homePath) {
-    var sidebar = document.createElement('nav');
-    sidebar.className = 'toc-sidebar';
+  var topBar = document.createElement('div'); topBar.className = 'toc-top-bar';
+  var collapseBtn = document.createElement('button');
+  collapseBtn.className = 'toc-collapse-btn';
+  collapseBtn.setAttribute('aria-label', '사이드바 접기');
+  collapseBtn.innerHTML = '‹';
+  collapseBtn.addEventListener('click', function () { document.body.classList.add('toc-collapsed-desktop'); });
+  topBar.appendChild(collapseBtn); sidebar.appendChild(topBar);
 
-    // 데스크탑 접기 toolbar (모바일에서는 CSS로 숨김)
-    var topBar = document.createElement('div');
-    topBar.className = 'toc-top-bar';
-    var collapseBtn = document.createElement('button');
-    collapseBtn.className = 'toc-collapse-btn';
-    collapseBtn.setAttribute('aria-label', '사이드바 접기');
-    collapseBtn.innerHTML = '‹';
-    collapseBtn.addEventListener('click', function () {
-      document.body.classList.add('toc-collapsed-desktop');
-    });
-    topBar.appendChild(collapseBtn);
-    sidebar.appendChild(topBar);
+  var homeHref = (typeof window.VIEWER_HOME === 'string' && window.VIEWER_HOME) ? window.VIEWER_HOME : './';
+  var homeLabel = (typeof window.VIEWER_TITLE === 'string' && window.VIEWER_TITLE) ? window.VIEWER_TITLE : '홈';
+  var homeBtn = document.createElement('a'); homeBtn.className = 'toc-home-btn'; homeBtn.href = homeHref;
+  homeBtn.innerHTML = '<span class="toc-home-icon">⌂</span><span>' + escapeHtml(homeLabel) + '</span>';
+  sidebar.appendChild(homeBtn);
 
-    // 홈 버튼
-    var homeBtn = document.createElement('a');
-    homeBtn.className = 'toc-home-btn';
-    homeBtn.href = homePath;
-    homeBtn.innerHTML = '<span class="toc-home-icon">⌂</span><span>Core 시스템 문서</span>';
-    sidebar.appendChild(homeBtn);
-
-    // 타이틀 + 전체 토글 버튼
-    var headerRow = document.createElement('div');
-    headerRow.className = 'toc-header-row';
-    var title = document.createElement('div');
-    title.className = 'toc-title';
-    title.textContent = '목차';
-    headerRow.appendChild(title);
-    var globalBtn = document.createElement('button');
-    globalBtn.className = 'toc-global-toggle';
-    globalBtn.textContent = '모두 접기';
-    headerRow.appendChild(globalBtn);
-    sidebar.appendChild(headerRow);
-
-    // 트리 구성 (스택 방식)
-    var rootList = document.createElement('ul');
-    rootList.className = 'toc-list';
-    sidebar.appendChild(rootList);
-
-    var stack = [{ level: 0, list: rootList }];
-
-    headers.forEach(function (h) {
-      var level = parseInt(h.tagName.charAt(1), 10);
-
-      // 현재 헤더 레벨 이상인 stack 항목 모두 pop
-      while (stack.length > 1 && stack[stack.length - 1].level >= level) {
-        stack.pop();
-      }
-
-      var parentList = stack[stack.length - 1].list;
-
-      var li = document.createElement('li');
-      li.className = 'toc-item toc-h' + level;
-
-      var row = document.createElement('div');
-      row.className = 'toc-row';
-
-      var toggle = document.createElement('span');
-      toggle.className = 'toc-toggle empty';  // 자식 생기면 empty 제거
-      toggle.innerHTML = '▾';
-      row.appendChild(toggle);
-
-      var a = document.createElement('a');
-      a.href = '#' + h.id;
-      a.textContent = h.textContent.trim();
-      a.dataset.target = h.id;
-      row.appendChild(a);
-
-      li.appendChild(row);
-
-      var sublist = document.createElement('ul');
-      sublist.className = 'toc-sublist';
-      sublist.style.display = 'none'; // 자식 생기면 표시
-      li.appendChild(sublist);
-
-      parentList.appendChild(li);
-
-      // 부모 li의 sublist에 자식이 들어오는 순간 토글 활성화
-      var parentEntry = stack[stack.length - 1];
-      if (parentEntry.toggle) {
-        parentEntry.toggle.classList.remove('empty');
-        parentEntry.sublist.style.display = '';
-      }
-
-      stack.push({ level: level, list: sublist, toggle: toggle, sublist: sublist, li: li });
-    });
-
+  if (headers.length < 2) {
+    var none = document.createElement('div');
+    none.className = 'toc-empty';
+    none.textContent = '(목차 없음)';
+    sidebar.appendChild(none);
     return sidebar;
   }
 
+  var headerRow = document.createElement('div'); headerRow.className = 'toc-header-row';
+  var title = document.createElement('div'); title.className = 'toc-title'; title.textContent = '목차'; headerRow.appendChild(title);
+  var outlineBtn = document.createElement('button'); outlineBtn.className = 'toc-outline-toggle'; outlineBtn.textContent = '목차 접기'; headerRow.appendChild(outlineBtn);
+  sidebar.appendChild(headerRow);
 
-  // ====================================================
-  // 개별 항목 접기/펼치기
-  // ====================================================
-  function setupToggles(sidebar) {
-    sidebar.querySelectorAll('.toc-toggle').forEach(function (toggle) {
-      toggle.addEventListener('click', function (e) {
-        if (toggle.classList.contains('empty')) return;
-        e.preventDefault();
-        e.stopPropagation();
-        var li = toggle.closest('.toc-item');
-        var collapsed = li.classList.toggle('collapsed');
-        toggle.innerHTML = collapsed ? '▸' : '▾';
-      });
+  var rootList = document.createElement('ul'); rootList.className = 'toc-list'; sidebar.appendChild(rootList);
+  var stack = [{ level: 0, list: rootList }];
+  headers.forEach(function (h) {
+    var level = parseInt(h.tagName.charAt(1), 10);
+    while (stack.length > 1 && stack[stack.length - 1].level >= level) stack.pop();
+    var parentList = stack[stack.length - 1].list;
+    var li = document.createElement('li'); li.className = 'toc-item toc-h' + level;
+    var row = document.createElement('div'); row.className = 'toc-row';
+    var toggle = document.createElement('span'); toggle.className = 'toc-toggle empty'; toggle.innerHTML = '▾'; row.appendChild(toggle);
+    var a = document.createElement('a'); a.href = '#' + h.id; a.textContent = h.textContent.trim(); a.dataset.target = h.id; row.appendChild(a);
+    li.appendChild(row);
+    var sublist = document.createElement('ul'); sublist.className = 'toc-sublist'; sublist.style.display = 'none'; li.appendChild(sublist);
+    parentList.appendChild(li);
+    var parentEntry = stack[stack.length - 1];
+    if (parentEntry.toggle) { parentEntry.toggle.classList.remove('empty'); parentEntry.sublist.style.display = ''; }
+    stack.push({ level: level, list: sublist, toggle: toggle, sublist: sublist, li: li });
+  });
+  return sidebar;
+}
+
+// ===== 개별 노드 토글 =====
+function setupToggles(sidebar) {
+  sidebar.querySelectorAll('.toc-toggle').forEach(function (toggle) {
+    toggle.addEventListener('click', function (e) {
+      if (toggle.classList.contains('empty')) return;
+      e.preventDefault(); e.stopPropagation();
+      var li = toggle.closest('.toc-item');
+      var collapsed = li.classList.toggle('collapsed');
+      toggle.innerHTML = collapsed ? '▸' : '▾';
+      syncOutlineLabel(sidebar);
+      if (window.__updateScrollspy) window.__updateScrollspy();
     });
-  }
-
-
-  // ====================================================
-  // 헤더(링크) 클릭 시 자식 접기/펼치기 (점프는 기본 동작 유지)
-  // ====================================================
-  function setupHeaderClickToggle(sidebar) {
-    sidebar.querySelectorAll('.toc-row > a').forEach(function (a) {
-      a.addEventListener('click', function () {
-        var li = a.closest('.toc-item');
-        var toggle = li.querySelector(':scope > .toc-row > .toc-toggle');
-        if (!toggle || toggle.classList.contains('empty')) return;
-        var collapsed = li.classList.toggle('collapsed');
-        toggle.innerHTML = collapsed ? '▸' : '▾';
-      });
+  });
+}
+function setupHeaderClickToggle(sidebar) {
+  sidebar.querySelectorAll('.toc-row > a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var li = a.closest('.toc-item');
+      var toggle = itemToggle(li);
+      if (!toggle || toggle.classList.contains('empty')) return;
+      var collapsed = li.classList.toggle('collapsed');
+      toggle.innerHTML = collapsed ? '▸' : '▾';
+      syncOutlineLabel(sidebar);
+      if (window.__updateScrollspy) window.__updateScrollspy();
     });
-  }
+  });
+}
 
-
-  // ====================================================
-  // 전체 접기/펼치기
-  // ====================================================
-  function setupGlobalToggle(sidebar) {
-    var btn = sidebar.querySelector('.toc-global-toggle');
-    var allCollapsed = false;
-
-    btn.addEventListener('click', function () {
-      allCollapsed = !allCollapsed;
-      sidebar.querySelectorAll('.toc-item').forEach(function (li) {
-        var toggle = li.querySelector(':scope > .toc-row > .toc-toggle');
-        if (!toggle || toggle.classList.contains('empty')) return;
-        if (allCollapsed) {
-          li.classList.add('collapsed');
-          toggle.innerHTML = '▸';
-        } else {
-          li.classList.remove('collapsed');
-          toggle.innerHTML = '▾';
-        }
-      });
-      btn.textContent = allCollapsed ? '모두 펼치기' : '모두 접기';
-    });
-  }
-
-
-  // ====================================================
-  // Scrollspy — 현재 보이는 섹션 강조
-  // ====================================================
-  function setupScrollspy(sidebar, headers) {
-    var links = sidebar.querySelectorAll('.toc-row > a');
-
-    function updateActive() {
-      var scrollY = window.scrollY + 120;
-      var active = null;
-      for (var i = 0; i < headers.length; i++) {
-        var top = headers[i].getBoundingClientRect().top + window.scrollY;
-        if (top <= scrollY) active = headers[i].id;
-        else break;
-      }
-      links.forEach(function (a) {
-        if (a.dataset.target === active) a.classList.add('active');
-        else a.classList.remove('active');
-      });
+// ===== 목차 접기/펼치기 (단일 버튼, 소제목 없으면 숨김) =====
+function setupOutlineToggle(sidebar) {
+  var btn = sidebar.querySelector('.toc-outline-toggle');
+  if (!btn) return;
+  if (!subTargets(sidebar).length) { btn.style.display = 'none'; return; }
+  btn.addEventListener('click', function () {
+    var t = subTargets(sidebar);
+    var allCol = t.length > 0 && t.every(function (li) { return li.classList.contains('collapsed'); });
+    if (allCol) {
+      collapsibleItems(sidebar).forEach(function (li) { setCollapsed(li, false); }); // 펼치기: 전체
+    } else {
+      collapseToOutline(sidebar);                                                    // 접기: 개요
     }
-    window.addEventListener('scroll', updateActive, { passive: true });
-    window.addEventListener('resize', updateActive, { passive: true });
-    updateActive();
-  }
+    syncOutlineLabel(sidebar);
+    if (window.__updateScrollspy) window.__updateScrollspy();
+  });
+  syncOutlineLabel(sidebar);
+}
 
-
-  // ====================================================
-  // 모바일 햄버거 — 스크롤 다운 시 숨김, 업 시 다시 표시
-  //   - 페이지 최상단(80px 이내)에서는 항상 표시
-  //   - 데드존(±5px) 둬서 미세 흔들림 무시
-  // ====================================================
-  function setupScrollHide() {
-    var prevY = window.scrollY;
-    window.addEventListener('scroll', function () {
-      var y = window.scrollY;
-      if (y < 80) {
-        document.body.classList.remove('scroll-down');
-      } else if (y > prevY + 5) {
-        document.body.classList.add('scroll-down');
-      } else if (y < prevY - 5) {
-        document.body.classList.remove('scroll-down');
-      }
-      prevY = y;
-    }, { passive: true });
+// ===== Scrollspy — 접힘 시 보이는 상위 섹션 하이라이트 =====
+function setupScrollspy(sidebar, headers) {
+  var links = sidebar.querySelectorAll('.toc-row > a');
+  function linkFor(id) { for (var i = 0; i < links.length; i++) { if (links[i].dataset.target === id) return links[i]; } return null; }
+  function visibleLink(a) {
+    while (a && a.offsetParent === null) {
+      var li = a.closest('.toc-item');
+      var sub = li && li.parentElement;
+      var pli = sub && sub.closest('.toc-item');
+      a = pli ? pli.querySelector(':scope > .toc-row > a') : null;
+    }
+    return a;
   }
+  function updateActive() {
+    var scrollY = window.scrollY + 120;
+    var activeId = null;
+    for (var i = 0; i < headers.length; i++) {
+      var top = headers[i].getBoundingClientRect().top + window.scrollY;
+      if (top <= scrollY) activeId = headers[i].id; else break;
+    }
+    var targetA = activeId ? visibleLink(linkFor(activeId)) : null;
+    links.forEach(function (a) { if (a === targetA) a.classList.add('active'); else a.classList.remove('active'); });
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  window.addEventListener('resize', updateActive, { passive: true });
+  window.__updateScrollspy = updateActive;
+  updateActive();
+}
+
+// ===== 햄버거 스크롤 숨김 =====
+function setupScrollHide() {
+  var prevY = window.scrollY;
+  window.addEventListener('scroll', function () {
+    var y = window.scrollY;
+    if (y < 80) document.body.classList.remove('scroll-down');
+    else if (y > prevY + 5) document.body.classList.add('scroll-down');
+    else if (y < prevY - 5) document.body.classList.remove('scroll-down');
+    prevY = y;
+  }, { passive: true });
+}
+
+// ===== 키보드 =====
+function setupKeyboard() {
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    var el = e.target; var tag = (el && el.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (el && el.isContentEditable)) return;
+    if (e.key === 't' || e.key === 'T') {
+      if (!document.querySelector('.toc-sidebar')) return;
+      if (window.matchMedia('(max-width: 1100px)').matches) document.body.classList.toggle('toc-open');
+      else document.body.classList.toggle('toc-collapsed-desktop');
+    } else if (e.key === 'Escape') { document.body.classList.remove('toc-open'); }
+  });
+}
 </script>
