@@ -1,8 +1,8 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
 > 이 문서는 Core 시스템과 물류 AMMR 사이의 MQTT 통신 인터페이스를 정의한다. 기준 본체 = Core SRS + Core SAD. 이 문서의 모든 항목은 Core가 확정한 값이며, AMMR 측 구현이 이 값에 맞춘다. 이 문서가 정한 것이 기준 본체와 충돌하면 기준 본체가 우선하며, 이 문서는 운영 합의 영역만 권위로 갖는다.
-> 이 문서는 `Core_ICD_AMMR_v0_1_d26.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-14 09:52
+> 이 문서는 `Core_ICD_AMMR_v0_1_d27.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-14 10:38
 
 ---
 
@@ -296,6 +296,10 @@ sequenceDiagram
 | Broker 접속                    | 기본 포트 1883 (평문 MQTT·Mosquitto 기본) | 실제 접속 정보(IP·포트·자격증명)는 설치 시 Core 측이 제공하며, 담당자가 태블릿 설정 화면에 입력한다 |
 
 **Clean Start=true·Session Expiry=10초·Will Delay=10초 근거**: 재접속 시 Clean Start=true로 세션을 폐기하므로 단절 중 Broker에 쌓인 옛 Job 지시가 뒤늦게 배달될 위험을 원천 차단한다. AMMR은 재연결할 때마다 SUBSCRIBE를 다시 수행하고 일괄 보고(A-1)를 재발행한다(§7.4). Will Delay Interval 10초는 짧은 통신 순단이 유예 내 재연결로 복구될 때 LWT(offline) 발행을 억제해 불필요한 단절 처리를 막으며, Session Expiry 10초는 이 유예가 유효하게 작동하도록 세션을 유지하는 구간이다.
+
+#### AMMR CONNECT 설정 (필수)
+
+AMMR은 매 CONNECT 시 다음을 설정한다 — Client ID = `{ammr_id}` · Clean Start = true · Session Expiry Interval = 10초 · Will Delay Interval = 10초(LWT) · Keep Alive = 60초 · LWT 등록(§3.4). 모두 Core 확정값이며 AMMR이 임의로 바꾸지 않는다. 세션·메시지 전달 의미에 영향을 주는 미명시 옵션(예: Message Expiry Interval)은 사용하지 않는다.
 
 ### 3.7 수신 확인 원칙
 
