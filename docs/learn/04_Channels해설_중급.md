@@ -1,11 +1,11 @@
-# Core 구현참고 Channels 해설 v1.0_d11
+# Core 구현참고 Channels 해설 v1.0_d12
 
 이 파일은 Core 아키 본체 §4.6 인프라 계층의 Channels 두 구조(FIFO 파이프 / Event 버스)을 실제 구현 코드 수준으로 풀어낸 학습 자료다. 본체와 독립 수명이며, Core 프로젝트 zip 묶음에 동반 자료로 포함된다.
 
 
-> **기준 본체**: Core_구현참고_Channels해설_v1_0_d11.md (학습 원본 변경 시 사용자 명시 때만 sync)
-> 이 문서는 `Core_구현참고_Channels해설_v1_0_d11.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-04 14:21
+> **기준 본체**: Core_구현참고_Channels해설_v1_0_d12.md (학습 원본 변경 시 사용자 명시 때만 sync)
+> 이 문서는 `Core_구현참고_Channels해설_v1_0_d12.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-12 22:06
 ---
 
 ## 1. Channels 개요
@@ -813,7 +813,7 @@ public class TransferService
 | 출고 Slot Sensor On Event    | State Service 자체      | Unit 출고 시간 기록                |
 | 출고 Slot Sensor On Event    | Transfer Service (Push) | Transfer 생성, 우선순위 정렬       |
 
-> 본체 d119 폐기 방식: 이전 방식은 CNC 작업대 4상태 Mapping + CncWorkStart/CncWorkEnd Event 방식이었으나, 본체 d118에서 입고 Slot Sensor / 출고 Slot Sensor 별도 Sensor On/Off 방식으로 단순화됨.
+> CNC 출고 감지는 입고 Slot Sensor / 출고 Slot Sensor를 각각 별도 Sensor On/Off로 다룬다. (본체 §5.2)
 
 코드 Mapping:
 
