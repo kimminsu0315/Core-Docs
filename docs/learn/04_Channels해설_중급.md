@@ -1,11 +1,11 @@
-# Core 구현참고 Channels 해설 v1.0_d12
+# Core 구현참고 Channels 해설 v1.0_d13
 
 이 파일은 Core 아키 본체 §4.6 인프라 계층의 Channels 두 구조(FIFO 파이프 / Event 버스)을 실제 구현 코드 수준으로 풀어낸 학습 자료다. 본체와 독립 수명이며, Core 프로젝트 zip 묶음에 동반 자료로 포함된다.
 
 
-> **기준 본체**: Core_구현참고_Channels해설_v1_0_d12.md (학습 원본 변경 시 사용자 명시 때만 sync)
-> 이 문서는 `Core_구현참고_Channels해설_v1_0_d12.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-12 22:06
+> **기준 본체**: Core_구현참고_Channels해설_v1_0_d13.md (학습 원본 변경 시 사용자 명시 때만 sync)
+> 이 문서는 `Core_구현참고_Channels해설_v1_0_d13.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-15 17:32
 ---
 
 ## 1. Channels 개요
@@ -868,7 +868,7 @@ private async Task ProcessWipQr(WipQrInput qr)
         unit.OutTime = DateTimeOffset.UtcNow;
         _history.Enqueue(new UnitOutTimeRecord(unit.Id, unit.OutTime));
 
-        // 되담기 WIP 추가 — Tray 형태 갱신
+        // CNC WIP 추가 — Tray 형태 갱신
         if (qr.RebundleDone)
         {
             unit.TrayShape = TrayShape.Stacked;

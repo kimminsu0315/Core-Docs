@@ -1,7 +1,7 @@
 # Core R&R
 
-> 이 문서는 `Core_RnR_v0_1_d33.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-12 22:06
+> 이 문서는 `Core_RnR_v0_1_d34.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-15 17:32
 
 ---
 
@@ -20,9 +20,9 @@
 | GM 시스템              | 제품 정보·Recipe REST API 제공                                                  | *** | ✅       | -    | -    |
 | SM 시스템              | 장비 상태·CNC 작업대 Slot Sensor 신호·공정-작업대 Mapping REST API 제공           | *** | ✅       | -    | -    |
 | 일반 공정 WIP 프로그램 | WinForms 독립 프로그램. PLC 통신으로 Slot Sensor 신호 수신 + 사용자 QR 입력 처리 + Core REST 호출 + HealthCheck 송신 | *** | ⏳       | -    | -    |
-| 되담기 WIP 프로그램    | WinForms 독립 프로그램. PLC 통신으로 Slot Sensor 신호 수신 + 사용자 QR 입력 처리 + 되담기 Queue 관리 + 이동/되담기 로봇 조율 + Core REST 호출 + HealthCheck 송신 | *** | ⏳       | -    | -    |
+| CNC WIP 프로그램    | WinForms 독립 프로그램. PLC 통신으로 Slot Sensor 신호 수신 + 사용자 QR 입력 처리 + 되담기 Queue 관리 + 이동/되담기 작업 로봇 조율 + Core REST 호출 + HealthCheck 송신 | *** | ⏳       | -    | -    |
 | QR 발행 프로그램       | WinForms 독립 프로그램. 공정 Unit 구성 + QR 스티커 출력·재출력 + 적층 Tray 정보 Mapping + Core REST 호출 | *** | ⏳       | -    | -    |
-| Unit 관리 프로그램     | WinForms 독립 프로그램. GM 제품 정보 조회 + Unit별 구성·공정 추가/삭제 + Tray 되담기 공정 관리 + 일괄 처리 + 변경 이력 조회 + Core REST 호출 | *** | ⏳       | -    | -    |
+| Unit 관리 프로그램     | WinForms 독립 프로그램. GM 제품 정보 조회 + Unit별 구성 조회 + Core REST 호출 | *** | ⏳       | -    | -    |
 | 작업 실적 프로그램     | WinForms 독립 프로그램. QR 리더기 연동 → Unit 정보·현재 위치·다음 공정 표시 + 작업실적 수동 입력 + Core REST 호출 | *** | ⏳       | -    | -    |
 | 물류 AMMR              | Core와 MQTT로 양방향 통신. AMMR 업체용 요구사항 정의서 + 태블릿 전용 View UI 제안서 제공 | *** | ⏳       | -    | 5/29 |
 
@@ -45,7 +45,7 @@
 | 분류              | 내용                                                                             | 담당자        | 진행상태 | 비고 | 일정 |
 |-------------------|----------------------------------------------------------------------------------|---------------|----------|------|------|
 | Core 노출 REST    | -                                                                                | *** | ⏳       | -    | -    |
-| Core 노출 REST    | WIP 프로그램 측 (Slot Sensor·QR 정보·되담기 완료·HealthCheck 수신 + Unit ID Mapping·갱신된 Tray 형태 응답) + QR 발행 프로그램 측 (Unit ID 발급·적층 Tray 정보 Mapping) + Unit 관리 프로그램 측 (제품 정보 조회·Unit 구성·공정 추가/삭제·이력 조회) | *** | ⏳       | -    | 6/5  |
+| Core 노출 REST    | WIP 프로그램 측 (Slot Sensor·QR 정보·되담기 완료·HealthCheck 수신 + Unit ID Mapping·갱신된 Tray 형태 응답) + QR 발행 프로그램 측 (Unit ID 발급·적층 Tray 정보 Mapping) + Unit 관리 프로그램 측 (제품 정보 조회·Unit 구성 조회) | *** | ⏳       | -    | 6/5  |
 | MQTT Topic·메시지 | AMMR ↔ Core. 보고 (HW 상태·Slot Sensor·위치·BMS·Job 결과·Last Will·Snapshot) + Core → AMMR 명령 (Job 지시·Snapshot 요청) + AMMR 태블릿 → Core 사용자 명령 (Unit 식별값 입력·Unit 정보 조회) | *** | ⏳       | -    | 6/5  |
 
 ---
@@ -55,4 +55,4 @@
 | 항목             | 내용                                                                             | 담당자        | 진행상태 | 비고           | 일정 |
 |------------------|----------------------------------------------------------------------------------|---------------|----------|----------------|------|
 | Core 본체 (구조) | -                                                                                | *** | ⏳       | 상호 코드 참조 | -    |
-| Core 본체 (구조) | Adapter 8종 (GM·SM·일반 공정 WIP·되담기 WIP·QR 발행·Unit 관리·작업 실적·MQTT) + Adapter별 HealthMonitor + 서비스 3종 (State·Transfer·AMMR) + 인프라 (InMemory 상태 저장·EF Core (CRUD만 사용)·Channel 입력 Queue·Event 버스·미영속화 이력 백업·Serilog 기반 구조화 Logging) | *** | ⏳       | 상호 코드 참조 | 7/3  |
+| Core 본체 (구조) | Adapter 8종 (GM·SM·일반 공정 WIP·CNC WIP·QR 발행·Unit 관리·작업 실적·MQTT) + Adapter별 HealthMonitor + 서비스 3종 (State·Transfer·AMMR) + 인프라 (InMemory 상태 저장·EF Core (CRUD만 사용)·Channel 입력 Queue·Event 버스·미영속화 이력 백업·Serilog 기반 구조화 Logging) | *** | ⏳       | 상호 코드 참조 | 7/3  |

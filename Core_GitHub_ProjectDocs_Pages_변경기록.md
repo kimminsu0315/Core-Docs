@@ -1,10 +1,16 @@
 # Core 시스템 문서 페이지 변경 이력
 
+[d42] 2026-07-15 · 식별자 명명 규칙 전면 도입 + Core 공정 관리 제거 (개인용·push)
+- 본체 — SRS d104 (§1.2 식별자 명명 규칙 신설: 통합WIP=WIP-{CLN|DP|CNC}{D3}·CNC작업대=CNC-{SM MACHINE_NAME}-{BEFORE|AFTER}·AMMR=AMMR-{LOGI|PROC}-{D3}·슬롯 ID화 · 되담기 WIP→CNC WIP · Core 공정 관리 제거: Recipe는 GM 소유·투입 단위 Unit 부속·Core는 조회만) · SAD d154 (개명·CNC 작업대 슬롯 스킴·공정 관리 파급) · RnR d34
+- 외부전달 — ICD_AMMR d33 (ammr-001→AMMR-LOGI-001·slot_index→slot_id 풀 ID·node 라벨 새 스킴·§5.2 라벨 형식 재작성) · UI정의제안 d37 (표시 라벨 되담기 WIP→CNC WIP·목업 ASCII 폭 정합) · SRS_AMMR d25
+- 학습자료 — 처리주체분기·Channels해설 개명 반영
+- 커밋 (push 후 기재)
+
 [d41] 2026-07-15 · ack 용어 정리 + ICD 생명순 문서 전체 반영 (개인용·push)
 - 본체 — SAD d153 (앱계층 Ack 8곳 우리말화: Job Ack·도킹 Ack→'Job 결과 보고'·'도킹 완료 보고', 단순 Ack→'단순 확인 응답' · ack/ACK는 MQTT 패킷 이름[CONNACK·PINGRESP]에만 예약)
 - 외부전달 — ICD_AMMR d31 (§3.3 Topic 표·§3.4 QoS 표를 메시지 카탈로그 생명순으로 재배치[conn=1번] · '도킹 Ack'→'도킹 완료 보고' 2곳 · CONNACK 유지)
 - 학습자료 — 어댑터입력처리 d14 ('단순 ACK'→'단순 확인 응답' 3곳)
-- 커밋 (push 후 기재)
+- 커밋 1aff54e (ede2024..1aff54e)·5파일 · github.com/kimminsu0315/Project_Core main
 
 [d40] 2026-07-15 · 외부전달 ICD 설계 변경 + 메시지 생명순 재번호 동기화 (개인용·push)
 - 본체 — SRS d101 (AMMR 주기 일괄 보고에 Slot별 적재 정보 포함·적재 정보 스냅샷 통합 반영 — 이전 push 누락 누적분) · SAD d152 (재동기화 경로를 Core 연결 상태 발신 push 기반으로 교체)
