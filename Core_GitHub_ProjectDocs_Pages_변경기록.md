@@ -1,9 +1,15 @@
 # Core 시스템 문서 페이지 변경 이력
 
+[d41] 2026-07-15 · ack 용어 정리 + ICD 생명순 문서 전체 반영 (개인용·push)
+- 본체 — SAD d153 (앱계층 Ack 8곳 우리말화: Job Ack·도킹 Ack→'Job 결과 보고'·'도킹 완료 보고', 단순 Ack→'단순 확인 응답' · ack/ACK는 MQTT 패킷 이름[CONNACK·PINGRESP]에만 예약)
+- 외부전달 — ICD_AMMR d31 (§3.3 Topic 표·§3.4 QoS 표를 메시지 카탈로그 생명순으로 재배치[conn=1번] · '도킹 Ack'→'도킹 완료 보고' 2곳 · CONNACK 유지)
+- 학습자료 — 어댑터입력처리 d14 ('단순 ACK'→'단순 확인 응답' 3곳)
+- 커밋 (push 후 기재)
+
 [d40] 2026-07-15 · 외부전달 ICD 설계 변경 + 메시지 생명순 재번호 동기화 (개인용·push)
 - 본체 — SRS d101 (AMMR 주기 일괄 보고에 Slot별 적재 정보 포함·적재 정보 스냅샷 통합 반영 — 이전 push 누락 누적분) · SAD d152 (재동기화 경로를 Core 연결 상태 발신 push 기반으로 교체)
 - 외부전달 — ICD_AMMR d30 (job/ack→job/report 개명 · Core 연결 상태 core/conn 신설 · C-5 예비화 · §3.7 수신확인 표 분리 · 메시지 A/C 생명순 재번호[conn=1번]) · UI정의제안 d36 (시스템 연결 판정에 Core 측 연결 상태 반영)
-- 커밋 (push 후 기재)
+- 커밋 ede2024 (2305baf..ede2024)·6파일·github.com/kimminsu0315/Project_Core main
 
 [d39] 2026-07-14 · UI 활성화 프리스크립션 제거 (개인용·push)
 - 외부전달 — UI정의제안 d34 (일괄 보고 주기 필드 활성 시점은 업체 결정 영역 — 활성화 문구 제거)

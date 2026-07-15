@@ -1,8 +1,8 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
 > 이 문서는 Core 시스템과 물류 AMMR 사이의 MQTT 통신 인터페이스를 정의한다. 기준 본체 = Core SRS + Core SAD. 이 문서의 모든 항목은 Core가 확정한 값이며, AMMR 측 구현이 이 값에 맞춘다. 이 문서가 정한 것이 기준 본체와 충돌하면 기준 본체가 우선하며, 이 문서는 운영 합의 영역만 권위로 갖는다.
-> 이 문서는 `Core_ICD_AMMR_v0_1_d30.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-15 10:56
+> 이 문서는 `Core_ICD_AMMR_v0_1_d31.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-15 12:45
 
 ---
 
@@ -150,6 +150,7 @@ flowchart LR
 
 | Topic                              | 내용                    |
 |-----------------------------------|-------------------------|
+| `ammr/{ammr_id}/conn`             | 연결 상태 (LWT)         |
 | `ammr/{ammr_id}/state/snapshot`   | 일괄 보고 (초기 연결·주기·재요청·수동 발행 · 점유+적재 정보) |
 | `ammr/{ammr_id}/state/hw`         | AMMR HW 상태 전이       |
 | `ammr/{ammr_id}/state/slot`       | Slot 점유 Sensor 변화   |
@@ -157,19 +158,18 @@ flowchart LR
 | `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍 (10초)      |
 | `ammr/{ammr_id}/job/received`     | Job 지시 수신 확인      |
 | `ammr/{ammr_id}/job/report`          | Job 수행 결과 통합 보고 |
-| `ammr/{ammr_id}/conn`             | 연결 상태 (LWT)         |
 
 #### Core → AMMR (Core가 publish, AMMR이 subscribe)
 
 | Topic                                  | 내용              |
 |---------------------------------------|-------------------|
+| `core/conn`                            | Core 연결 상태 (retained·LWT·전체 broadcast) |
 | `core/ammr/{ammr_id}/job/cmd`         | Job 지시 (단건)  |
+| `core/ammr/{ammr_id}/display/snapshot` | 일괄 표시 회신 |
+| `core/ammr/{ammr_id}/display/state`   | AMMR 상태 표시 회신 |
 | `core/ammr/{ammr_id}/display/slot`    | Slot 변동 표시 회신 |
 | `core/ammr/{ammr_id}/display/job`     | Job 결과 표시 회신 |
-| `core/ammr/{ammr_id}/display/state`   | AMMR 상태 표시 회신 |
-| `core/ammr/{ammr_id}/display/snapshot` | 일괄 표시 회신 |
 | `core/ammr/{ammr_id}/state/request`   | 일괄 보고 재전송 요청 (예비) |
-| `core/conn`                            | Core 연결 상태 (retained·LWT·전체 broadcast) |
 
 `display/*` Topic들은 태블릿 표시용 회신 계열이고, `state/request`는 일괄 보고(A-2) 재발행을 요청하는 Core 요청이다. 적재 정보 일괄 재로드는 담당자가 `state/snapshot`(일괄 보고)을 수동 발행하는 것으로, 응답은 `display/snapshot`(일괄 표시 회신)이다. `core/conn`은 Core 자신의 연결 상태(online/offline)를 전체 AMMR에 알리는 retained 메시지다 — AMMR은 이를 subscribe해 Core 재접속을 감지하면 일괄 보고(A-2)를 재발행하고, Core 단절(offline)을 감지하면 태블릿에 시스템 연결 끊김을 표시한다. `state/request`(C-7)는 현재 Core 운영 기본 경로가 아닌 예비 수단이며, 재동기화 기본 경로는 `core/conn` 발신 + 주기 일괄 보고다.
 
@@ -179,6 +179,7 @@ flowchart LR
 
 | Topic                              | 분류                    | QoS  | 근거                                              |
 |-----------------------------------|-------------------------|------|---------------------------------------------------|
+| `ammr/{ammr_id}/conn`             | 연결 상태 (LWT)         | 1    | Retained로 늦은 접속에서도 단절 인지               |
 | `ammr/{ammr_id}/state/snapshot`   | 일괄 보고               | 1    | 연결 직후 운영 상태 재구축의 입력                  |
 | `ammr/{ammr_id}/state/hw`         | AMMR HW 상태 전이       | 1    | 단발성. 누락 시 운영 정합성 깨짐                  |
 | `ammr/{ammr_id}/state/slot`       | Slot 점유 Sensor 변화   | 1    | 정합성 판정 입력으로 누락 시 위험                 |
@@ -186,14 +187,13 @@ flowchart LR
 | `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍 (10초)      | 0    | 연속값. 임계 통과는 다음 보고에서 즉시 표면화     |
 | `ammr/{ammr_id}/job/received`     | Job 지시 수신 확인      | 1    | 수신 진단·책임 분리                                |
 | `ammr/{ammr_id}/job/report`          | Job 수행 결과 통합 보고 | 1    | 결과 누락 시 Job 종료 판정 불가                   |
-| `ammr/{ammr_id}/conn`             | 연결 상태 (LWT)         | 1    | Retained로 늦은 접속에서도 단절 인지               |
+| `core/conn`                       | Core 연결 상태          | 1    | Retained로 늦은 접속에서도 Core 상태 인지         |
 | `core/ammr/{ammr_id}/job/cmd`     | Job 지시                | 1    | 미수신 시 운영 중단. `job_id` 멱등                |
+| `core/ammr/{ammr_id}/display/snapshot` | 일괄 표시 회신      | 1    | 재연결 직후 태블릿 화면 회복                      |
+| `core/ammr/{ammr_id}/display/state` | AMMR 상태 표시 회신    | 1    | 태블릿 상단 표시 정합                             |
 | `core/ammr/{ammr_id}/display/slot` | Slot 변동 표시 회신    | 1    | 태블릿 표시 정합                                  |
 | `core/ammr/{ammr_id}/display/job` | Job 결과 표시 회신      | 1    | 태블릿 표시 정합                                  |
-| `core/ammr/{ammr_id}/display/state` | AMMR 상태 표시 회신    | 1    | 태블릿 상단 표시 정합                             |
-| `core/ammr/{ammr_id}/display/snapshot` | 일괄 표시 회신      | 1    | 재연결 직후 태블릿 화면 회복                      |
 | `core/ammr/{ammr_id}/state/request` | 일괄 보고 재전송 요청(예비) | 1    | 예비 경로 — 사용 시 재구축 입력                  |
-| `core/conn`                       | Core 연결 상태          | 1    | Retained로 늦은 접속에서도 Core 상태 인지         |
 
 #### Retained
 
@@ -1082,7 +1082,7 @@ sequenceDiagram
     A->>B: PUBLISH job/received
     B->>C: 전달 (수신 확인)
     Note over A: 설정 스테이션으로 이동·도킹<br/>(AMMR HW 자율)
-    A->>B: PUBLISH job/report (Charge success = 도킹 Ack, hw_state=charging)
+    A->>B: PUBLISH job/report (Charge success = 도킹 완료 보고, hw_state=charging)
     B->>C: 전달
     C->>B: PUBLISH display/job (표시 회신)
     B->>A: 전달
@@ -1294,7 +1294,7 @@ Job 수행 결과 통합 보고의 payload는 다음 4가지로 분기되어 Cor
 
 - 충전 스테이션 도킹의 물리 절차.
 - 충전 동작 자체.
-- 도킹 완료 시점에 **Charge Job 수행 결과(`job/report`)** 1회 보고 → "도킹 Ack" 의 의미.
+- 도킹 완료 시점에 **Charge Job 수행 결과(`job/report`)** 1회 보고 → "도킹 완료 보고" 의 의미.
 - 이후 충전 진행·완료는 AMMR HW가 자율 처리하며, **충전 완료 시점에 `state/hw` 로 `charging → idle` 전이를 별도 보고**한다.
 - 자체 임계 도달에 따른 충전 중단 결정은 AMMR HW 자체 처리. 단, 충전 중 Core Job 지시 수신 시의 중단·이탈은 §8.4를 따른다.
 
