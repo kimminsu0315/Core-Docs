@@ -1,8 +1,8 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
 > 이 문서는 Core 시스템과 물류 AMMR 사이의 MQTT 통신 인터페이스를 정의한다. 기준 본체 = Core SRS + Core SAD. 이 문서의 모든 항목은 Core가 확정한 값이며, AMMR 측 구현이 이 값에 맞춘다. 이 문서가 정한 것이 기준 본체와 충돌하면 기준 본체가 우선하며, 이 문서는 운영 합의 영역만 권위로 갖는다.
-> 이 문서는 `Core_ICD_AMMR_v0_1_d36.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-16 13:33
+> 이 문서는 `Core_ICD_AMMR_v0_1_d40.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-16 19:07
 
 ---
 
@@ -88,7 +88,7 @@ flowchart LR
 | Job 수행 결과 보고                     | AMMR HW  | Job 종료 시 통합 보고                                         |
 | AMMR HW 상태 보고                      | AMMR HW  | 초기 연결 일괄 + 상태 전이 시점                              |
 | Slot 정합 판정 결과 보고 (slot_state)  | AMMR(태블릿+HW) | 초기 연결 일괄 + 외부 원인 전이 시 1 Slot              |
-| 위치·BMS 스트리밍                     | AMMR HW  | 위치 1초·BMS 10초 주기                                        |
+| 위치·BMS 스트리밍                     | AMMR HW  | 위치 1초·BMS 10초 주기 (태블릿 설정)                                        |
 | Unit 식별 (Unit ID 확정)              | Core     | AMMR HW(로봇)는 Unit ID를 인식하지 못한다(QR 미판독). Core가 Job 지시(C-2)에 Unit 정보를 선탑재해 태블릿이 보관하며, 정합이 어긋나면 일괄보고 응답(C-3)으로 확정 배정을 내려줌 |
 | 태블릿 표시 데이터 (적재·배정·상단 정보)   | Core 선탑재 / 태블릿 구성 | Core가 Job 지시(C-2)에 선탑재 · 상단·slot_state는 태블릿 자체 산출 · 정합 정정만 일괄보고 응답(C-3, §5.2)   |
 | 충전 중단 결정                         | AMMR HW / Core | 자체 임계 도달 시 자율 중단은 AMMR HW. 단, 충전 중 Core가 Job을 지시하면 AMMR은 충전을 중단하고 이탈 후 수행 (§8.4) |
@@ -99,16 +99,16 @@ flowchart LR
 
 | 항목                                          | 권위 매체           | 비고                                                                       |
 |-----------------------------------------------|---------------------|----------------------------------------------------------------------------|
-| 위치 (x, y, a) 스트리밍                       | AMMR HW             | 1초 주기 (AMMR HW 설정 가변)                                              |
+| 위치 (x, y, a) 스트리밍                       | AMMR HW             | 1초 주기 (기본·태블릿 설정)                                              |
 | AMMR HW 상태 전이                             | AMMR HW             | 8종 — `move`/`pickup`/`dropoff`/`charge`/`idle`/`charging`/`low_battery`/`error` (§부록 A.1) |
 | Slot 정합 판정 결과 (slot_state·6 Slot)      | AMMR(태블릿+HW)     | 초기 일괄 또는 외부 원인 전이 시 1 Slot                                   |
 | Job 지시 수신                                 | AMMR HW             | Core Job 지시 수신 즉시 보고                                              |
 | Job 수행 결과 (Move/Pickup/Dropoff/Charge)   | AMMR HW             | Job 종료 시 통합 보고                                                     |
-| Battery (raw % 스트리밍)                       | AMMR HW             | 10초 주기                                                                  |
+| Battery (raw % 스트리밍)                       | AMMR HW             | 10초 주기 (기본·태블릿 설정)                                                                  |
 | Battery 자체 임계 (저전력 진입·대기 복귀)      | AMMR HW             | AMMR이 보유·태블릿 설정 화면에서 변경 (기본값: 저전력 20% / 대기 80%). §8.3 자율 충전 판단 기준 |
 | Battery 저전력 분류 (Core 운영 판단)           | Core (자체 판정)    | Core가 수신한 Battery raw %를 자체 기준으로 분류 — AMMR이 별도 보고하지 않고, Core도 분류 결과를 AMMR에 전달하지 않음 |
 | Unit ID                                       | Core (자체 판정)    | AMMR HW(로봇)는 Unit ID를 인식하지 못한다(QR 미판독). 태블릿 보관값(추정 등급)이 일괄 보고에 실리며, Slot의 Unit 정보 확정은 Core가 회신으로 내려줌 |
-| 태블릿 표시 데이터 (Unit 정보·Job 배정·시스템 상태) | Core 선탑재 / 태블릿 구성 | Job 지시(C-2) 선탑재 + 태블릿 자체 산출 · 정합 정정만 일괄보고 응답(§5.2 C-3) |
+| 태블릿 표시 데이터 (Unit 정보·Job 배정·상단 표시) | Core 선탑재 / 태블릿 구성 | Job 지시(C-2) 선탑재 + 태블릿 자체 산출 · 정합 정정만 일괄보고 응답(§5.2 C-3) |
 | 충전 스테이션 위치                            | AMMR HW             | 태블릿 설정 화면의 충전 스테이션 번호가 단일 소스. Core는 충전 스테이션을 지정·보유하지 않음 (§8.5) |
 | Job 결정                                      | Core                | AMMR은 Core 지시를 수행                                                   |
 
@@ -200,32 +200,40 @@ flowchart LR
 AMMR은 CONNECT 시 다음 LWT를 등록한다.
 
 - **Topic**: `ammr/{ammr_id}/conn`
-- **Payload**: `{"ammr_id": "AMMR-LOGI-001", "timestamp": "<CONNECT 시점>", "status": "offline", "reason": "broker_disconnect"}` — 공통 필드 포함. LWT payload는 CONNECT 시점에 등록되어 Broker가 그대로 발행하므로 `timestamp`는 발행 시점이 아니라 등록(CONNECT) 시점 값이다 (§3.5 공통 필드 규칙의 명시 예외)
+- **Payload**: `{"header": {"timestamp": null, "ammr_id": "AMMR-LOGI-001", "msg_id": null}, "body": {"status": "offline", "reason": "broker_disconnect"}}` — Broker가 CONNECT 때 등록한 payload를 그대로 재발행하므로 발행 시점 값을 못 넣어 `header.timestamp`·`header.msg_id`는 `null`이다 (실제 offline 시각은 수신 시점으로 판단·§3.5 예외)
 - **QoS**: 1
 - **Retained**: true
 - **Will Delay Interval**: 10초 (순단 유예·§3.6)
 
 AMMR HW와 Broker의 연결이 Keep Alive 임계 초과로 끊어지면 Broker가 자동 발행한다.
 
-Core도 CONNECT 시 `core/conn` 을 Topic으로 하는 LWT(`{"timestamp": "<CONNECT 시점>", "status": "offline", "reason": "core_down"}` · QoS 1 · Retained true)를 등록한다 — Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 발행해 AMMR·태블릿이 Core 다운을 인지한다. `core/conn` payload는 발신 주체가 Core라서 `ammr_id`를 포함하지 않는다 (§3.5 공통 필드의 명시 예외).
+Core도 CONNECT 시 `core/conn` 을 Topic으로 하는 LWT(`{"header": {"timestamp": null, "ammr_id": null, "msg_id": null}, "body": {"status": "offline", "reason": "core_down"}}` · QoS 1 · Retained true)를 등록한다 — Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 발행해 AMMR·태블릿이 Core 다운을 인지한다. `core/conn` payload는 발신 주체가 Core라서 `header.ammr_id` = `null`이다 (§3.5 예외).
 
-### 3.5 Payload 인코딩·공통 필드
+### 3.5 Payload 인코딩·구조·공통 필드
 
 모든 Payload는 **JSON (UTF-8)** 이다. 운영 부하 수준(AMMR 2대·초당 수십 건 이하 메시지)에서 인코딩 비용 부담이 없고, 디버깅·Log 가독성이 높다.
 
-모든 Payload는 다음 공통 필드를 포함한다.
+**구조 = `header` + `body`.** 모든 Payload는 봉투 메타를 담는 `header`와 메시지별 내용을 담는 `body` 두 객체로 구성된다. 전송·라우팅 메타를 MQTT 속성이나 Topic에만 의존하지 않고 Payload 안에 자기완결로 담아, Log에 Payload 문자열 하나만 남아도 메시지를 단독으로 해석할 수 있게 한다.
+
+`header`는 다음 공통 필드를 담는다.
 
 | 필드          | 타입    | 필수 | 설명                                                              |
 |---------------|---------|------|-------------------------------------------------------------------|
-| `ammr_id`     | string  | 필수 | AMMR 식별자 (예: `AMMR-LOGI-001`)                                      |
-| `timestamp`   | string  | 필수 | KST 현지시각 (예: `2026-07-10 07:30:00.123`) — 발행 시점         |
-| `msg_id`      | string  | 선택 | 메시지 고유 ID (UUID). 추적·디버깅 용도                           |
+| `timestamp`   | string\|null | 필수 | KST 현지시각 (예: `2026-07-10 07:30:00.123`) — 발행 시점. broker LWT는 `null` (아래 예외) |
+| `ammr_id`     | string\|null | 필수 | AMMR 식별자 (예: `AMMR-LOGI-001`). `core/conn`은 `null` (아래 예외)               |
+| `msg_id`      | string\|null | 필수 | 메시지 고유 ID (UUID). 추적·디버깅 용도. broker LWT는 `null` (아래 예외)          |
 
-위 공통 필드는 이하 메시지 상세 정의에서 매번 반복 표기하지 않고, **메시지별 고유 필드만** 명시한다. 유일한 예외는 LWT payload다 — CONNECT 시점에 등록되는 고정 payload라 `timestamp`가 발행 시점이 아니라 등록 시점 값이다 (§3.4).
+`body`는 메시지별 고유 필드를 담는다. 이하 메시지 상세 정의(§5)는 각 메시지의 **`body` 고유 필드만** 명시하며, `header`는 위 공통 구조를 공통 적용한다.
+
+**필드 순서 = 고정.** `header`는 `timestamp → ammr_id → msg_id` 순(로그 한 줄 가독 = 시각 먼저), `body`의 상태 필드는 `hw_state → slots → pose → battery` 순으로 싣는다. 그 외 메시지별 고유 필드는 각 정의(§5) 표 순서를 따른다.
+
+**header 예외 (구조·필드는 유지·값만 `null`):**
+- `core/conn`(C-1)은 발신 주체가 Core라 특정 AMMR이 없어 `header.ammr_id` = `null`.
+- broker 자동 발행 LWT(`broker_disconnect`·`core_down`)는 broker가 CONNECT 때 등록한 payload를 그대로 재발행해 발행 시점 값을 못 넣으므로 `header.timestamp` = `null`, `header.msg_id` = `null` (실제 offline 시각은 수신 시점으로 판단). AMMR/Core가 직접 발행하는 offline(`clean_shutdown` 등)은 실제 값을 넣는다.
 
 모든 `timestamp`는 KST(UTC+9) 기준 현지시각이며, 시간대 오프셋 없이 `YYYY-MM-DD HH:MM:SS.mmm` 형식으로 전달한다 (예: `2026-07-10 07:30:00.123`).
 
-표시에 쓰이는 문자열 값(`job_type`·`slot_state`·출발/도착 node_id 라벨 등 Core가 Job 지시(C-2)에 선탑재하는 값)은 영문 enum·식별자이며 UTF-8 문자열 그대로 전달되고, 태블릿은 한글 매핑·조립 없이 그대로 표시한다. 상단 시스템 상태는 태블릿이 자기 `hw_state`와 진행 중 Job 정보로 자체 산출한다.
+표시에 쓰이는 문자열 값(`job_type`·`slot_state`·출발/도착 node_id 라벨 등 Core가 Job 지시(C-2)에 선탑재하는 값)은 영문 enum·식별자이며 UTF-8 문자열 그대로 전달되고, 태블릿은 한글 매핑·조립 없이 그대로 표시한다. 상단 표시(HW 상태·최근 명령 등)는 태블릿이 자기 `hw_state`와 Core 선탑재 Job 정보로 자체 구성한다 (상세 = UI 정의 제안).
 
 ### 3.6 연결 수명 주기
 
@@ -343,8 +351,8 @@ AMMR은 매 CONNECT 시 다음을 설정한다 — Client ID = `{ammr_id}` · Cl
 | A-2 | `ammr/{ammr_id}/state/snapshot`   | 일괄 보고 (정합 상태+적재 정보) | MQTT CONNECT 직후 / Core 연결 상태 online 감지 시 / 일괄 보고 재전송 요청(C-4) 수신 시(예비) / 주기 자동(기본 60초·태블릿 설정) / 담당자 수동 발행(재로드) | 발생 시점·주기 60초       |
 | A-3 | `ammr/{ammr_id}/state/hw`         | AMMR HW 상태 전이       | 상태 전이 시점 (Job 종료 보고에 실리는 전이 제외 — §5.1 A-3) | 전이 시점 Event |
 | A-4 | `ammr/{ammr_id}/state/slot`       | Slot 상태 전이          | 외부 원인 Slot 상태 전이 시점                | 전이 시점 Event (1 Slot) |
-| A-5 | `ammr/{ammr_id}/telemetry/pose`   | 위치 스트리밍           | 주기                                          | 1초 (HW 설정 가변)        |
-| A-6 | `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍            | 주기                                          | 10초 (HW 설정 가변)        |
+| A-5 | `ammr/{ammr_id}/telemetry/pose`   | 위치 스트리밍           | 주기                                          | 1초 (태블릿 설정)        |
+| A-6 | `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍            | 주기                                          | 10초 (태블릿 설정)        |
 | A-7 | `ammr/{ammr_id}/job/received`     | Job 지시 수신 확인      | Core Job 지시 수신 직후                       | 수신 시점 Event          |
 | A-8 | `ammr/{ammr_id}/job/report`          | Job 수행 결과 통합 보고 | Job 종료 시점                                 | Job 종료 Event           |
 
@@ -363,7 +371,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ## 5. 메시지 상세 정의
 
-각 메시지는 **공통 필드(§3.5)** 외에 다음 고유 필드를 갖는다. 필드 타입은 §부록 A 참고. AMMR Slot ID는 식별자 명명 규칙을 따르며(예 `AMMR-LOGI-001-A1`~`A6`), 행 번호 1–6이 태블릿 화면의 Slot 번호와 일치한다.
+각 메시지 payload는 **`header`(공통 필드·§3.5)** 와 **`body`** 로 구성되며, 아래 표는 각 메시지의 **`body` 고유 필드**를 정의한다. 필드 타입은 §부록 A 참고. AMMR Slot ID는 식별자 명명 규칙을 따르며(예 `AMMR-LOGI-001-A1`~`A6`), 행 번호 1–6이 태블릿 화면의 Slot 번호와 일치한다.
 
 ### 5.1 AMMR → Core 메시지
 
@@ -384,20 +392,30 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:30:00.000",
-  "status": "online"
+  "header": {
+    "timestamp": "2026-07-10 07:30:00.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0001-4abc-8def-000000000001"
+  },
+  "body": {
+    "status": "online"
+  }
 }
 ```
 
-**예시**: LWT (Broker 자동 발행 — `timestamp`는 등록(CONNECT) 시점 값·§3.4)
+**예시**: LWT (Broker 자동 발행 — `timestamp`·`msg_id` = `null`·§3.4)
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:30:00.000",
-  "status": "offline",
-  "reason": "broker_disconnect"
+  "header": {
+    "timestamp": null,
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": null
+  },
+  "body": {
+    "status": "offline",
+    "reason": "broker_disconnect"
+  }
 }
 ```
 
@@ -405,10 +423,15 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 18:00:00.000",
-  "status": "offline",
-  "reason": "clean_shutdown"
+  "header": {
+    "timestamp": "2026-07-10 18:00:00.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0002-4abc-8def-000000000002"
+  },
+  "body": {
+    "status": "offline",
+    "reason": "clean_shutdown"
+  }
 }
 ```
 #### A-2. 일괄 보고
@@ -421,8 +444,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | 필드           | 타입               | 필수 | 설명                                                       |
 |----------------|--------------------|------|------------------------------------------------------------|
 | `hw_state`     | enum (§부록 A.1) | 필수 | 현재 AMMR HW 상태                                          |
-| `pose`         | object             | 필수 | `{x: float, y: float, a: float}` — 현재 위치 + 방향각      |
 | `slots`        | array[6]           | 필수 | 6 Slot 각각의 점유 정보 (아래 구조)                       |
+| `pose`         | object             | 필수 | `{x: float, y: float, a: float}` — 현재 위치 + 방향각      |
 | `battery`      | object             | 필수 | A-6 BMS 메시지의 필드 구조와 동일 (§부록 A.5 참조)        |
 
 `slots` 항목 구조:
@@ -437,19 +460,24 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:30:00.123",
-  "hw_state": "idle",
-  "pose": { "x": 12.5, "y": 3.7, "a": 1.57 },
-  "slots": [
-    { "slot_id": "AMMR-LOGI-001-A1", "slot_state": "occupied", "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d" },
-    { "slot_id": "AMMR-LOGI-001-A2", "slot_state": "empty",    "unit_id": null },
-    { "slot_id": "AMMR-LOGI-001-A3", "slot_state": "empty",    "unit_id": null },
-    { "slot_id": "AMMR-LOGI-001-A4", "slot_state": "empty",    "unit_id": null },
-    { "slot_id": "AMMR-LOGI-001-A5", "slot_state": "empty",    "unit_id": null },
-    { "slot_id": "AMMR-LOGI-001-A6", "slot_state": "empty",    "unit_id": null }
-  ],
-  "battery": { "soc": 87.3, "voltage": 50.1, "current": -2.1, "temperature": 28.5, "bmu_error": false, "battery_id": "BAT_A01" }
+  "header": {
+    "timestamp": "2026-07-10 07:30:00.123",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0003-4abc-8def-000000000003"
+  },
+  "body": {
+    "hw_state": "idle",
+    "slots": [
+      { "slot_id": "AMMR-LOGI-001-A1", "slot_state": "occupied", "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d" },
+      { "slot_id": "AMMR-LOGI-001-A2", "slot_state": "empty",    "unit_id": null },
+      { "slot_id": "AMMR-LOGI-001-A3", "slot_state": "empty",    "unit_id": null },
+      { "slot_id": "AMMR-LOGI-001-A4", "slot_state": "empty",    "unit_id": null },
+      { "slot_id": "AMMR-LOGI-001-A5", "slot_state": "empty",    "unit_id": null },
+      { "slot_id": "AMMR-LOGI-001-A6", "slot_state": "empty",    "unit_id": null }
+    ],
+    "pose": { "x": 12.5, "y": 3.7, "a": 1.57 },
+    "battery": { "battery_id": "BAT_A01", "soc": 87.3, "voltage": 50.1, "current": -2.1, "temperature": 28.5, "bmu_error": false }
+  }
 }
 ```
 
@@ -481,10 +509,15 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:35:12.456",
-  "hw_state": "idle",
-  "prev_state": "charging"
+  "header": {
+    "timestamp": "2026-07-10 07:35:12.456",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0004-4abc-8def-000000000004"
+  },
+  "body": {
+    "hw_state": "idle",
+    "prev_state": "charging"
+  }
 }
 ```
 
@@ -505,18 +538,23 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:40:23.789",
-  "slot_id": "AMMR-LOGI-001-A3",
-  "slot_state": "blocked",
-  "unit_id": null
+  "header": {
+    "timestamp": "2026-07-10 07:40:23.789",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0005-4abc-8def-000000000005"
+  },
+  "body": {
+    "slot_id": "AMMR-LOGI-001-A3",
+    "slot_state": "blocked",
+    "unit_id": null
+  }
 }
 ```
 
 #### A-5. 위치 스트리밍
 
 - **Topic**: `ammr/{ammr_id}/telemetry/pose`
-- **Trigger**: 1초 주기 (AMMR HW 설정 가변)
+- **Trigger**: 1초 주기 (기본·태블릿 설정)
 - **QoS**: 0 (연속값, 1건 누락 허용)
 
 | 필드 | 타입  | 필수 | 설명                       |
@@ -531,18 +569,23 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:40:24.000",
-  "x": 12.51,
-  "y": 3.72,
-  "a": 1.58
+  "header": {
+    "timestamp": "2026-07-10 07:40:24.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0006-4abc-8def-000000000006"
+  },
+  "body": {
+    "x": 12.51,
+    "y": 3.72,
+    "a": 1.58
+  }
 }
 ```
 
 #### A-6. BMS 스트리밍
 
 - **Topic**: `ammr/{ammr_id}/telemetry/bms`
-- **Trigger**: 10초 주기 (AMMR HW 설정 가변)
+- **Trigger**: 10초 주기 (기본·태블릿 설정)
 - **QoS**: 0
 
 | 필드           | 타입    | 필수 | 설명                                          |
@@ -558,14 +601,19 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:40:25.000",
-  "battery_id": "BAT_A01",
-  "soc": 87.1,
-  "voltage": 50.0,
-  "current": -2.0,
-  "temperature": 28.6,
-  "bmu_error": false
+  "header": {
+    "timestamp": "2026-07-10 07:40:25.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0007-4abc-8def-000000000007"
+  },
+  "body": {
+    "battery_id": "BAT_A01",
+    "soc": 87.1,
+    "voltage": 50.0,
+    "current": -2.0,
+    "temperature": 28.6,
+    "bmu_error": false
+  }
 }
 ```
 
@@ -583,9 +631,14 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:41:55.123",
-  "job_id": 1024
+  "header": {
+    "timestamp": "2026-07-10 07:41:55.123",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0008-4abc-8def-000000000008"
+  },
+  "body": {
+    "job_id": 1024
+  }
 }
 ```
 
@@ -617,16 +670,21 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:42:11.234",
-  "job_id": 1024,
-  "job_type": "pickup",
-  "hw_state": "idle",
-  "job_result": "success",
-  "slot": {
-    "slot_id": "AMMR-LOGI-001-A2",
-    "slot_state": "occupied",
-    "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d"
+  "header": {
+    "timestamp": "2026-07-10 07:42:11.234",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0009-4abc-8def-000000000009"
+  },
+  "body": {
+    "job_id": 1024,
+    "job_type": "pickup",
+    "hw_state": "idle",
+    "job_result": "success",
+    "slot": {
+      "slot_id": "AMMR-LOGI-001-A2",
+      "slot_state": "occupied",
+      "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d"
+    }
   }
 }
 ```
@@ -635,17 +693,22 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:42:11.234",
-  "job_id": 1024,
-  "job_type": "pickup",
-  "hw_state": "idle",
-  "job_result": "failure",
-  "reason": "slot_source_empty",
-  "slot": {
-    "slot_id": "AMMR-LOGI-001-A2",
-    "slot_state": "job_failed",
-    "unit_id": null
+  "header": {
+    "timestamp": "2026-07-10 07:42:11.234",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-000a-4abc-8def-00000000000a"
+  },
+  "body": {
+    "job_id": 1024,
+    "job_type": "pickup",
+    "hw_state": "idle",
+    "job_result": "failure",
+    "reason": "slot_source_empty",
+    "slot": {
+      "slot_id": "AMMR-LOGI-001-A2",
+      "slot_state": "job_failed",
+      "unit_id": null
+    }
   }
 }
 ```
@@ -654,13 +717,18 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:42:11.234",
-  "job_id": 1025,
-  "job_type": "move",
-  "hw_state": "error",
-  "job_result": "failure",
-  "reason": "ammr_hw_navigation_lost"
+  "header": {
+    "timestamp": "2026-07-10 07:42:11.234",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-000b-4abc-8def-00000000000b"
+  },
+  "body": {
+    "job_id": 1025,
+    "job_type": "move",
+    "hw_state": "error",
+    "job_result": "failure",
+    "reason": "ammr_hw_navigation_lost"
+  }
 }
 ```
 
@@ -686,8 +754,14 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "timestamp": "2026-07-10 07:29:58.000",
-  "status": "online"
+  "header": {
+    "timestamp": "2026-07-10 07:29:58.000",
+    "ammr_id": null,
+    "msg_id": "0a1b2c3d-0101-4abc-8def-000000000101"
+  },
+  "body": {
+    "status": "online"
+  }
 }
 ```
 
@@ -695,9 +769,15 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "timestamp": "2026-07-10 07:29:58.000",
-  "status": "offline",
-  "reason": "core_down"
+  "header": {
+    "timestamp": null,
+    "ammr_id": null,
+    "msg_id": null
+  },
+  "body": {
+    "status": "offline",
+    "reason": "core_down"
+  }
 }
 ```
 #### C-2. Job 지시
@@ -712,20 +792,18 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 |---------------|------------------|---------|---------------------------------------------------------------|
 | `job_id`      | integer          | 필수    | Job 고유 번호. Core가 정수 순번(직전 번호+1)으로 부여. AMMR은 동일 번호로 결과 보고 |
 | `job_type`    | enum (§부록 A.2) | 필수    | Move / Pickup / Dropoff / Charge                             |
-| `source`      | object           | 조건부 | 출발 지점 라벨 `{ "node_id": ... }`. Pickup 시 필수(외부 지점) |
-| `source_slot` | string           | 조건부 | 출발 슬롯. Pickup=외부 slot / Dropoff=AMMR slot             |
-| `destination` | object           | 조건부 | 도착 지점 라벨 `{ "node_id": ... }`. Move·Dropoff 시 필수    |
-| `dest_slot`   | string           | 조건부 | 도착 슬롯. Pickup=AMMR slot / Dropoff=외부 slot            |
+| `work_location` | string           | 조건부 | 작업 외부 지점 라벨(노드 id 문자열). Move·Pickup·Dropoff 시 필수 (Move=목적지 / Pickup=출발 외부 지점 / Dropoff=도착 외부 지점) |
+| `slot_info`      | object           | 조건부 | Pickup·Dropoff 시 필수. `{ from_slot_id, to_slot_id }` — 이동 방향(출발→도착 슬롯). Pickup=외부→AMMR / Dropoff=AMMR→외부 |
 | `unit`        | object           | 조건부 | Pickup·Dropoff 시 필수. 대상 Unit 정보 (선탑재). 구조 아래.  |
 
 **job_type별 필요 필드**
 
-| job_type | source | source_slot | destination | dest_slot | unit |
-|----------|--------|-------------|-------------|-----------|------|
-| `move`    | –      | –           | ✓ 지점      | –          | –    |
-| `pickup`  | ✓ 외부 지점 | ✓ 외부 slot | –       | ✓ AMMR slot | ✓  |
-| `dropoff` | –      | ✓ AMMR slot | ✓ 외부 지점 | ✓ 외부 slot | ✓  |
-| `charge`  | –      | –           | –           | –          | –    |
+| job_type | work_location | slot_info (from → to) | unit |
+|----------|---------------|------------------------|------|
+| `move`    | ✓ 목적지 지점    | –                        | –  |
+| `pickup`  | ✓ 출발 외부 지점 | ✓ 외부 slot → AMMR slot  | ✓  |
+| `dropoff` | ✓ 도착 외부 지점 | ✓ AMMR slot → 외부 slot  | ✓  |
+| `charge`  | –              | –                        | –  |
 
 **지점/슬롯 라벨**: 식별자 명명 규칙을 따르는 문자열. 지점 라벨(예: `WIP-CLN001` 세척 WIP, `CNC-RAC-A01` CNC 작업대)과 슬롯 라벨(예: `WIP-CLN001-A1`, `CNC-RAC-A01-BEFORE`, `AMMR-LOGI-001-A2`) 두 층위다. 목적지는 좌표가 아니라 논리 지점 라벨이며 AMMR이 자체 맵으로 물리 위치를 해석한다. 전체 라벨 목록은 설치 시 Core 측이 제공한다. Charge는 위치·unit 필드가 없다 — 충전 스테이션은 태블릿 설정값이 단일 소스다 (§8.5).
 
@@ -747,11 +825,16 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:41:55.000",
-  "job_id": 1025,
-  "job_type": "move",
-  "destination": { "node_id": "WIP-CLN001" }
+  "header": {
+    "timestamp": "2026-07-10 07:41:55.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0102-4abc-8def-000000000102"
+  },
+  "body": {
+    "job_id": 1025,
+    "job_type": "move",
+    "work_location": "WIP-CLN001"
+  }
 }
 ```
 
@@ -759,21 +842,25 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:42:00.000",
-  "job_id": 1024,
-  "job_type": "pickup",
-  "source": { "node_id": "WIP-CLN001" },
-  "source_slot": "WIP-CLN001-A1",
-  "dest_slot": "AMMR-LOGI-001-A2",
-  "unit": {
-    "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
-    "input_code": "26SF03002-001",
-    "unit_num": "001",
-    "model_name": "H8-MAIN",
-    "version": "KM70",
-    "tray_count": 5,
-    "product_count": 16
+  "header": {
+    "timestamp": "2026-07-10 07:42:00.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0103-4abc-8def-000000000103"
+  },
+  "body": {
+    "job_id": 1024,
+    "job_type": "pickup",
+    "work_location": "WIP-CLN001",
+    "slot_info": { "from_slot_id": "WIP-CLN001-A1", "to_slot_id": "AMMR-LOGI-001-A2" },
+    "unit": {
+      "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
+      "input_code": "26SF03002-001",
+      "unit_num": "001",
+      "model_name": "H8-MAIN",
+      "version": "KM70",
+      "tray_count": 5,
+      "product_count": 16
+    }
   }
 }
 ```
@@ -782,21 +869,25 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 07:45:00.000",
-  "job_id": 1026,
-  "job_type": "dropoff",
-  "source_slot": "AMMR-LOGI-001-A2",
-  "destination": { "node_id": "CNC-RAC-A02" },
-  "dest_slot": "CNC-RAC-A02-BEFORE",
-  "unit": {
-    "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
-    "input_code": "26SF03002-001",
-    "unit_num": "001",
-    "model_name": "H8-MAIN",
-    "version": "KM70",
-    "tray_count": 5,
-    "product_count": 16
+  "header": {
+    "timestamp": "2026-07-10 07:45:00.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0104-4abc-8def-000000000104"
+  },
+  "body": {
+    "job_id": 1026,
+    "job_type": "dropoff",
+    "work_location": "CNC-RAC-A02",
+    "slot_info": { "from_slot_id": "AMMR-LOGI-001-A2", "to_slot_id": "CNC-RAC-A02-BEFORE" },
+    "unit": {
+      "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
+      "input_code": "26SF03002-001",
+      "unit_num": "001",
+      "model_name": "H8-MAIN",
+      "version": "KM70",
+      "tray_count": 5,
+      "product_count": 16
+    }
   }
 }
 ```
@@ -805,10 +896,15 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 08:10:00.000",
-  "job_id": 1027,
-  "job_type": "charge"
+  "header": {
+    "timestamp": "2026-07-10 08:10:00.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0105-4abc-8def-000000000105"
+  },
+  "body": {
+    "job_id": 1027,
+    "job_type": "charge"
+  }
 }
 ```
 
@@ -833,27 +929,32 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 10:05:00.400",
-  "slots": [
-    {
-      "slot_id": "AMMR-LOGI-001-A1",
-      "unit": {
-        "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
-        "input_code": "26SF03002-001",
-        "unit_num": "001",
-        "model_name": "H8-MAIN",
-        "version": "KM70",
-        "tray_count": 5,
-        "product_count": 16
-      }
-    },
-    { "slot_id": "AMMR-LOGI-001-A2", "unit": null },
-    { "slot_id": "AMMR-LOGI-001-A3", "unit": null },
-    { "slot_id": "AMMR-LOGI-001-A4", "unit": null },
-    { "slot_id": "AMMR-LOGI-001-A5", "unit": null },
-    { "slot_id": "AMMR-LOGI-001-A6", "unit": null }
-  ]
+  "header": {
+    "timestamp": "2026-07-10 10:05:00.400",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0106-4abc-8def-000000000106"
+  },
+  "body": {
+    "slots": [
+      {
+        "slot_id": "AMMR-LOGI-001-A1",
+        "unit": {
+          "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
+          "input_code": "26SF03002-001",
+          "unit_num": "001",
+          "model_name": "H8-MAIN",
+          "version": "KM70",
+          "tray_count": 5,
+          "product_count": 16
+        }
+      },
+      { "slot_id": "AMMR-LOGI-001-A2", "unit": null },
+      { "slot_id": "AMMR-LOGI-001-A3", "unit": null },
+      { "slot_id": "AMMR-LOGI-001-A4", "unit": null },
+      { "slot_id": "AMMR-LOGI-001-A5", "unit": null },
+      { "slot_id": "AMMR-LOGI-001-A6", "unit": null }
+    ]
+  }
 }
 ```
 
@@ -866,14 +967,18 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 - **목적**: AMMR에게 일괄 보고(A-2) 재발행을 요청한다. AMMR은 이 메시지 수신 시 초기 연결 시와 같은 일괄 보고를 재발행한다.
 - **수신 확인**: 별도 확인 메시지 없이 일괄 보고(A-2) 도착 자체가 수신 확인이다. 요청 후 3초(§7.3) 안에 도착하지 않으면 Core는 재요청할 수 있으며, 해당 AMMR은 일괄 보고 도착으로 운영 상태가 재구축될 때까지 신규 작업 대상에서 제외된다.
 
-고유 필드 없음 — 공통 필드(§3.5)만으로 구성된다.
+`body` 고유 필드 없음 — `header` 공통 필드(§3.5)만으로 구성되며 `body`는 빈 객체다.
 
 **예시**
 
 ```json
 {
-  "ammr_id": "AMMR-LOGI-001",
-  "timestamp": "2026-07-10 10:05:00.000"
+  "header": {
+    "timestamp": "2026-07-10 10:05:00.000",
+    "ammr_id": "AMMR-LOGI-001",
+    "msg_id": "0a1b2c3d-0107-4abc-8def-000000000107"
+  },
+  "body": {}
 }
 ```
 
@@ -915,7 +1020,7 @@ sequenceDiagram
     participant A as AMMR
 
     loop Job Sequence의 각 Job (Move → Pickup → Move → Dropoff 순)
-        C->>B: PUBLISH job/cmd (job_type + destination 또는 slot_target)
+        C->>B: PUBLISH job/cmd (job_type + work_location + slot_info)
         B->>A: 전달
         A->>B: PUBLISH job/received
         B->>C: 전달 (수신 확인 — 3초 안 미도달 시 단절 처리)
@@ -938,11 +1043,11 @@ sequenceDiagram
 
 AMMR은 어떤 순서 조합이든 단건 Job 계약(§5.2 C-2)만으로 수행할 수 있어야 하며, Dropoff가 항상 Pickup 뒤에 온다고 가정하지 않는다.
 
-Job 시작 시점의 상단 표시(시스템 상태 = 수행 중 동작·작업 슬롯)는 태블릿이 자기 hw_state와 진행 중 Job 정보로 자체 산출한다 (별도 상태 표시 회신 없음).
+Job 시작 시점의 상단 표시(HW 상태·최근 명령·명령 Slot)는 태블릿이 자기 hw_state와 Core 선탑재 Job 정보로 자체 구성한다 (상세 = UI 정의 제안·별도 표시 회신 없음).
 
 ### 6.3 Charge Job Sequence
 
-Charge는 Core가 자체 결정하여 **단일 Charge Job**으로 지시한다. `destination`이 없으며, AMMR은 태블릿 설정값으로 보유한 충전 스테이션으로 자체 이동·도킹한다 (§8.5). 도킹·충전·이탈·자체 임계에 따른 충전 중단 결정은 AMMR HW 자율 영역이다.
+Charge는 Core가 자체 결정하여 **단일 Charge Job**으로 지시한다. `work_location`이 없으며, AMMR은 태블릿 설정값으로 보유한 충전 스테이션으로 자체 이동·도킹한다 (§8.5). 도킹·충전·이탈·자체 임계에 따른 충전 중단 결정은 AMMR HW 자율 영역이다.
 
 ```mermaid
 sequenceDiagram
@@ -950,7 +1055,7 @@ sequenceDiagram
     participant B as Broker
     participant A as AMMR
 
-    C->>B: PUBLISH job/cmd (Charge, destination 없음)
+    C->>B: PUBLISH job/cmd (Charge, work_location 없음)
     B->>A: 전달
     A->>B: PUBLISH job/received
     B->>C: 전달 (수신 확인)
@@ -1257,7 +1362,7 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | `move`      | 지정 지점으로 자율 주행                            |
 | `pickup`    | 외부 Slot에서 AMMR Slot으로 Unit 적재             |
 | `dropoff`   | AMMR Slot에서 외부 Slot으로 Unit 하역             |
-| `charge`    | 설정 스테이션에서 도킹·충전 (`destination` 없음)  |
+| `charge`    | 설정 스테이션에서 도킹·충전 (`work_location` 없음)  |
 
 #### A.3 Job 결과 (`job_result`)
 
@@ -1327,11 +1432,11 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | 4  | QoS           | Job 지시·상태·회신·conn = 1 / 스트리밍(pose·bms) = 0                       | §3.4        |
 | 5  | Retained      | `ammr/…/conn`·`core/conn` Topic만 true (online: 각자 직접 발행 / offline: Broker LWT 또는 정상 종료 시 직접 발행) · 그 외 false | §3.4        |
 | 6  | 인코딩        | JSON (UTF-8)                                                               | §3.5        |
-| 7  | 공통 필드     | `msg_id` = 선택 (추적용)                                                   | §3.5        |
+| 7  | 공통 필드     | Payload=`header`+`body` · 공통 `msg_id` 필수 (UUID·broker LWT는 null)                                                   | §3.5        |
 | 8  | 수명 주기     | Keep Alive 60초 / Broker 단절 감지 90초 (1.5×·Mosquitto 기본)              | §3.6, §7.3 |
 | 9  | 수명 주기     | Clean Start = true · Session Expiry = 10초 · Will Delay = 10초 (재접속 Clean Start=true가 stale Job 차단 · Will Delay가 순단 offline 억제)  | §3.6        |
 | 10 | Slot 상태     | Slot은 클라이언트 판정 `slot_state` 4종(occupied/empty/blocked/job_failed). 일괄 보고(A-2)에 `unit_id`(QR) 동반, Unit 상세·확정 배정은 Core가 Job 지시 선탑재·정합 정정으로 제공 | §5.1, §부록 A.7 |
-| 11 | 목적지        | `destination`/`external_location` = 논리 지점 라벨 (좌표 미전송·AMMR 자체 맵 해석) | §5.2 C-2    |
+| 11 | 목적지        | `work_location` = 논리 지점 라벨 문자열 (좌표 미전송·AMMR 자체 맵 해석) | §5.2 C-2    |
 | 12 | 좌표 단위     | m·rad — 위치 스트리밍(A-5) 전용                                            | §부록 A.6   |
 | 13 | BMS           | `current` 부호 = 충전 양수 / 방전 음수                                     | §5.1 A-6    |
 | 14 | Reason 코드   | `ammr_hw_*` 5종 + `slot_*` 5종 (Pickup 충돌 `slot_source_obstructed` 포함) | §7.1, §부록 A.4 |
@@ -1340,11 +1445,11 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | 17 | 재동기화      | Core 측 재연결·재시작 시 Core 연결 상태 발신(C-1 online) → AMMR A-2 재발행 → 불일치 시 일괄보고 응답(C-3) · C-4는 예비 | §5.2 C-4, §6.8 |
 | 18 | 인증          | 사용자명/비밀번호 (username=`ammr_id` / pw=`{ammr_id}@core`·TLS 없음·사내망 전제)                                   | §9.1        |
 | 19 | Topic 권한     | Broker ACL 적용                                                            | §9.2        |
-| 20 | Charge        | 단일 Charge Job · `destination` 없음 · 충전 스테이션 = 태블릿 설정 단일 소스 | §6.3, §8.5  |
+| 20 | Charge        | 단일 Charge Job · `work_location` 없음 · 충전 스테이션 = 태블릿 설정 단일 소스 | §6.3, §8.5  |
 | 21 | Broker 접속   | 기본 포트 1883 (평문 MQTT·Mosquitto 기본) · 실제 접속 정보(IP·포트·자격증명)는 설치 시 Core 측 제공·태블릿 설정 입력 | §3.6, §9.1  |
 | 22 | 표시          | 표시 회신 계열 제거 — 태블릿 표시는 Job 지시(C-2) 선탑재 + 태블릿 자체 slot_state 판정으로 구성 · 정합 정정만 일괄보고 응답(C-3·조건부) | §4.2, §5.2  |
 | 23 | 적재 정보     | 일괄 보고(A-2)가 6 Slot slot_state + Slot별 `unit_id`(QR·태블릿 보관) 동반 · 적재 정보 재로드 = 담당자가 일괄 보고를 수동 발행(별도 재로드 토픽 없음·응답 = 일괄보고 응답 C-3) | §5.1 A-2, §6.5 |
 | 24 | Core 연결     | `core/conn`(retained·LWT·broadcast) — Core online/offline 발신 → AMMR이 online 시 A-2 재발행·offline 시 태블릿 표시 · 재동기 기본 경로(C-4는 예비) | §3.4, §5.2 C-1, §6.8 |
 | 25 | Slot 정합     | 정합 판정 주체 = 클라이언트(태블릿+HW). Core는 결과 수신·unit 배정 마스터 보유 · 정합 어긋날 때만 일괄보고 응답(C-3) | §2.2, §5.1 |
-| 26 | Job 지시      | `job_id` 정수 순번(Core DB 마지막+1) · 표시정보 선탑재(source·source_slot·destination·dest_slot + unit·job_type별 필요분) | §5.2 C-2 |
+| 26 | Job 지시      | `job_id` 정수 순번(Core DB 마지막+1) · 표시정보 선탑재(`work_location` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) | §5.2 C-2 |
 | 27 | Unit 정보     | `unit_id`(QR)·`input_code`·`unit_num`·`model_name`·`version`·`tray_count`·`product_count` · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2 |
