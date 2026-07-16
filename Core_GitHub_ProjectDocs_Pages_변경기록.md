@@ -1,10 +1,16 @@
 # Core 시스템 문서 페이지 변경 이력
 
+[d43] 2026-07-16 · 이벤트 모델·명명 컨벤션 재설계 + 정합 감사 반영 (개인용·push)
+- 본체 — SRS d106 (§0.4 pair_waiting 넓은 의미·§6 부분 진행 되담기 임시 배치·정합성 이상 자동해제 표기) · SAD d157 (도메인 이벤트 PascalCase 일괄 승격 + 표기 규칙 신설 · slot_state 통합 AmmrSlotStateEvent · BlockReleasedEvent 유지·Block 요약 이력 DB 강등 · pair_waiting 처리 · BMS 3축 · payload 4필드 · enum 표 · A-7 정정)
+- 외부전달 — ICD_AMMR d36 (§3.5 인코딩 절 표시 회신 계열 잔재 정정)
+- 학습자료 — 어댑터입력처리 d18 (§7.5 세분화 이벤트 제거 · record 정합[RestackPlacements·Heading·AmmrBmsInput] · wire Topic·JSON 키 snake)
+- 커밋 e0346008..신규 (push 시 확정) · github.com/kimminsu0315/Project_Core main
+
 [d42] 2026-07-15 · 식별자 명명 규칙 전면 도입 + Core 공정 관리 제거 (개인용·push)
 - 본체 — SRS d104 (§1.2 식별자 명명 규칙 신설: 통합WIP=WIP-{CLN|DP|CNC}{D3}·CNC작업대=CNC-{SM MACHINE_NAME}-{BEFORE|AFTER}·AMMR=AMMR-{LOGI|PROC}-{D3}·슬롯 ID화 · 되담기 WIP→CNC WIP · Core 공정 관리 제거: Recipe는 GM 소유·투입 단위 Unit 부속·Core는 조회만) · SAD d154 (개명·CNC 작업대 슬롯 스킴·공정 관리 파급) · RnR d34
 - 외부전달 — ICD_AMMR d33 (ammr-001→AMMR-LOGI-001·slot_index→slot_id 풀 ID·node 라벨 새 스킴·§5.2 라벨 형식 재작성) · UI정의제안 d37 (표시 라벨 되담기 WIP→CNC WIP·목업 ASCII 폭 정합) · SRS_AMMR d25
 - 학습자료 — 처리주체분기·Channels해설 개명 반영
-- 커밋 (push 후 기재)
+- 커밋 e034600 (1aff54e..e034600)·10파일 · github.com/kimminsu0315/Project_Core main
 
 [d41] 2026-07-15 · ack 용어 정리 + ICD 생명순 문서 전체 반영 (개인용·push)
 - 본체 — SAD d153 (앱계층 Ack 8곳 우리말화: Job Ack·도킹 Ack→'Job 결과 보고'·'도킹 완료 보고', 단순 Ack→'단순 확인 응답' · ack/ACK는 MQTT 패킷 이름[CONNACK·PINGRESP]에만 예약)
