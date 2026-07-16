@@ -2,7 +2,7 @@
 
 [d44] 2026-07-16 · AMMR 메시지 payload 구조 개편 + UI 헤더·갱신 정합 (개인용·push)
 - 외부전달 — ICD_AMMR d40 (payload header/body 분리·헤더 유니폼[timestamp→ammr_id→msg_id·core/conn·broker LWT null]·msg_id 필수·필드 중요도순[slots↔pose·battery_id 선두]·C-2 work_location+slot_info{from,to}·A-5/A-6 보고주기 태블릿 설정·상단 표시 UI 정합·최근 명령/명령 Slot) · UI정의제안 d40 (최근 명령 Slot 라벨·최근 명령/Slot 갱신 시점 명문화·표시값 두 축 갱신 표·설정 위치(pose)/배터리 보고 주기·모형 AMMR 이름 좌측 칸 분리[사이드바 열 정렬·폭 113])
-- 커밋 <push 후 기재> · github.com/kimminsu0315/Project_Core main
+- 커밋 0555769 (677cb08..0555769) · github.com/kimminsu0315/Project_Core main
 
 [d43] 2026-07-16 · slot 재설계 + 이벤트 모델·명명 컨벤션 재설계 반영 (개인용·push · 2세션 누적)
 - 본체 — SRS d106 · SAD d157 — slot 정합 판정 재설계(클라 판정 slot_state·display 회신 제거·명령 선탑재·reconcile·WIP 확장) + 이벤트 모델·명명 재설계(도메인 이벤트 PascalCase 일괄·slot_state 통합 AmmrSlotStateEvent·BlockReleasedEvent 유지·Block 요약 이력 DB 강등·pair_waiting 넓은 의미 처리·BMS 3축·payload 4필드·enum 표·표기 규칙 신설) · RnR d35
