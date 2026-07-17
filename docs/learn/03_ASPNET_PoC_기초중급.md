@@ -1,4 +1,4 @@
-# Core 구현참고 — ASPNET PoC 샘플 코드 v1.0_d10
+# Core 구현참고 — ASPNET PoC 샘플 코드 v1.0_d11
 
 이 파일은 Core 프로젝트 ASP.NET Core 구현 학습용 임시 자료입니다. 본체 SAD v1.0_d118 기준의 핵심 흐름을 짧은 코드로 따라갈 수 있게 구성했습니다. 실제 프로덕션 코드가 아닌 학습 샘플입니다.
 
@@ -7,9 +7,9 @@
 **명명 규칙**: 백엔드 C#은 일반 PascalCase Convention (헝가리언은 WinForms Dashboard 측만).
 
 
-> **기준 본체**: Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d10.md (학습 원본 변경 시 사용자 명시 때만 sync)
-> 이 문서는 `Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d10.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-04 14:21
+> **기준 본체**: Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d11.md (학습 원본 변경 시 사용자 명시 때만 sync)
+> 이 문서는 `Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d11.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-17 13:00
 ---
 
 ## 1. 프로젝트 구조
@@ -626,7 +626,7 @@ public sealed class MqttAdapter : BackgroundService, IMqttSendPort
     public Task SendJobInstructionAsync(JobInstruction instr, CancellationToken ct)
     {
         var payload = SerializeInstruction(instr);
-        var topic = $"ammr/{instr.AmmrId}/cmd";
+        var topic = $"core/ammr/{instr.AmmrId}/job/cmd";
         // return _client.PublishAsync(topic, payload, ct);
         _log.LogDebug("MQTT publish: {Topic}", topic);
         return Task.CompletedTask;

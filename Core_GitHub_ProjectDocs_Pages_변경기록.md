@@ -1,8 +1,14 @@
 # Core 시스템 문서 페이지 변경 이력
 
+[d46] 2026-07-17 · 메시지 구조 드리프트 전수 정합 + 학습자료 코드 작성 원칙(C# 컨벤션) 재검토 (개인용·push)
+- 본체 — SRS d107 · SAD d158 (pose·BMS 스트리밍 보고 주기 출처 'HW 설정 가변'→'태블릿 설정' 정정)
+- 외부전달 — ICD_AMMR d45 (§3.6 정상 시나리오에 일괄 보고 처리 메모 추가·§6.1 일관) · SRS_AMMR d27 (보고 주기 표기 정정)
+- 학습자료 — 어댑터입력처리 d19 (§7.3~§7.5 job/report A-8 단일 slot 모델 재작성·ParseTopic state 분기·record/직렬화 wire 어휘 정합) · 처리주체분기 d16 (job_result boolean→enum·AmmrHwStatus Failure→Error·§5.5 인용 갱신) · Application_Log d10 · Channels해설 d14 · 권위일원화 d11 · ASPNET_PoC d11 · DI와동시성 d14 · 어댑터헬스모니터 d10 · DB부하측정 d11 (C# 표준 컨벤션 + 메시지 정본 정합)
+- 커밋 (push 후 기재) · github.com/kimminsu0315/Project_Core main
+
 [d45] 2026-07-17 · 외부전달 ICD·UI 실데이터·purpose 정합 반영 (개인용·push)
 - 외부전달 — ICD_AMMR d44 (GM 실데이터 샘플 교체·unit purpose 필드 신설·input_code 대시 표기·적대 감사 플래그 4건 정합) · UI정의제안 d45 (purpose 용도 전용 행·초기연결/설정 모형 정렬·감사 플래그 정합)
-- 커밋 (push 후 보정) · github.com/kimminsu0315/Project_Core main
+- 커밋 58d84ab (e547b3c..58d84ab) · github.com/kimminsu0315/Project_Core main
 
 [d44] 2026-07-16 · AMMR 메시지 payload 구조 개편 + UI 헤더·갱신 정합 (개인용·push)
 - 외부전달 — ICD_AMMR d40 (payload header/body 분리·헤더 유니폼[timestamp→ammr_id→msg_id·core/conn·broker LWT null]·msg_id 필수·필드 중요도순[slots↔pose·battery_id 선두]·C-2 work_location+slot_info{from,to}·A-5/A-6 보고주기 태블릿 설정·상단 표시 UI 정합·최근 명령/명령 Slot) · UI정의제안 d40 (최근 명령 Slot 라벨·최근 명령/Slot 갱신 시점 명문화·표시값 두 축 갱신 표·설정 위치(pose)/배터리 보고 주기·모형 AMMR 이름 좌측 칸 분리[사이드바 열 정렬·폭 113])

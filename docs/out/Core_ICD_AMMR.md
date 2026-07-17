@@ -1,8 +1,8 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
 > 이 문서는 Core 시스템과 물류 AMMR 사이의 MQTT 통신 인터페이스를 정의한다. 기준 본체 = Core SRS + Core SAD. 이 문서의 모든 항목은 Core가 확정한 값이며, AMMR 측 구현이 이 값에 맞춘다. 이 문서가 정한 것이 기준 본체와 충돌하면 기준 본체가 우선하며, 이 문서는 운영 합의 영역만 권위로 갖는다.
-> 이 문서는 `Core_ICD_AMMR_v0_1_d44.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-17 11:51
+> 이 문서는 `Core_ICD_AMMR_v0_1_d45.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-17 13:00
 
 ---
 
@@ -255,6 +255,7 @@ sequenceDiagram
     B->>A: core/conn online 전달 (Retained → 태블릿 시스템 연결 표시)
     A->>B: PUBLISH ammr/{ammr_id}/state/snapshot (일괄 보고)
     B->>C: 전달 (일괄 보고)
+    Note over C: Core 운영 상태 재구축·마스터 배정과 대조<br/>불일치 시에만 state/reconcile로 정정 (일치 시 무응답)
 
     loop 정상 운영
         A->>B: PUBLISH telemetry / state

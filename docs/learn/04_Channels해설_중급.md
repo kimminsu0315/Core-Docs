@@ -1,11 +1,11 @@
-# Core 구현참고 Channels 해설 v1.0_d13
+# Core 구현참고 Channels 해설 v1.0_d14
 
 이 파일은 Core 아키 본체 §4.6 인프라 계층의 Channels 두 구조(FIFO 파이프 / Event 버스)을 실제 구현 코드 수준으로 풀어낸 학습 자료다. 본체와 독립 수명이며, Core 프로젝트 zip 묶음에 동반 자료로 포함된다.
 
 
-> **기준 본체**: Core_구현참고_Channels해설_v1_0_d13.md (학습 원본 변경 시 사용자 명시 때만 sync)
-> 이 문서는 `Core_구현참고_Channels해설_v1_0_d13.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-15 17:32
+> **기준 본체**: Core_구현참고_Channels해설_v1_0_d14.md (학습 원본 변경 시 사용자 명시 때만 sync)
+> 이 문서는 `Core_구현참고_Channels해설_v1_0_d14.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-17 13:00
 ---
 
 ## 1. Channels 개요
@@ -60,7 +60,7 @@ public record WipSensorInput(int WipId, int SlotId, bool Occupied)
 public record AmmrStateInput(int AmmrId, AmmrStatus Status, int CurrentNode)
     : StateServiceInput;
 
-public record AmmrSlotSensorInput(int AmmrId, int SlotIdx, bool Occupied)
+public record AmmrSlotSensorInput(int AmmrId, int SlotIndex, bool Occupied)
     : StateServiceInput;
 
 public record AmmrJobResultInput(
@@ -148,7 +148,7 @@ public class SmAdapter : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
         while (await timer.WaitForNextTickAsync(ct))
         {
             try
@@ -553,8 +553,8 @@ public record AmmrStateChangedEvent(
     int AmmrId, AmmrStatus OldStatus, AmmrStatus NewStatus, int CurrentNode)
     : DomainEvent;
 
-public record AmmrSlotOccupiedEvent(int AmmrId, int SlotIdx) : DomainEvent;
-public record AmmrSlotReleasedEvent(int AmmrId, int SlotIdx) : DomainEvent;
+public record AmmrSlotOccupiedEvent(int AmmrId, int SlotIndex) : DomainEvent;
+public record AmmrSlotReleasedEvent(int AmmrId, int SlotIndex) : DomainEvent;
 
 public record JobResultEvent(
     int AmmrId, int JobId, JobKind Kind, bool Success,
@@ -683,10 +683,10 @@ public record SlotReleasedEvent(int WipId, int SlotId, SlotState FullSnapshot);
 **3. 권위 갱신 결과만 발행, 추정·중간값 발행 금지**
 ```csharp
 // OK — Pickup 성공으로 적재 추정값 갱신된 결과
-public record AmmrSlotOccupiedEvent(int AmmrId, int SlotIdx);
+public record AmmrSlotOccupiedEvent(int AmmrId, int SlotIndex);
 
 // 부적절 — Pickup 시도 중 중간 상태
-public record AmmrPickupAttemptingEvent(int AmmrId, int SlotIdx);
+public record AmmrPickupAttemptingEvent(int AmmrId, int SlotIndex);
 // AMMR HW 책임 영역, Core가 본 것 아님
 ```
 
