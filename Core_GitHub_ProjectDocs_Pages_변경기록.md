@@ -1,5 +1,9 @@
 # Core 시스템 문서 페이지 변경 이력
 
+[d45] 2026-07-17 · 외부전달 ICD·UI 실데이터·purpose 정합 반영 (개인용·push)
+- 외부전달 — ICD_AMMR d44 (GM 실데이터 샘플 교체·unit purpose 필드 신설·input_code 대시 표기·적대 감사 플래그 4건 정합) · UI정의제안 d45 (purpose 용도 전용 행·초기연결/설정 모형 정렬·감사 플래그 정합)
+- 커밋 (push 후 보정) · github.com/kimminsu0315/Project_Core main
+
 [d44] 2026-07-16 · AMMR 메시지 payload 구조 개편 + UI 헤더·갱신 정합 (개인용·push)
 - 외부전달 — ICD_AMMR d40 (payload header/body 분리·헤더 유니폼[timestamp→ammr_id→msg_id·core/conn·broker LWT null]·msg_id 필수·필드 중요도순[slots↔pose·battery_id 선두]·C-2 work_location+slot_info{from,to}·A-5/A-6 보고주기 태블릿 설정·상단 표시 UI 정합·최근 명령/명령 Slot) · UI정의제안 d40 (최근 명령 Slot 라벨·최근 명령/Slot 갱신 시점 명문화·표시값 두 축 갱신 표·설정 위치(pose)/배터리 보고 주기·모형 AMMR 이름 좌측 칸 분리[사이드바 열 정렬·폭 113])
 - 커밋 0555769 (677cb08..0555769) · github.com/kimminsu0315/Project_Core main

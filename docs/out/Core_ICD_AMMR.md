@@ -1,8 +1,8 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
 > 이 문서는 Core 시스템과 물류 AMMR 사이의 MQTT 통신 인터페이스를 정의한다. 기준 본체 = Core SRS + Core SAD. 이 문서의 모든 항목은 Core가 확정한 값이며, AMMR 측 구현이 이 값에 맞춘다. 이 문서가 정한 것이 기준 본체와 충돌하면 기준 본체가 우선하며, 이 문서는 운영 합의 영역만 권위로 갖는다.
-> 이 문서는 `Core_ICD_AMMR_v0_1_d40.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-16 19:07
+> 이 문서는 `Core_ICD_AMMR_v0_1_d44.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-17 11:51
 
 ---
 
@@ -38,7 +38,7 @@
 | Slot    | 1 Unit이 적재되는 물리적 위치. AMMR은 6 Slot 보유                  |
 | Unit    | Core가 추적하는 적재 단위 (1 Slot에 1 Unit)                        |
 | Unit ID | Unit 식별에 쓰는 시스템 권위 QR 식별값(uuid). Tray마다 유니크하며 각 Tray의 QR 코드에 인코딩된다. Core가 이 값으로 소속 Unit을 식별하므로 한 Unit의 어느 Tray 값이든 같은 Unit으로 식별된다. Job 지시 선탑재·재로드 입력에 사용 |
-| 라벨    | `투입코드_유닛번호` 형식의 사람 읽기용 Unit 표기 (예: `26SF03002-001_001`). 태블릿이 Core 선탑재 `input_code`+`unit_num`으로 조립한다. 투입코드 = GM `inputCode` 원형 · 유닛번호 = Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호 |
+| 라벨    | `투입코드_유닛번호` 형식의 사람 읽기용 Unit 표기 (예: `26SF03002-001_001`). 태블릿이 Core 선탑재 `input_code`+`unit_num`으로 조립한다. 투입코드 = GM `inputCode` 뒤 3자리 앞에 Core가 대시 삽입(예: `26SF03002001`→`26SF03002-001`) · 유닛번호 = Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호 |
 | WIP     | Work In Process (공정 간 임시 보관 장비)                           |
 | Job     | AMMR 내부 수행 단위 (Move / Pickup / Dropoff / Charge 4종)         |
 | BMS     | Battery Management System                                          |
@@ -200,14 +200,14 @@ flowchart LR
 AMMR은 CONNECT 시 다음 LWT를 등록한다.
 
 - **Topic**: `ammr/{ammr_id}/conn`
-- **Payload**: `{"header": {"timestamp": null, "ammr_id": "AMMR-LOGI-001", "msg_id": null}, "body": {"status": "offline", "reason": "broker_disconnect"}}` — Broker가 CONNECT 때 등록한 payload를 그대로 재발행하므로 발행 시점 값을 못 넣어 `header.timestamp`·`header.msg_id`는 `null`이다 (실제 offline 시각은 수신 시점으로 판단·§3.5 예외)
+- **Payload**: `{"header": {"timestamp": null, "ammr_id": "AMMR-LOGI-001", "msg_id": null}, "body": {"status": "offline", "reason": "broker_disconnect", "connected_at": "2026-07-10 07:30:00.000"}}` — Broker가 CONNECT 때 등록한 payload를 그대로 재발행하므로 발행 시점 값을 못 넣어 `header.timestamp`·`header.msg_id`는 `null`이다 (실제 offline 시각은 수신 시점으로 판단·§3.5 예외)
 - **QoS**: 1
 - **Retained**: true
 - **Will Delay Interval**: 10초 (순단 유예·§3.6)
 
 AMMR HW와 Broker의 연결이 Keep Alive 임계 초과로 끊어지면 Broker가 자동 발행한다.
 
-Core도 CONNECT 시 `core/conn` 을 Topic으로 하는 LWT(`{"header": {"timestamp": null, "ammr_id": null, "msg_id": null}, "body": {"status": "offline", "reason": "core_down"}}` · QoS 1 · Retained true)를 등록한다 — Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 발행해 AMMR·태블릿이 Core 다운을 인지한다. `core/conn` payload는 발신 주체가 Core라서 `header.ammr_id` = `null`이다 (§3.5 예외).
+Core도 CONNECT 시 `core/conn` 을 Topic으로 하는 LWT(`{"header": {"timestamp": null, "ammr_id": null, "msg_id": null}, "body": {"status": "offline", "reason": "core_down", "connected_at": "2026-07-10 07:29:58.000"}}` · QoS 1 · Retained true)를 등록한다 — Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 발행해 AMMR·태블릿이 Core 다운을 인지한다. `core/conn` payload는 발신 주체가 Core라서 `header.ammr_id` = `null`이다 (§3.5 예외).
 
 ### 3.5 Payload 인코딩·구조·공통 필드
 
@@ -249,10 +249,12 @@ sequenceDiagram
     A->>B: CONNECT
     B-->>A: CONNACK
     A->>B: SUBSCRIBE core/ammr/{ammr_id}/#35; + core/conn
+    A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained)
+    B->>C: 전달 (online)
     Note over C: Core는 이미 접속·core/conn online을 retained 발행한 상태
     B->>A: core/conn online 전달 (Retained → 태블릿 시스템 연결 표시)
-    A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained)
     A->>B: PUBLISH ammr/{ammr_id}/state/snapshot (일괄 보고)
+    B->>C: 전달 (일괄 보고)
 
     loop 정상 운영
         A->>B: PUBLISH telemetry / state
@@ -387,6 +389,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 |----------|--------|------|----------------------------------------------------------------|
 | `status` | enum   | 필수 | `online` / `offline`                                          |
 | `reason` | string | 선택 | `offline`일 때 사유 (예: `broker_disconnect`, `clean_shutdown`)|
+| `connected_at` | string | 조건부 | offline 메시지에 실린 세션 접속 시각 (KST). online엔 없음(접속 시각 = `header.timestamp`) |
 
 **예시**: 정상 연결
 
@@ -414,7 +417,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   },
   "body": {
     "status": "offline",
-    "reason": "broker_disconnect"
+    "reason": "broker_disconnect",
+    "connected_at": "2026-07-10 07:30:00.000"
   }
 }
 ```
@@ -430,7 +434,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   },
   "body": {
     "status": "offline",
-    "reason": "clean_shutdown"
+    "reason": "clean_shutdown",
+    "connected_at": "2026-07-10 07:30:00.000"
   }
 }
 ```
@@ -532,6 +537,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 |----------------|--------------|------|---------------------------------------------------|
 | `slot_id`      | string       | 필수 | 전이 Slot ID                                      |
 | `slot_state`   | enum (§부록 A.7) | 필수 | 클라이언트 판정 Slot 상태 (`occupied`/`empty`/`blocked`/`job_failed`) |
+| `prev_slot_state` | enum (§부록 A.7) | 선택 | 전이 전 Slot 상태 (디버깅 용도) |
 | `unit_id`      | string\|null | 필수 | 적재 Unit 식별값(QR). 미점유·미상이면 null        |
 
 **예시**
@@ -546,6 +552,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   "body": {
     "slot_id": "AMMR-LOGI-001-A3",
     "slot_state": "blocked",
+    "prev_slot_state": "empty",
     "unit_id": null
   }
 }
@@ -747,6 +754,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 |----------|--------|------|-----------------------------------------|
 | `status` | enum   | 필수 | `online` / `offline`                    |
 | `reason` | string | 선택 | `offline`일 때 사유 (예: `core_down`)   |
+| `connected_at` | string | 조건부 | offline 메시지에 실린 Core 세션 접속 시각 (KST). online엔 없음 |
 
 **공통 필드 예외**: `core/conn` payload는 발신 주체가 Core라서 `ammr_id`를 포함하지 않는다 (§3.5 명시 예외).
 
@@ -776,7 +784,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   },
   "body": {
     "status": "offline",
-    "reason": "core_down"
+    "reason": "core_down",
+    "connected_at": "2026-07-10 07:29:58.000"
   }
 }
 ```
@@ -812,10 +821,11 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | 필드            | 타입    | 필수 | 설명                                                              |
 |-----------------|---------|------|-------------------------------------------------------------------|
 | `unit_id`       | string  | 필수 | Unit 식별값 (QR uuid·§1.3). AMMR이 자체 인식하지 못하므로 Core가 선탑재 |
-| `input_code`    | string  | 필수 | 투입코드 — GM `inputCode` 원형                                    |
+| `input_code`    | string  | 필수 | 투입코드 — GM `inputCode` 뒤 3자리 앞 대시 삽입                   |
 | `unit_num`      | string  | 필수 | 유닛번호 — Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호   |
 | `model_name`    | string  | 필수 | 제품 모델 코드 (예: `H8-MAIN`)                                    |
 | `version`       | string  | 필수 | 모델 버전 (예: `KM70`)                                            |
+| `purpose`       | string  | 필수 | 제품 용도 — GM `purpose` 값 (별표 등 장식문자 제외)               |
 | `tray_count`    | integer | 필수 | Unit을 구성하는 Tray 단 수                                        |
 | `product_count` | integer | 필수 | Unit 안 제품 개수 (최대 16)                                       |
 
@@ -858,6 +868,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       "unit_num": "001",
       "model_name": "H8-MAIN",
       "version": "KM70",
+      "purpose": "PV2차 선검증 (7월까지)",
       "tray_count": 5,
       "product_count": 16
     }
@@ -885,6 +896,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       "unit_num": "001",
       "model_name": "H8-MAIN",
       "version": "KM70",
+      "purpose": "PV2차 선검증 (7월까지)",
       "tray_count": 5,
       "product_count": 16
     }
@@ -944,6 +956,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
           "unit_num": "001",
           "model_name": "H8-MAIN",
           "version": "KM70",
+          "purpose": "PV2차 선검증 (7월까지)",
           "tray_count": 5,
           "product_count": 16
         }
@@ -1145,7 +1158,8 @@ sequenceDiagram
     Note over A: AMMR HW 복구
     A->>B: CONNECT (재연결·Clean Start=true·Will Delay=10초)
     B-->>A: CONNACK
-    A->>B: SUBSCRIBE core/ammr/{ammr_id}/#35; (재구독)
+    A->>B: SUBSCRIBE core/ammr/{ammr_id}/#35; + core/conn (재구독)
+    B->>A: core/conn online 전달 (Retained → 태블릿 시스템 연결 표시)
     A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained, LWT 덮어쓰기)
     A->>B: PUBLISH ammr/{ammr_id}/state/snapshot (재동기화)
     B->>C: 전달
@@ -1409,7 +1423,7 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 
 #### A.7 slot_state (Slot 정합 상태)
 
-슬롯 보고(A-2·A-4·A-8)의 `slot_state` 값 일람. 클라이언트(태블릿+HW)가 보유 Unit 정보와 Sensor로 판정한다.
+슬롯 보고(A-2·A-4·A-8)의 `slot_state` 값 일람. 클라이언트(태블릿+HW)가 보유 Unit 정보와 Sensor로 판정한다. `prev_slot_state`(전이 전 Slot 상태·디버깅용)도 이 값을 쓴다.
 
 | 값           | 의미                                            |
 |--------------|-------------------------------------------------|
@@ -1452,4 +1466,5 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | 24 | Core 연결     | `core/conn`(retained·LWT·broadcast) — Core online/offline 발신 → AMMR이 online 시 A-2 재발행·offline 시 태블릿 표시 · 재동기 기본 경로(C-4는 예비) | §3.4, §5.2 C-1, §6.8 |
 | 25 | Slot 정합     | 정합 판정 주체 = 클라이언트(태블릿+HW). Core는 결과 수신·unit 배정 마스터 보유 · 정합 어긋날 때만 일괄보고 응답(C-3) | §2.2, §5.1 |
 | 26 | Job 지시      | `job_id` 정수 순번(Core DB 마지막+1) · 표시정보 선탑재(`work_location` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) | §5.2 C-2 |
-| 27 | Unit 정보     | `unit_id`(QR)·`input_code`·`unit_num`·`model_name`·`version`·`tray_count`·`product_count` · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2 |
+| 27 | Unit 정보     | `unit_id`(QR)·`input_code`·`unit_num`·`model_name`·`version`·`purpose`·`tray_count`·`product_count` · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2 |
+| 28 | 연결 상태 body | offline conn(broker LWT·정상 종료) body에 `connected_at`(세션 접속 시각·KST) 동반 — null인 `header.timestamp` 보완·세션 앵커 · online엔 없음 | §3.4, §5.1 A-1, §5.2 C-1 |
