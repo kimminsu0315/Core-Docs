@@ -1,10 +1,19 @@
 # Core 시스템 문서 페이지 변경 이력
 
+[d47] 2026-07-19 · 직전 싱크 이후 본체 누적분 + 빌드 도구 스킬 이관 (개인용·push)
+- 본체 — SRS d107→d112 · SAD d158→d161
+- 외부전달 — ICD_AMMR d45→d74 · UI정의제안 d45→d51 · SRS_AMMR d27→d32
+- 학습자료 — 어댑터입력처리 d19→d20 · 애플리케이션로그 d10→d11
+- 운영 — Pages 빌드 도구와 사이트 자산을 Core 본체에서 작업공간 스킬(core-docs)로 옮김 · 본체엔 산출물목록만 남음 · 빌드는 이 저장소를 clone 한 자리에서 돌고 결과는 여기로만 남음
+- 저장소 — Project_Core → Core-Docs 개명 반영 (index·레이아웃 링크)
+- 변경기록 — 본체의 개인용 원본 폐지 · 이 파일이 단일 자리
+- 커밋 (push 후 기재) · github.com/kimminsu0315/Core-Docs main
+
 [d46] 2026-07-17 · 메시지 구조 드리프트 전수 정합 + 학습자료 코드 작성 원칙(C# 컨벤션) 재검토 (개인용·push)
 - 본체 — SRS d107 · SAD d158 (pose·BMS 스트리밍 보고 주기 출처 'HW 설정 가변'→'태블릿 설정' 정정)
 - 외부전달 — ICD_AMMR d45 (§3.6 정상 시나리오에 일괄 보고 처리 메모 추가·§6.1 일관) · SRS_AMMR d27 (보고 주기 표기 정정)
 - 학습자료 — 어댑터입력처리 d19 (§7.3~§7.5 job/report A-8 단일 slot 모델 재작성·ParseTopic state 분기·record/직렬화 wire 어휘 정합) · 처리주체분기 d16 (job_result boolean→enum·AmmrHwStatus Failure→Error·§5.5 인용 갱신) · Application_Log d10 · Channels해설 d14 · 권위일원화 d11 · ASPNET_PoC d11 · DI와동시성 d14 · 어댑터헬스모니터 d10 · DB부하측정 d11 (C# 표준 컨벤션 + 메시지 정본 정합)
-- 커밋 (push 후 기재) · github.com/kimminsu0315/Project_Core main
+- 커밋 34a2798 (58d84ab..34a2798) · github.com/kimminsu0315/Project_Core main
 
 [d45] 2026-07-17 · 외부전달 ICD·UI 실데이터·purpose 정합 반영 (개인용·push)
 - 외부전달 — ICD_AMMR d44 (GM 실데이터 샘플 교체·unit purpose 필드 신설·input_code 대시 표기·적대 감사 플래그 4건 정합) · UI정의제안 d45 (purpose 용도 전용 행·초기연결/설정 모형 정렬·감사 플래그 정합)

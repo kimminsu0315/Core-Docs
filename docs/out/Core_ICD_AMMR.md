@@ -1,8 +1,8 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
 > 이 문서는 Core 시스템과 물류 AMMR 사이의 MQTT 통신 인터페이스를 정의한다. 기준 본체 = Core SRS + Core SAD. 이 문서의 모든 항목은 Core가 확정한 값이며, AMMR 측 구현이 이 값에 맞춘다. 이 문서가 정한 것이 기준 본체와 충돌하면 기준 본체가 우선하며, 이 문서는 운영 합의 영역만 권위로 갖는다.
-> 이 문서는 `Core_ICD_AMMR_v0_1_d45.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-17 13:00
+> 이 문서는 `Core_ICD_AMMR_v0_1_d74.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-19 22:06
 
 ---
 
@@ -38,9 +38,9 @@
 | Slot    | 1 Unit이 적재되는 물리적 위치. AMMR은 6 Slot 보유                  |
 | Unit    | Core가 추적하는 적재 단위 (1 Slot에 1 Unit)                        |
 | Unit ID | Unit 식별에 쓰는 시스템 권위 QR 식별값(uuid). Tray마다 유니크하며 각 Tray의 QR 코드에 인코딩된다. Core가 이 값으로 소속 Unit을 식별하므로 한 Unit의 어느 Tray 값이든 같은 Unit으로 식별된다. Job 지시 선탑재·재로드 입력에 사용 |
-| 라벨    | `투입코드_유닛번호` 형식의 사람 읽기용 Unit 표기 (예: `26SF03002-001_001`). 태블릿이 Core 선탑재 `input_code`+`unit_num`으로 조립한다. 투입코드 = GM `inputCode` 뒤 3자리 앞에 Core가 대시 삽입(예: `26SF03002001`→`26SF03002-001`) · 유닛번호 = Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호 |
+| 라벨    | `투입코드_유닛번호` 형식의 사람 읽기용 Unit 표기 (예: `26SF03002001_001`). 태블릿이 Core 선탑재 `input_code`+`unit_num`으로 조립한다. 투입코드 = GM `inputCode` 값 그대로(가공 없음) · 유닛번호 = Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호 |
 | WIP     | Work In Process (공정 간 임시 보관 장비)                           |
-| Job     | AMMR 내부 수행 단위 (Move / Pickup / Dropoff / Charge 4종)         |
+| Job     | AMMR 내부 수행 단위 (4종·§부록 A.2)                                  |
 | BMS     | Battery Management System                                          |
 | BMU     | Battery Management Unit                                            |
 | SoC     | State of Charge (Battery 충전 상태, %)                              |
@@ -75,7 +75,7 @@ flowchart LR
 
 - **Core PC** — Core 본체 프로세스(ASP.NET Core)와 Mosquitto Broker가 같은 PC에서 운영된다.
 - **물류 AMMR** — 현재 2대 운영. 추후 증설 가능성 있음. 각 AMMR은 Broker에 클라이언트로 접속한다.
-- **태블릿** — AMMR 1대당 1대가 본체에 Mount된다. AMMR과 함께 Core와 MQTT로 통신하는 단말이며 별도 통신 채널이 없다. 적재 상태·배정 상태·상단 정보 등 표시 정보는 Core가 Job 지시(C-2)에 선탑재하고, 태블릿이 이 값과 자체 slot_state 판정으로 화면을 구성한다. 정합이 어긋날 때만 Core가 일괄보고 응답(C-3)으로 정정한다.
+- **태블릿** — AMMR 1대당 1대가 본체에 Mount된다. AMMR과 함께 Core와 MQTT로 통신하는 단말이며 별도 통신 채널이 없다. 적재 상태·배정 상태·상단 정보 등 표시 정보는 Core가 Job 지시(C-2)에 선탑재하고, 태블릿이 이 값과 자체 slot_state 판정으로 화면을 구성한다. 정합이 어긋나면 Core가 일괄보고 응답(C-3)으로 정정한다.
 - **연결 망** — 사내 내부망 한정. 외부 인터넷 노출 없음.
 
 ### 2.2 Core와 AMMR의 역할 분담
@@ -89,7 +89,7 @@ flowchart LR
 | AMMR HW 상태 보고                      | AMMR HW  | 초기 연결 일괄 + 상태 전이 시점                              |
 | Slot 정합 판정 결과 보고 (slot_state)  | AMMR(태블릿+HW) | 초기 연결 일괄 + 외부 원인 전이 시 1 Slot              |
 | 위치·BMS 스트리밍                     | AMMR HW  | 위치 1초·BMS 10초 주기 (태블릿 설정)                                        |
-| Unit 식별 (Unit ID 확정)              | Core     | AMMR HW(로봇)는 Unit ID를 인식하지 못한다(QR 미판독). Core가 Job 지시(C-2)에 Unit 정보를 선탑재해 태블릿이 보관하며, 정합이 어긋나면 일괄보고 응답(C-3)으로 확정 배정을 내려줌 |
+| Unit 식별 (Unit ID 확정)              | Core     | AMMR HW(로봇)는 Unit ID를 인식하지 못한다(QR 미판독). Core가 Job 지시(C-2)에 Unit 정보를 선탑재해 태블릿이 보관하며, 정합이 어긋나면 일괄보고 응답(C-3)으로 확정 Unit 정보·Job 배정을 내려줌 |
 | 태블릿 표시 데이터 (적재·배정·상단 정보)   | Core 선탑재 / 태블릿 구성 | Core가 Job 지시(C-2)에 선탑재 · 상단·slot_state는 태블릿 자체 산출 · 정합 정정만 일괄보고 응답(C-3, §5.2)   |
 | 충전 중단 결정                         | AMMR HW / Core | 자체 임계 도달 시 자율 중단은 AMMR HW. 단, 충전 중 Core가 Job을 지시하면 AMMR은 충전을 중단하고 이탈 후 수행 (§8.4) |
 
@@ -99,8 +99,8 @@ flowchart LR
 
 | 항목                                          | 권위 매체           | 비고                                                                       |
 |-----------------------------------------------|---------------------|----------------------------------------------------------------------------|
-| 위치 (x, y, a) 스트리밍                       | AMMR HW             | 1초 주기 (기본·태블릿 설정)                                              |
-| AMMR HW 상태 전이                             | AMMR HW             | 8종 — `move`/`pickup`/`dropoff`/`charge`/`idle`/`charging`/`low_battery`/`error` (§부록 A.1) |
+| 위치 (node_id, x, y, a) 스트리밍                       | AMMR HW             | 1초 주기 (기본·태블릿 설정)                                              |
+| AMMR HW 상태 전이                             | AMMR HW             | 8종 (§부록 A.1) |
 | Slot 정합 판정 결과 (slot_state·6 Slot)      | AMMR(태블릿+HW)     | 초기 일괄 또는 외부 원인 전이 시 1 Slot                                   |
 | Job 지시 수신                                 | AMMR HW             | Core Job 지시 수신 즉시 보고                                              |
 | Job 수행 결과 (Move/Pickup/Dropoff/Charge)   | AMMR HW             | Job 종료 시 통합 보고                                                     |
@@ -134,13 +134,15 @@ flowchart LR
 
     Core -->|"Publish: core/ammr/{ammr_id}/..."| Broker
     Broker -->|"Subscribe: core/ammr/{ammr_id}/..."| AMMR
+    Core -->|"Publish: core/conn (전체 broadcast)"| Broker
+    Broker -->|"Subscribe: core/conn"| AMMR
 
     AMMR -->|"Publish: ammr/{ammr_id}/..."| Broker
     Broker -->|"Subscribe: ammr/+/..."| Core
 ```
 
 - **AMMR** — 자기 `ammr_id` 기준 Topic을 publish하고, Core가 자기에게 내리는 Topic(`core/ammr/{ammr_id}/#`)을 subscribe한다.
-- **Core** — 모든 AMMR의 Topic을 wildcard subscribe하고, 특정 AMMR에게만 publish한다.
+- **Core** — 모든 AMMR의 Topic을 wildcard subscribe하고, AMMR별 Topic(`core/ammr/{ammr_id}/…`)은 특정 AMMR에게 publish한다. 자신의 연결 상태(`core/conn`)는 전체 AMMR에 broadcast한다.
 
 ### 3.3 Topic 명명 규약
 
@@ -150,12 +152,12 @@ flowchart LR
 
 | Topic                              | 내용                    |
 |-----------------------------------|-------------------------|
-| `ammr/{ammr_id}/conn`             | 연결 상태 (LWT)         |
-| `ammr/{ammr_id}/state/snapshot`   | 일괄 보고 (초기 연결·주기·재요청·수동 발행 · 정합 상태+적재 정보) |
+| `ammr/{ammr_id}/conn`             | 연결 상태 (retained·LWT)         |
+| `ammr/{ammr_id}/state/snapshot`   | 일괄 보고 (초기 연결·core/conn 감지·주기·재요청(예비)·수동 발행 · 정합 상태+적재 정보) |
 | `ammr/{ammr_id}/state/hw`         | AMMR HW 상태 전이       |
 | `ammr/{ammr_id}/state/slot`       | Slot 상태 전이 (slot_state)   |
-| `ammr/{ammr_id}/telemetry/pose`   | 위치 스트리밍 (1초)     |
-| `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍 (10초)      |
+| `ammr/{ammr_id}/telemetry/pose`   | 위치 스트리밍 (기본 1초)     |
+| `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍 (기본 10초)      |
 | `ammr/{ammr_id}/job/received`     | Job 지시 수신 확인      |
 | `ammr/{ammr_id}/job/report`          | Job 수행 결과 통합 보고 |
 
@@ -168,7 +170,7 @@ flowchart LR
 | `core/ammr/{ammr_id}/state/reconcile` | 일괄보고 응답 (정합 정정·조건부) |
 | `core/ammr/{ammr_id}/state/request`   | 일괄 보고 재전송 요청 (예비) |
 
-표시 회신 계열은 제거했다 — 태블릿 표시는 Job 지시(C-2) 선탑재 + 태블릿 자체 slot_state 판정으로 구성한다. `state/reconcile`(C-3)은 Core 마스터 배정과 어긋나 정합을 맞춰야 할 때만 발행하는 일괄보고 응답이다 (평상시 무발행). 적재 정보 일괄 재로드는 담당자가 `state/snapshot`(일괄 보고)을 수동 발행하는 것으로, 정합 불일치 시 `state/reconcile`로 정정된다. `core/conn`은 Core 자신의 연결 상태(online/offline)를 전체 AMMR에 알리는 retained 메시지다 — AMMR은 이를 subscribe해 Core 재접속을 감지하면 일괄 보고(A-2)를 재발행하고, Core 단절(offline)을 감지하면 태블릿에 시스템 연결 끊김을 표시한다. `state/request`(C-4)는 현재 Core 운영 기본 경로가 아닌 예비 수단이며, 재동기화 기본 경로는 `core/conn` 발신 + 주기 일괄 보고다.
+표시 회신 계열은 제거했다 — 태블릿 표시는 Job 지시(C-2) 선탑재 + 태블릿 자체 slot_state 판정으로 구성한다. `state/reconcile`(C-3)은 Core 마스터 배정과 어긋나 정합을 맞춰야 할 때만 발행하는 일괄보고 응답이다 (평상시 무발행·재로드는 예외로 일치해도 발행). 적재 정보 일괄 재로드는 담당자가 `state/snapshot`(일괄 보고)을 수동 발행하는 것으로, `state/reconcile`로 응답받는다. `core/conn`은 Core 자신의 연결 상태(online/offline)를 전체 AMMR에 알리는 retained 메시지다 — AMMR은 이를 subscribe해 Core 재접속을 감지하면 일괄 보고(A-2)를 재발행하고, Core 단절(offline)을 감지하면 태블릿에 시스템 연결 끊김을 표시한다. `state/request`(C-4)는 현재 Core 운영 기본 경로가 아닌 예비 수단이며, 재동기화 기본 경로는 `core/conn` 발신 + 주기 일괄 보고다.
 
 ### 3.4 QoS / Retained / Last Will
 
@@ -180,18 +182,18 @@ flowchart LR
 | `ammr/{ammr_id}/state/snapshot`   | 일괄 보고               | 1    | 연결 직후 운영 상태 재구축의 입력                  |
 | `ammr/{ammr_id}/state/hw`         | AMMR HW 상태 전이       | 1    | 단발성. 누락 시 운영 정합성 깨짐                  |
 | `ammr/{ammr_id}/state/slot`       | Slot 상태 전이(slot_state) | 1    | 운영 정합 입력으로 누락 시 위험                 |
-| `ammr/{ammr_id}/telemetry/pose`   | 위치 스트리밍 (1초)     | 0    | 연속값. 1건 누락이 운영에 영향 없음               |
-| `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍 (10초)      | 0    | 연속값. 임계 통과는 다음 보고에서 즉시 표면화     |
+| `ammr/{ammr_id}/telemetry/pose`   | 위치 스트리밍 (기본 1초)     | 0    | 연속값. 1건 누락이 운영에 영향 없음               |
+| `ammr/{ammr_id}/telemetry/bms`    | BMS 스트리밍 (기본 10초)      | 0    | 연속값. 임계 통과는 다음 보고에서 즉시 표면화     |
 | `ammr/{ammr_id}/job/received`     | Job 지시 수신 확인      | 1    | 수신 진단·책임 분리                                |
 | `ammr/{ammr_id}/job/report`          | Job 수행 결과 통합 보고 | 1    | 결과 누락 시 Job 종료 판정 불가                   |
-| `core/conn`                       | Core 연결 상태          | 1    | Retained로 늦은 접속에서도 Core 상태 인지         |
+| `core/conn`                       | Core 연결 상태 (LWT)    | 1    | Retained로 늦은 접속에서도 Core 상태 인지         |
 | `core/ammr/{ammr_id}/job/cmd`     | Job 지시                | 1    | 미수신 시 운영 중단. `job_id` 멱등                |
 | `core/ammr/{ammr_id}/state/reconcile` | 일괄보고 응답(정합 정정) | 1    | 정합 불일치 시 Core 확정 배정 정정               |
 | `core/ammr/{ammr_id}/state/request` | 일괄 보고 재전송 요청(예비) | 1    | 예비 경로 — 사용 시 재구축 입력                  |
 
 #### Retained
 
-- `ammr/{ammr_id}/conn` 만 **Retained = true** 로 발행한다 — `online`은 AMMR이 CONNECT 직후 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료·운영자 명시 해제 시 AMMR이 DISCONNECT 전에 직접 발행한다. Core가 늦게 접속해도 마지막 연결 상태를 즉시 인지한다.
+- `ammr/{ammr_id}/conn` 은 **Retained = true** 로 발행한다 — `online`은 AMMR이 CONNECT 직후 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료·운영자 명시 해제 시 AMMR이 DISCONNECT 전에 직접 발행한다. Core가 늦게 접속해도 마지막 연결 상태를 즉시 인지한다.
 - `core/conn` 도 **Retained = true** 로 발행한다 — Core가 Broker CONNECT 직후 `online`을 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료 시 Core가 DISCONNECT 전에 직접 발행한다. AMMR이 늦게 접속해도 마지막 Core 연결 상태를 즉시 인지한다.
 - 그 외 모든 Topic은 Retained = false.
 
@@ -249,10 +251,11 @@ sequenceDiagram
     A->>B: CONNECT
     B-->>A: CONNACK
     A->>B: SUBSCRIBE core/ammr/{ammr_id}/#35; + core/conn
-    A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained)
-    B->>C: 전달 (online)
     Note over C: Core는 이미 접속·core/conn online을 retained 발행한 상태
     B->>A: core/conn online 전달 (Retained → 태블릿 시스템 연결 표시)
+    A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained)
+    B->>C: 전달 (online)
+    Note over A,B: 자기 online 발행↔core/conn 수신 순서는 무관(각각 비동기)
     A->>B: PUBLISH ammr/{ammr_id}/state/snapshot (일괄 보고)
     B->>C: 전달 (일괄 보고)
     Note over C: Core 운영 상태 재구축·마스터 배정과 대조<br/>불일치 시에만 state/reconcile로 정정 (일치 시 무응답)
@@ -283,10 +286,10 @@ sequenceDiagram
     participant B as Broker
     participant C as Core
 
-    Note over A,B: Keep Alive 무수신 임계 초과
+    Note over A,B: AMMR Keep Alive 무수신<br/>임계(90초) 초과
     B->>B: AMMR 연결 끊김 감지
     B->>C: LWT 발행 (ammr/{ammr_id}/conn = "offline", Retained)
-    Note over C: AMMR HW 단절 처리
+    Note over C: AMMR HW 단절 처리<br/>해당 AMMR 운영 정보 초기화<br/>6 Slot 사용 보류·진행 중 작업 종료
 ```
 
 #### Core 다운 시나리오
@@ -332,13 +335,13 @@ AMMR은 매 CONNECT 시 다음을 설정한다 — Client ID = `{ammr_id}` · Cl
 | C-2 Job 지시 | Core 명령 | 수신 확인 있음 — AMMR이 `job/received`로 즉시 확인. Core는 3초 안 미도달 시 AMMR HW 단절 처리 (§7.3) |
 | C-4 일괄 보고 재전송 요청 (예비) | Core 요청 | 수신 확인 있음 — 별도 확인 메시지 없이 일괄 보고(A-2) 도착 자체가 확인. C-4는 현재 Core 운영 기본 경로가 아닌 예비 수단이다 (§4.2·§5.2 C-4) |
 | C-3 일괄보고 응답 (정합 정정·조건부) | Core 응답 | 수신 확인 없음 — QoS 1 전달 보증만. 정합 불일치 시·재로드 시에만 발행 |
-| A-2 일괄 보고 | AMMR 보고 | 수신 확인 없음 · 응답 조건부 — Core는 마스터 배정과 어긋날 때만 일괄보고 응답(C-3)으로 정정한다. 일치 시 무응답 |
+| A-2 일괄 보고 | AMMR 보고 | 수신 확인 없음 · 응답 조건부 — Core는 마스터 배정과 어긋날 때만 일괄보고 응답(C-3)으로 정정한다. 일치 시 무응답 (단 `trigger` = `manual` 재로드는 일치해도 응답) |
 | A-3·A-4·A-8 보고 | AMMR 보고 | 수신 확인 없음 · 표시 회신 없음 — 태블릿이 선탑재 값·자체 slot_state 판정으로 표시를 갱신한다 |
 | A-1·A-5·A-6 보고 | AMMR 보고 | 수신 확인 없음 · 응답 없음 — Core가 별도 메시지를 보내지 않는다 (QoS 보증만) |
 | A-7 Job 지시 수신 확인 | AMMR 보고 | 그 자체가 C-2의 수신 확인이며, 이에 대한 별도 확인·응답은 없다 |
 | 일괄 보고 수동 발행 (재로드) | 담당자 조작 | 응답 = 일괄보고 응답(C-3·Core 확정 배정). 3초 내 미도착 시 태블릿이 실패 처리(메시지 박스)·담당자 재시도 |
 
-**주의**: 일괄보고 응답(C-3)은 정합 정정 응답이지 수신 확인이 아니다. 평상시 UI 갱신은 Job 지시 선탑재 값과 태블릿 자체 slot_state 판정으로 이루어지며, C-3는 정합이 어긋날 때만 내려온다.
+**주의**: 일괄보고 응답(C-3)은 정합 정정 응답이지 수신 확인이 아니다. 평상시 UI 갱신은 Job 지시 선탑재 값과 태블릿 자체 slot_state 판정으로 이루어지며, C-3는 정합이 어긋날 때 내려온다 (담당자 재로드는 일치해도 내려온다).
 
 ---
 
@@ -368,7 +371,7 @@ AMMR은 매 CONNECT 시 다음을 설정한다 — Client ID = `{ammr_id}` · Cl
 | C-3 | `core/ammr/{ammr_id}/state/reconcile` | 일괄보고 응답 (정합 정정·조건부) | 일괄 보고(A-2)가 Core 마스터와 불일치 시·재로드 시 | 정합 정정 시점 |
 | C-4 | `core/ammr/{ammr_id}/state/request` | 일괄 보고 재전송 요청 (예비) | Core가 특정 AMMR 상태를 즉시 당길 때 (예비·기본 경로 아님) | 발생 시점 |
 
-Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/Charge)을 구분하며, 태블릿 표시에 필요한 Unit·위치 정보를 선탑재한다. C-3(`state/reconcile`)은 Core 마스터 배정과 어긋날 때만 내려오는 일괄보고 응답이다 (평상시 무발행). C-1(`core/conn`)은 Core 자신의 연결 상태를 전체 AMMR에 알리는 retained 메시지로, AMMR은 online 감지 시 일괄 보고(A-2)를 재발행하고 offline 감지 시 태블릿에 시스템 연결 끊김을 표시한다. C-4는 예비 수단이며 재동기화 기본 경로는 C-1 발신 + 주기 일괄 보고다.
+Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/Charge)을 구분하며, 태블릿 표시에 필요한 Unit·위치 정보를 선탑재한다. C-3(`state/reconcile`)은 Core 마스터 배정과 어긋날 때 내려오는 일괄보고 응답이다 (평상시 무발행·담당자 재로드는 일치해도 발행). C-1(`core/conn`)은 Core 자신의 연결 상태를 전체 AMMR에 알리는 retained 메시지로, AMMR은 online 감지 시 일괄 보고(A-2)를 재발행하고 offline 감지 시 태블릿에 시스템 연결 끊김을 표시한다. C-4는 예비 수단이며 재동기화 기본 경로는 C-1 발신 + 주기 일괄 보고다.
 
 ---
 
@@ -386,11 +389,11 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 - **Trigger (offline — 정상 종료)**: AMMR 정상 종료·운영자가 태블릿에서 시스템 연결을 명시적으로 해제하는 경우, AMMR이 DISCONNECT 전에 직접 publish (`reason = clean_shutdown`). Core는 어느 offline이든 AMMR HW 단절과 동일하게 처리하며, 재연결은 초기 연결 흐름(§6.1)과 동일하다
 - **Retained**: true (Core가 늦게 접속해도 즉시 인지)
 
-| 필드     | 타입   | 필수 | 설명                                                           |
-|----------|--------|------|----------------------------------------------------------------|
-| `status` | enum   | 필수 | `online` / `offline`                                          |
-| `reason` | string | 선택 | `offline`일 때 사유 (예: `broker_disconnect`, `clean_shutdown`)|
-| `connected_at` | string | 조건부 | offline 메시지에 실린 세션 접속 시각 (KST). online엔 없음(접속 시각 = `header.timestamp`) |
+| 필드           | 타입             | 필수   | 설명                                                                                      |
+|----------------|------------------|--------|-------------------------------------------------------------------------------------------|
+| `status`       | enum (§부록 A.8) | 필수   | 연결 상태                                                                                 |
+| `reason`       | enum (§부록 A.9) | 선택   | `offline`일 때 종료 사유                                                                  |
+| `connected_at` | string           | 조건부 | offline 메시지에 실린 세션 접속 시각 (KST). online엔 없음(접속 시각 = `header.timestamp`) |
 
 **예시**: 정상 연결
 
@@ -443,23 +446,24 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 #### A-2. 일괄 보고
 
 - **Topic**: `ammr/{ammr_id}/state/snapshot`
-- **Trigger**: ① AMMR이 Broker에 CONNECT 한 직후 1회 ② Core 연결 상태 online 감지 시 1회(Core 재접속·재시작 복구) ③ Core의 일괄 보고 재전송 요청(C-4) 수신 시 1회(예비) ④ 주기 자동 발행 (기본 60초·태블릿 설정값으로 조정) ⑤ 담당자가 태블릿에서 [일괄 보고 재로드] 실행 시 1회 (수동 발행)
+- **Trigger**: 5가지 계기로 발행하며, 각 계기를 body `trigger` 값으로 구분해 싣는다 (§부록 A.10)
 - **목적**: Core가 해당 AMMR의 운영 상태(HW 상태·위치·6 Slot 정합 상태(slot_state)·Slot별 Unit 식별값·Battery)를 일괄 재구축하기 위한 입력
-- **회신**: Core는 이 보고로 운영 상태를 재구축한다. Core 마스터 배정과 어긋나 정합을 맞춰야 할 때만 일괄보고 응답(C-3 `state/reconcile`)을 내려준다 (평상시 무응답·§5.2 C-3)
+- **회신**: Core는 이 보고로 운영 상태를 재구축한다. Core 마스터 배정과 어긋나 정합을 맞춰야 할 때만 일괄보고 응답(C-3 `state/reconcile`)을 내려준다 (평상시 무응답·§5.2 C-3). 단 `trigger` = `manual`이면 일치해도 응답한다
 
 | 필드           | 타입               | 필수 | 설명                                                       |
 |----------------|--------------------|------|------------------------------------------------------------|
+| `trigger`      | enum (§부록 A.10) | 필수 | 이 보고의 발행 계기                                       |
 | `hw_state`     | enum (§부록 A.1) | 필수 | 현재 AMMR HW 상태                                          |
 | `slots`        | array[6]           | 필수 | 6 Slot 각각의 점유 정보 (아래 구조)                       |
-| `pose`         | object             | 필수 | `{x: float, y: float, a: float}` — 현재 위치 + 방향각      |
-| `battery`      | object             | 필수 | A-6 BMS 메시지의 필드 구조와 동일 (§부록 A.5 참조)        |
+| `pose`         | object             | 필수 | `{node_id, x, y, a}` — 현재 노드 + 현재 위치·방향각 (§5.1 A-5) |
+| `battery`      | object             | 필수 | A-6 BMS 메시지의 필드 구조와 동일(§5.1 A-6)·단위는 §부록 A.5        |
 
 `slots` 항목 구조:
 
 | 필드           | 타입         | 필수 | 설명                                                |
 |----------------|--------------|------|-----------------------------------------------------|
 | `slot_id`      | string       | 필수 | AMMR Slot ID (예 `AMMR-LOGI-001-A1`)                |
-| `slot_state`   | enum (§부록 A.7) | 필수 | 클라이언트(태블릿+HW)가 판정한 Slot 상태 — `occupied`/`empty`/`blocked`/`job_failed` |
+| `slot_state`   | enum (§부록 A.7) | 필수 | 클라이언트(태블릿+HW)가 판정한 Slot 상태            |
 | `unit_id`      | string\|null | 필수 | 적재 Unit 식별값(QR uuid). 태블릿 보관값(Core 명령 선탑재·담당자 입력). 미점유·미상이면 null |
 
 **예시 JSON**
@@ -472,6 +476,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
     "msg_id": "0a1b2c3d-0003-4abc-8def-000000000003"
   },
   "body": {
+    "trigger": "periodic",
     "hw_state": "idle",
     "slots": [
       { "slot_id": "AMMR-LOGI-001-A1", "slot_state": "occupied", "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d" },
@@ -481,7 +486,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       { "slot_id": "AMMR-LOGI-001-A5", "slot_state": "empty",    "unit_id": null },
       { "slot_id": "AMMR-LOGI-001-A6", "slot_state": "empty",    "unit_id": null }
     ],
-    "pose": { "x": 12.5, "y": 3.7, "a": 1.57 },
+    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 1.57 },
     "battery": { "battery_id": "BAT_A01", "soc": 87.3, "voltage": 50.1, "current": -2.1, "temperature": 28.5, "bmu_error": false }
   }
 }
@@ -537,7 +542,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | 필드           | 타입         | 필수 | 설명                                              |
 |----------------|--------------|------|---------------------------------------------------|
 | `slot_id`      | string       | 필수 | 전이 Slot ID                                      |
-| `slot_state`   | enum (§부록 A.7) | 필수 | 클라이언트 판정 Slot 상태 (`occupied`/`empty`/`blocked`/`job_failed`) |
+| `slot_state`   | enum (§부록 A.7) | 필수 | 클라이언트 판정 Slot 상태 |
 | `prev_slot_state` | enum (§부록 A.7) | 선택 | 전이 전 Slot 상태 (디버깅 용도) |
 | `unit_id`      | string\|null | 필수 | 적재 Unit 식별값(QR). 미점유·미상이면 null        |
 
@@ -565,13 +570,14 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 - **Trigger**: 1초 주기 (기본·태블릿 설정)
 - **QoS**: 0 (연속값, 1건 누락 허용)
 
-| 필드 | 타입  | 필수 | 설명                       |
-|------|-------|------|----------------------------|
-| `x`  | float | 필수 | x 좌표 (단위: m)          |
-| `y`  | float | 필수 | y 좌표 (단위: m)          |
-| `a`  | float | 필수 | 방향각 (단위: rad, 0~2π)  |
+| 필드      | 타입   | 필수 | 설명                          |
+|-----------|--------|------|-------------------------------|
+| `node_id` | string | 필수 | 현재 노드 id (논리 지점 라벨) |
+| `x`       | float  | 필수 | x 좌표 (단위: m)              |
+| `y`       | float  | 필수 | y 좌표 (단위: m)              |
+| `a`       | float  | 필수 | 방향각 (단위: rad, 0~2π)      |
 
-좌표·방향각 단위는 이 위치 스트리밍 전용이다 (§부록 A.6). Job 지시의 목적지는 좌표가 아니라 논리 지점 라벨이다 (§5.2 C-2).
+좌표·방향각 단위는 이 위치 스트리밍과 일괄 보고(A-2)가 공통으로 쓴다 (§부록 A.6). Job 지시의 목적지는 좌표가 아니라 논리 지점 라벨이다 (§5.2 C-2). 현재 노드(`node_id`)는 그 목적지(`work_location_id`)와 같은 논리 지점 라벨 층위이며, 우선은 Core가 지시한 목적지 노드를 그대로 회신한다.
 
 **예시**
 
@@ -583,6 +589,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
     "msg_id": "0a1b2c3d-0006-4abc-8def-000000000006"
   },
   "body": {
+    "node_id": "WIP-CLN001",
     "x": 12.51,
     "y": 3.72,
     "a": 1.58
@@ -633,7 +640,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 | 필드     | 타입          | 필수 | 설명                              |
 |----------|---------------|------|-----------------------------------|
-| `job_id` | integer       | 필수 | Core 지시의 `job_id` (정수 순번)  |
+| `job_id` | integer       | 필수 | Core 지시의 `job_id`  |
 
 **예시**
 
@@ -659,10 +666,10 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 | 필드                 | 타입               | 필수    | 설명                                                         |
 |----------------------|--------------------|---------|--------------------------------------------------------------|
-| `job_id`             | integer            | 필수    | 대응되는 Job 지시의 `job_id` (정수 순번)                     |
-| `job_type`           | enum (§부록 A.2) | 필수    | Move / Pickup / Dropoff / Charge                            |
+| `job_id`             | integer            | 필수    | 대응되는 Job 지시의 `job_id`                     |
+| `job_type`           | enum (§부록 A.2) | 필수    | 수행한 Job 종류                                             |
 | `hw_state`           | enum (§부록 A.1) | 필수    | Job 종료 직후 AMMR HW 상태. 이 필드에 실린 전이는 A-3로 중복 발행하지 않는다 (§5.1 A-3). Charge Job은 도킹 완료 시점 보고라 `charging` |
-| `job_result`         | enum (§부록 A.3) | 필수    | `success` / `failure`                                       |
+| `job_result`         | enum (§부록 A.3) | 필수    | Job 수행 결과                                               |
 | `reason`             | enum (§부록 A.4) | 조건부 | `job_result = failure` 시 필수 (`ammr_hw_*` 또는 `slot_*`)  |
 | `slot`               | object             | 조건부 | Pickup·Dropoff 시 필수. 대상 AMMR Slot의 클라이언트 판정 상태. 구조 아래. |
 
@@ -747,15 +754,15 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 - **Topic**: `core/conn` (Core 단일 · 전체 AMMR broadcast)
 - **Trigger (online)**: Core가 Broker CONNECT 직후 직접 publish (retained)
-- **Trigger (offline)**: Core 프로세스·연결 비정상 단절 시 Broker가 LWT 자동 발행(`reason = core_down`) / 정상 종료 시 Core가 DISCONNECT 전에 직접 publish
+- **Trigger (offline)**: Core 프로세스·연결 비정상 단절 시 Broker가 LWT 자동 발행(`reason = core_down`) / 정상 종료 시 Core가 DISCONNECT 전에 직접 publish (`reason = clean_shutdown`)
 - **목적**: Core 자신의 연결 상태를 AMMR·태블릿에 알린다. AMMR은 `online` 감지 시 일괄 보고(A-2)를 재발행해 Core 재동기를 개시하고, `offline` 감지 시 태블릿에 시스템 연결 끊김을 표시한다.
 - **Retained**: true (늦게 접속한 AMMR도 마지막 Core 상태를 즉시 인지)
 
-| 필드     | 타입   | 필수 | 설명                                    |
-|----------|--------|------|-----------------------------------------|
-| `status` | enum   | 필수 | `online` / `offline`                    |
-| `reason` | string | 선택 | `offline`일 때 사유 (예: `core_down`)   |
-| `connected_at` | string | 조건부 | offline 메시지에 실린 Core 세션 접속 시각 (KST). online엔 없음 |
+| 필드           | 타입             | 필수   | 설명                                                           |
+|----------------|------------------|--------|----------------------------------------------------------------|
+| `status`       | enum (§부록 A.8) | 필수   | 연결 상태                                                      |
+| `reason`       | enum (§부록 A.9) | 선택   | `offline`일 때 종료 사유                                       |
+| `connected_at` | string           | 조건부 | offline 메시지에 실린 Core 세션 접속 시각 (KST). online엔 없음 |
 
 **공통 필드 예외**: `core/conn` payload는 발신 주체가 Core라서 `ammr_id`를 포함하지 않는다 (§3.5 명시 예외).
 
@@ -798,17 +805,17 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 - **멱등성**: AMMR은 동일 `job_id` 중복 수신 시 1회만 처리한다 (QoS 1 중복 가능성 대비).
 - **표시 정보 선탑재**: 표시 회신 계열을 제거했으므로, 태블릿이 표시에 필요한 값(적재 Unit 정보·출발/도착 위치)을 Core가 이 지시에 미리 싣는다. 태블릿은 이 값을 보관해 화면을 자체 구성한다 (라벨 조립·위치 표시 텍스트 = "AMMR 태블릿 UI 정의 제안" 참조).
 
-| 필드          | 타입             | 필수    | 설명                                                          |
-|---------------|------------------|---------|---------------------------------------------------------------|
-| `job_id`      | integer          | 필수    | Job 고유 번호. Core가 정수 순번(직전 번호+1)으로 부여. AMMR은 동일 번호로 결과 보고 |
-| `job_type`    | enum (§부록 A.2) | 필수    | Move / Pickup / Dropoff / Charge                             |
-| `work_location` | string           | 조건부 | 작업 외부 지점 라벨(노드 id 문자열). Move·Pickup·Dropoff 시 필수 (Move=목적지 / Pickup=출발 외부 지점 / Dropoff=도착 외부 지점) |
-| `slot_info`      | object           | 조건부 | Pickup·Dropoff 시 필수. `{ from_slot_id, to_slot_id }` — 이동 방향(출발→도착 슬롯). Pickup=외부→AMMR / Dropoff=AMMR→외부 |
-| `unit`        | object           | 조건부 | Pickup·Dropoff 시 필수. 대상 Unit 정보 (선탑재). 구조 아래.  |
+| 필드               | 타입             | 필수    | 설명                                                     |
+|--------------------|------------------|---------|----------------------------------------------------------|
+| `job_id`           | integer          | 필수    | Job 고유 번호. AMMR은 동일 번호로 결과 보고 |
+| `job_type`         | enum (§부록 A.2) | 필수    | 지시할 Job 종류                                          |
+| `work_location_id` | string           | 조건부  | 작업 외부 지점 라벨(노드 id 문자열). Move·Pickup·Dropoff 시 필수 (Move=목적지 / Pickup=출발 외부 지점 / Dropoff=도착 외부 지점) |
+| `slot_info`        | object           | 조건부  | Pickup·Dropoff 시 필수. `{ from_slot_id, to_slot_id }` — 이번 지시의 슬롯 이동 방향. Pickup=외부→AMMR / Dropoff=AMMR→외부 (Unit 전체 경로는 `unit`의 `from_location_id`·`to_location_id`) |
+| `unit`             | object           | 조건부  | Pickup·Dropoff 시 필수. 대상 Unit 정보 (선탑재). 구조 아래. |
 
 **job_type별 필요 필드**
 
-| job_type | work_location | slot_info (from → to) | unit |
+| job_type | work_location_id | slot_info (from → to) | unit |
 |----------|---------------|------------------------|------|
 | `move`    | ✓ 목적지 지점    | –                        | –  |
 | `pickup`  | ✓ 출발 외부 지점 | ✓ 외부 slot → AMMR slot  | ✓  |
@@ -819,18 +826,20 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 `unit` 구조 (Pickup·Dropoff 선탑재):
 
-| 필드            | 타입    | 필수 | 설명                                                              |
-|-----------------|---------|------|-------------------------------------------------------------------|
-| `unit_id`       | string  | 필수 | Unit 식별값 (QR uuid·§1.3). AMMR이 자체 인식하지 못하므로 Core가 선탑재 |
-| `input_code`    | string  | 필수 | 투입코드 — GM `inputCode` 뒤 3자리 앞 대시 삽입                   |
-| `unit_num`      | string  | 필수 | 유닛번호 — Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호   |
-| `model_name`    | string  | 필수 | 제품 모델 코드 (예: `H8-MAIN`)                                    |
-| `version`       | string  | 필수 | 모델 버전 (예: `KM70`)                                            |
-| `purpose`       | string  | 필수 | 제품 용도 — GM `purpose` 값 (별표 등 장식문자 제외)               |
-| `tray_count`    | integer | 필수 | Unit을 구성하는 Tray 단 수                                        |
-| `product_count` | integer | 필수 | Unit 안 제품 개수 (최대 16)                                       |
+| 필드               | 타입    | 필수 | 설명                                                           |
+|--------------------|---------|------|----------------------------------------------------------------|
+| `unit_id`          | string  | 필수 | Unit 식별값 (QR uuid·§1.3). AMMR이 자체 인식하지 못하므로 Core가 선탑재 |
+| `input_code`       | string  | 필수 | 투입코드 — GM `inputCode` 값 그대로(가공 없음)                |
+| `unit_num`         | string  | 필수 | 유닛번호 — Core가 수신 수량을 Unit으로 나눌 때 부여하는 일련번호 |
+| `model_name`       | string  | 필수 | 제품 모델 코드 (예: `H8-MAIN`)                                 |
+| `version`          | string  | 필수 | 모델 버전 (예: `KM70`)                                         |
+| `purpose`          | string  | 필수 | 제품 용도 — GM `purpose` 값 (별표 등 장식문자 제외)            |
+| `tray_count`       | integer | 필수 | Unit을 구성하는 Tray 단 수                                     |
+| `product_count`    | integer | 필수 | Unit 안 제품 개수 (최대 16)                                    |
+| `from_location_id` | string  | 필수 | 출발 지점 라벨 — 이 Unit이 있는 공정·설비 (예: `WIP-CLN001`)   |
+| `to_location_id`   | string  | 필수 | 도착 지점 라벨 — 이 Unit이 갈 다음 공정·설비 (예: `CNC-RAC-A02`) |
 
-태블릿은 사람 읽기용 라벨을 `input_code`_`unit_num`으로 조립한다 (예 `26SF03002-001_001`).
+태블릿은 사람 읽기용 라벨을 `input_code`_`unit_num`으로 조립한다 (예 `26SF03002001_001`).
 
 **예시**: Move
 
@@ -844,7 +853,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   "body": {
     "job_id": 1025,
     "job_type": "move",
-    "work_location": "WIP-CLN001"
+    "work_location_id": "WIP-CLN001"
   }
 }
 ```
@@ -861,17 +870,19 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   "body": {
     "job_id": 1024,
     "job_type": "pickup",
-    "work_location": "WIP-CLN001",
+    "work_location_id": "WIP-CLN001",
     "slot_info": { "from_slot_id": "WIP-CLN001-A1", "to_slot_id": "AMMR-LOGI-001-A2" },
     "unit": {
       "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
-      "input_code": "26SF03002-001",
+      "input_code": "26SF03002001",
       "unit_num": "001",
       "model_name": "H8-MAIN",
       "version": "KM70",
       "purpose": "PV2차 선검증 (7월까지)",
       "tray_count": 5,
-      "product_count": 16
+      "product_count": 16,
+      "from_location_id": "WIP-CLN001",
+      "to_location_id": "CNC-RAC-A02"
     }
   }
 }
@@ -889,17 +900,19 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   "body": {
     "job_id": 1026,
     "job_type": "dropoff",
-    "work_location": "CNC-RAC-A02",
+    "work_location_id": "CNC-RAC-A02",
     "slot_info": { "from_slot_id": "AMMR-LOGI-001-A2", "to_slot_id": "CNC-RAC-A02-BEFORE" },
     "unit": {
       "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
-      "input_code": "26SF03002-001",
+      "input_code": "26SF03002001",
       "unit_num": "001",
       "model_name": "H8-MAIN",
       "version": "KM70",
       "purpose": "PV2차 선검증 (7월까지)",
       "tray_count": 5,
-      "product_count": 16
+      "product_count": 16,
+      "from_location_id": "WIP-CLN001",
+      "to_location_id": "CNC-RAC-A02"
     }
   }
 }
@@ -924,12 +937,12 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 #### C-3. 일괄보고 응답 (정합 정정·조건부)
 
 - **Topic**: `core/ammr/{ammr_id}/state/reconcile`
-- **Trigger**: 일괄 보고(A-2) 수신 처리 후, **Core 마스터 배정과 AMMR 보고가 어긋나 정합을 맞춰야 할 때만** 발행. 일치하면 발행하지 않는다.
-- **목적**: Core가 확정한 6 Slot의 Unit 배정을 태블릿에 내려 정합을 맞춘다. 담당자 재로드(§6.5)나 재연결 후 불일치 시 사용한다. 평상시 재연결·표시 갱신은 태블릿이 보유 상태와 자체 slot_state 판정으로 처리하므로 이 응답이 없다.
+- **Trigger**: 일괄 보고(A-2) 수신 처리 후, **Core 마스터 배정과 AMMR 보고가 어긋나 정합을 맞춰야 할 때만** 발행. 일치하면 발행하지 않는다. 단 A-2 `trigger` = `manual`(담당자 재로드)이면 일치해도 발행한다 — 태블릿이 응답 도착으로 재로드 성공을 판정한다 (§7.3·§7.4).
+- **목적**: Core가 확정한 6 Slot의 Unit 정보·Job 배정을 태블릿에 내려 정합을 맞춘다. 담당자 재로드(§6.5)에는 항상 응답하고, 그 밖에는 재연결 후 불일치 시 사용한다. 평상시 재연결·표시 갱신은 태블릿이 보유 상태와 자체 slot_state 판정으로 처리하므로 이 응답이 없다.
 
 | 필드     | 타입     | 필수 | 설명                                              |
 |----------|----------|------|---------------------------------------------------|
-| `slots`  | array[6] | 필수 | Core 확정 Slot별 Unit 배정. 구조 아래.            |
+| `slots`  | array[6] | 필수 | Core 확정 Slot별 Unit 정보·Job 배정. 구조 아래.            |
 
 `slots` 항목 구조:
 
@@ -953,13 +966,15 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
         "slot_id": "AMMR-LOGI-001-A1",
         "unit": {
           "unit_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d",
-          "input_code": "26SF03002-001",
+          "input_code": "26SF03002001",
           "unit_num": "001",
           "model_name": "H8-MAIN",
           "version": "KM70",
           "purpose": "PV2차 선검증 (7월까지)",
           "tray_count": 5,
-          "product_count": 16
+          "product_count": 16,
+          "from_location_id": "WIP-CLN001",
+          "to_location_id": "CNC-RAC-A02"
         }
       },
       { "slot_id": "AMMR-LOGI-001-A2", "unit": null },
@@ -1009,13 +1024,15 @@ sequenceDiagram
     participant B as Broker
     participant C as Core
 
-    A->>B: CONNECT (Clean Start=true, LWT 등록)
+    Note over A,B: CONNECT 파라미터 상세 = §3.6
+    A->>B: CONNECT
     B-->>A: CONNACK
     A->>B: SUBSCRIBE core/ammr/{ammr_id}/#35; + core/conn
-    A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained)
-    B->>C: 전달 (online)
     Note over C: Core는 이미 core/conn online을 retained 발행한 상태
     B->>A: core/conn online 전달 (태블릿 시스템 연결 표시)
+    A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained)
+    B->>C: 전달 (online)
+    Note over A,B: 자기 online 발행↔core/conn 수신 순서는 무관(각각 비동기)
     A->>B: PUBLISH ammr/{ammr_id}/state/snapshot
     B->>C: 전달 (일괄 보고)
     Note over C: Core가 운영 상태 재구축·마스터 배정과 대조<br/>불일치 시에만 state/reconcile로 정정<br/>(일치 시 무응답·태블릿 자체 구성)
@@ -1034,7 +1051,7 @@ sequenceDiagram
     participant A as AMMR
 
     loop Job Sequence의 각 Job (Move → Pickup → Move → Dropoff 순)
-        C->>B: PUBLISH job/cmd (job_type + work_location + slot_info)
+        C->>B: PUBLISH job/cmd (job_type + work_location_id + slot_info)
         B->>A: 전달
         A->>B: PUBLISH job/received
         B->>C: 전달 (수신 확인 — 3초 안 미도달 시 단절 처리)
@@ -1061,7 +1078,7 @@ Job 시작 시점의 상단 표시(HW 상태·최근 명령·명령 Slot)는 태
 
 ### 6.3 Charge Job Sequence
 
-Charge는 Core가 자체 결정하여 **단일 Charge Job**으로 지시한다. `work_location`이 없으며, AMMR은 태블릿 설정값으로 보유한 충전 스테이션으로 자체 이동·도킹한다 (§8.5). 도킹·충전·이탈·자체 임계에 따른 충전 중단 결정은 AMMR HW 자율 영역이다.
+Charge는 Core가 자체 결정하여 **단일 Charge Job**으로 지시한다. `work_location_id`이 없으며, AMMR은 태블릿 설정값으로 보유한 충전 스테이션으로 자체 이동·도킹한다 (§8.5). 도킹·충전·이탈·자체 임계에 따른 충전 중단 결정은 AMMR HW 자율 영역이다.
 
 ```mermaid
 sequenceDiagram
@@ -1069,7 +1086,7 @@ sequenceDiagram
     participant B as Broker
     participant A as AMMR
 
-    C->>B: PUBLISH job/cmd (Charge, work_location 없음)
+    C->>B: PUBLISH job/cmd (Charge, work_location_id 없음)
     B->>A: 전달
     A->>B: PUBLISH job/received
     B->>C: 전달 (수신 확인)
@@ -1133,8 +1150,13 @@ sequenceDiagram
     participant B as Broker
     participant C as Core
 
-    Note over A: AMMR HW 자기 진단 실패
-    A->>B: PUBLISH job/report (hw_state=error, reason=ammr_hw_*)
+    alt Job 수행 중 HW 실패
+        Note over A: Job 수행 중 AMMR HW 실패
+        A->>B: PUBLISH job/report (hw_state=error, reason=ammr_hw_*)
+    else 비수행 중 HW 장애 (자기 진단 실패 등)
+        Note over A: 비수행 중 AMMR HW 장애 (자기 진단 실패 등)
+        A->>B: PUBLISH state/hw (A-3: hw_state=error, reason=self_diagnostic_failed)
+    end
     B->>C: 전달
     Note over C: AMMR HW 장애 처리<br/>해당 AMMR 운영 정보 초기화<br/>6 Slot 사용 보류·진행 중 작업 종료
 ```
@@ -1153,15 +1175,18 @@ sequenceDiagram
 
     Note over A,B: AMMR Keep Alive 무수신<br/>임계(90초) 초과
     B->>B: AMMR 연결 끊김 감지
-    B->>C: LWT 발행 (ammr/{ammr_id}/conn = "offline")
+    B->>C: LWT 발행 (ammr/{ammr_id}/conn = "offline", Retained)
     Note over C: AMMR HW 단절 처리<br/>해당 AMMR 운영 정보 초기화<br/>6 Slot 사용 보류·진행 중 작업 종료
 
     Note over A: AMMR HW 복구
-    A->>B: CONNECT (재연결·Clean Start=true·Will Delay=10초)
+    Note over A,B: CONNECT 파라미터 상세 = §3.6 (재연결)
+    A->>B: CONNECT
     B-->>A: CONNACK
     A->>B: SUBSCRIBE core/ammr/{ammr_id}/#35; + core/conn (재구독)
     B->>A: core/conn online 전달 (Retained → 태블릿 시스템 연결 표시)
     A->>B: PUBLISH ammr/{ammr_id}/conn {"status":"online"} (Retained, LWT 덮어쓰기)
+    B->>C: 전달 (online)
+    Note over A,B: 자기 online 발행↔core/conn 수신 순서는 무관(각각 비동기)
     A->>B: PUBLISH ammr/{ammr_id}/state/snapshot (재동기화)
     B->>C: 전달
     Note over C: Core 마스터 배정과 대조<br/>불일치 시에만 state/reconcile로 정정
@@ -1182,6 +1207,7 @@ sequenceDiagram
     participant C as Core
 
     Note over C: Core 재시작 → Broker에 재연결
+    Note over C,B: CONNECT 파라미터는 Core 내부 설정(AMMR 인터페이스 범위 밖)
     C->>B: CONNECT
     B-->>C: CONNACK
     C->>B: SUBSCRIBE ammr/+/...
@@ -1297,7 +1323,7 @@ Job 수행 결과 통합 보고의 payload는 다음 4가지로 분기되어 Cor
   - 도킹 시점에 `state/hw` 로 `charging` 전이 보고
   - 태블릿 설정의 대기 임계치(기본값 80%) 완충 시점에 `state/hw` 로 `idle` 전이 보고
 - 이 자율 동작은 Core 다운 여부와 무관하게 작동한다.
-- AMMR HW 상태가 `low_battery` 또는 `charging`인 동안 Core는 신규 Job 배정을 차단한다. 단, 충전 중 Battery가 충분히 회복되었다고 Core가 판단하면 충전 완료를 기다리지 않고 Job을 지시할 수 있다 (§8.4).
+- AMMR HW 상태가 `low_battery` 또는 `charging`인 동안 Core는 신규 Job 배정을 차단한다. 단, Core가 필요하다고 판단하면(대표 사례 = 충전 중 Battery 충분히 회복) 충전 완료를 기다리지 않고 Job을 지시할 수 있다 (§8.4).
 
 ### 8.4 충전 중 Job 지시 (충전 중단·이탈)
 
@@ -1340,7 +1366,7 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | 클라이언트     | 허용 권한                                                                  |
 |----------------|----------------------------------------------------------------------------|
 | AMMR `{ammr_id}` | Publish: `ammr/{ammr_id}/#` / Subscribe: `core/ammr/{ammr_id}/#` · `core/conn`           |
-| Core           | Publish: `core/ammr/+/#` / Subscribe: `ammr/+/#`                          |
+| Core           | Publish: `core/ammr/+/#` · `core/conn` / Subscribe: `ammr/+/#`                             |
 
 각 AMMR은 자기 `ammr_id` 외 다른 AMMR의 Topic에 publish할 수 없다.
 
@@ -1354,6 +1380,12 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 ## 10. 부록
 
 ### A. 데이터 타입·enum 정의
+
+각 타입의 값과 의미는 이 부록이 단일 권위다. 부록 밖에서는 타입을 가리키고 값 일람을 다시 나열하지 않는다 (맥락상 개별 값을 지목하는 것은 허용).
+
+- 수록 대상 = 메시지가 쓰는 모든 enum·단위 (한 메시지 전용도 수록)
+- 절 이름 = 쓰이는 범위를 포함한 타입명 (예: `Job 실패 Reason 코드`·`연결 종료 Reason 코드`)
+  · 필드명이 같아도 값 집합이 다르면 별개 절로 둔다
 
 #### A.1 AMMR HW 상태 (`hw_state`)
 
@@ -1370,6 +1402,8 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | `low_battery`  | 운영 상태   | 저전력 — 자체 임계(태블릿 설정·기본값 20%) 이하 진입. 자율 충전 동작 진입 (§8.3) |
 | `error`        | 운영 상태   | 장애 — 고장 또는 수리 중                                                  |
 
+AMMR HW가 위 8종으로 포괄되지 않는 새로운 물리 상태를 가지면, 업체는 이를 임의로 8종 중 하나에 끼워 맞추거나 무단으로 새 값을 발행하지 않는다. Core에 알리고, Core가 검토해 이 enum을 확장한다.
+
 #### A.2 Job 종류 (`job_type`)
 
 | 값          | 의미                                                |
@@ -1377,7 +1411,7 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | `move`      | 지정 지점으로 자율 주행                            |
 | `pickup`    | 외부 Slot에서 AMMR Slot으로 Unit 적재             |
 | `dropoff`   | AMMR Slot에서 외부 Slot으로 Unit 하역             |
-| `charge`    | 설정 스테이션에서 도킹·충전 (`work_location` 없음)  |
+| `charge`    | 설정 스테이션에서 도킹·충전 (`work_location_id` 없음)  |
 
 #### A.3 Job 결과 (`job_result`)
 
@@ -1386,7 +1420,7 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | `success` | Job 정상 완료 (Charge는 도킹 완료 시점)                    |
 | `failure` | Job 실패 — `reason` 필드에 사유 기재 (§부록 A.4)           |
 
-#### A.4 Reason 코드 (`reason`)
+#### A.4 Job 실패 Reason 코드 (`reason`)
 
 §7.1의 분류 체계를 따르는 확정 코드 일람이다.
 
@@ -1414,7 +1448,7 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 
 #### A.6 좌표·방향각 단위
 
-위치 스트리밍(A-5) 전용이다. Job 지시의 목적지는 좌표가 아니라 논리 지점 라벨이다 (§5.2 C-2).
+위치 스트리밍(A-5)·일괄 보고(A-2) 공통 단위다. Job 지시의 목적지는 좌표가 아니라 논리 지점 라벨이다 (§5.2 C-2).
 
 | 필드  | 단위         |
 |-------|--------------|
@@ -1435,9 +1469,40 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 
 > 표시 텍스트는 Core가 내려준 값(`job_type`·`slot_state`·출발/도착 라벨 등)을 태블릿이 그대로 표시한다 — 한글 매핑·조립 없음. 상단 HW 상태만 AMMR 자체 보고값(`hw_state`)을 표시한다. 상세 = "AMMR 태블릿 UI 정의 제안".
 
+#### A.8 연결 상태 (`status`)
+
+연결 상태 보고(A-1·C-1)의 `status` 값 일람.
+
+| 값        | 의미                                                          |
+|-----------|---------------------------------------------------------------|
+| `online`  | 연결됨 — CONNECT 직후 발신 주체가 직접 발행                    |
+| `offline` | 연결 끊김 — Broker LWT 자동 발행 또는 정상 종료 시 직접 발행   |
+
+#### A.9 연결 종료 Reason 코드 (`reason`)
+
+연결 상태 보고(A-1·C-1)가 `offline`일 때 싣는 종료 사유 일람.
+
+| 값                  | 쓰는 곳 | 의미                                                     |
+|---------------------|---------|----------------------------------------------------------|
+| `broker_disconnect` | A-1     | AMMR HW와 Broker 연결 끊김 — Broker가 LWT 자동 발행      |
+| `core_down`         | C-1     | Core 프로세스·연결 비정상 단절 — Broker가 LWT 자동 발행  |
+| `clean_shutdown`    | A-1·C-1 | 정상 종료·운영자 명시 해제 — DISCONNECT 전 직접 발행     |
+
+#### A.10 일괄 보고 발행 계기 (`trigger`)
+
+일괄 보고(A-2)의 `trigger` 값 일람. Core가 발행 계기를 이 값으로 구분한다.
+
+| 값            | 의미                                                            |
+|---------------|-----------------------------------------------------------------|
+| `connect`     | AMMR이 Broker에 CONNECT 한 직후 1회                             |
+| `core_online` | Core 연결 상태 online 감지 시 1회 (Core 재접속·재시작 복구)     |
+| `requested`   | Core의 일괄 보고 재전송 요청(C-4) 수신 시 1회 (예비)            |
+| `periodic`    | 주기 자동 발행 (기본 60초·태블릿 설정값으로 조정)               |
+| `manual`      | 담당자가 태블릿에서 [일괄 보고 재로드] 실행 시 1회 (수동 발행)  |
+
 ### B. 확정 사항 일람
 
-업체 협의 없이 전량 Core가 확정한다 — HW 의존 값도 Core가 정하고 AMMR이 맞춘다. 이 표는 이 문서 곳곳에 정의된 확정값의 한눈 일람이다.
+업체 협의 없이 전량 Core가 확정한다 — HW 의존 값도 보고 형식·어휘는 Core가 정하고 AMMR이 맞춘다. 단, 충전 스테이션 번호·Battery 임계치·스트리밍 주기 등 현장마다 달라지는 설치값은 예외로 태블릿 설정에 위임하고, hw_state가 8종 밖 새 물리 상태를 만나면 업체가 Core에 알려 Core가 enum 확장 여부를 정한다(§부록 A.1). 이 표는 이 문서 곳곳에 정의된 확정값의 한눈 일람이다.
 
 | #  | 분류          | 확정 내용                                                                  | 관련 절      |
 |----|---------------|----------------------------------------------------------------------------|--------------|
@@ -1450,22 +1515,25 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 | 7  | 공통 필드     | Payload=`header`+`body` · 공통 `msg_id` 필수 (UUID·broker LWT는 null)                                                   | §3.5        |
 | 8  | 수명 주기     | Keep Alive 60초 / Broker 단절 감지 90초 (1.5×·Mosquitto 기본)              | §3.6, §7.3 |
 | 9  | 수명 주기     | Clean Start = true · Session Expiry = 10초 · Will Delay = 10초 (재접속 Clean Start=true가 stale Job 차단 · Will Delay가 순단 offline 억제)  | §3.6        |
-| 10 | Slot 상태     | Slot은 클라이언트 판정 `slot_state` 4종(occupied/empty/blocked/job_failed). 일괄 보고(A-2)에 `unit_id`(QR) 동반, Unit 상세·확정 배정은 Core가 Job 지시 선탑재·정합 정정으로 제공 | §5.1, §부록 A.7 |
-| 11 | 목적지        | `work_location` = 논리 지점 라벨 문자열 (좌표 미전송·AMMR 자체 맵 해석) | §5.2 C-2    |
-| 12 | 좌표 단위     | m·rad — 위치 스트리밍(A-5) 전용                                            | §부록 A.6   |
+| 10 | Slot 상태     | Slot은 클라이언트 판정 `slot_state` 4종. 일괄 보고(A-2)에 `unit_id`(QR) 동반, Unit 상세·확정 배정은 Core가 Job 지시 선탑재·정합 정정으로 제공 | §5.1, §부록 A.7 |
+| 11 | 목적지        | `work_location_id` = 논리 지점 라벨 문자열 (좌표 미전송·AMMR 자체 맵 해석) | §5.2 C-2    |
+| 12 | 좌표 단위     | m·rad — 위치 스트리밍(A-5)·일괄 보고(A-2) 공통                             | §부록 A.6   |
 | 13 | BMS           | `current` 부호 = 충전 양수 / 방전 음수                                     | §5.1 A-6    |
 | 14 | Reason 코드   | `ammr_hw_*` 5종 + `slot_*` 5종 (Pickup 충돌 `slot_source_obstructed` 포함) | §7.1, §부록 A.4 |
-| 15 | enum          | `hw_state` = 영문 8종 (`move`/`pickup`/`dropoff`/`charge`/`idle`/`charging`/`low_battery`/`error`) | §부록 A.1   |
+| 15 | enum          | `hw_state` = 영문 8종 | §부록 A.1   |
 | 16 | Job 필드      | `priority` 필드 없음 (Job은 한 번에 하나 지시)                             | §5.2 C-2    |
-| 17 | 재동기화      | Core 측 재연결·재시작 시 Core 연결 상태 발신(C-1 online) → AMMR A-2 재발행 → 불일치 시 일괄보고 응답(C-3) · C-4는 예비 | §5.2 C-4, §6.8 |
+| 17 | 재동기화      | Core 측 재연결·재시작 시 Core 연결 상태 발신(C-1 online) → AMMR A-2 재발행 → 불일치 시 일괄보고 응답(C-3) · C-4는 예비 | §5.2 C-1, §5.2 C-3, §5.2 C-4, §6.8 |
 | 18 | 인증          | 사용자명/비밀번호 (username=`ammr_id` / pw=`{ammr_id}@core`·TLS 없음·사내망 전제)                                   | §9.1        |
 | 19 | Topic 권한     | Broker ACL 적용                                                            | §9.2        |
-| 20 | Charge        | 단일 Charge Job · `work_location` 없음 · 충전 스테이션 = 태블릿 설정 단일 소스 | §6.3, §8.5  |
+| 20 | Charge        | 단일 Charge Job · `work_location_id` 없음 · 충전 스테이션 = 태블릿 설정 단일 소스 | §6.3, §8.5  |
 | 21 | Broker 접속   | 기본 포트 1883 (평문 MQTT·Mosquitto 기본) · 실제 접속 정보(IP·포트·자격증명)는 설치 시 Core 측 제공·태블릿 설정 입력 | §3.6, §9.1  |
 | 22 | 표시          | 표시 회신 계열 제거 — 태블릿 표시는 Job 지시(C-2) 선탑재 + 태블릿 자체 slot_state 판정으로 구성 · 정합 정정만 일괄보고 응답(C-3·조건부) | §4.2, §5.2  |
-| 23 | 적재 정보     | 일괄 보고(A-2)가 6 Slot slot_state + Slot별 `unit_id`(QR·태블릿 보관) 동반 · 적재 정보 재로드 = 담당자가 일괄 보고를 수동 발행(별도 재로드 토픽 없음·응답 = 일괄보고 응답 C-3) | §5.1 A-2, §6.5 |
+| 23 | 적재 정보     | 일괄 보고(A-2)가 6 Slot slot_state + Slot별 `unit_id`(QR·태블릿 보관) 동반 · 적재 정보 재로드 = 담당자가 일괄 보고를 수동 발행(별도 재로드 토픽 없음·`trigger`=`manual`로 구분·응답 = 일괄보고 응답 C-3·일치해도 응답) | §5.1 A-2, §6.5 |
 | 24 | Core 연결     | `core/conn`(retained·LWT·broadcast) — Core online/offline 발신 → AMMR이 online 시 A-2 재발행·offline 시 태블릿 표시 · 재동기 기본 경로(C-4는 예비) | §3.4, §5.2 C-1, §6.8 |
-| 25 | Slot 정합     | 정합 판정 주체 = 클라이언트(태블릿+HW). Core는 결과 수신·unit 배정 마스터 보유 · 정합 어긋날 때만 일괄보고 응답(C-3) | §2.2, §5.1 |
-| 26 | Job 지시      | `job_id` 정수 순번(Core DB 마지막+1) · 표시정보 선탑재(`work_location` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) | §5.2 C-2 |
-| 27 | Unit 정보     | `unit_id`(QR)·`input_code`·`unit_num`·`model_name`·`version`·`purpose`·`tray_count`·`product_count` · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2 |
-| 28 | 연결 상태 body | offline conn(broker LWT·정상 종료) body에 `connected_at`(세션 접속 시각·KST) 동반 — null인 `header.timestamp` 보완·세션 앵커 · online엔 없음 | §3.4, §5.1 A-1, §5.2 C-1 |
+| 25 | Slot 정합     | 정합 판정 주체 = 클라이언트(태블릿+HW). Core는 결과 수신·unit 배정 마스터 보유 · 정합 어긋날 때만 일괄보고 응답(C-3·재로드는 예외로 일치해도 응답) | §2.2, §5.1 |
+| 26 | Job 지시      | `job_id` 정수(고유) · 표시정보 선탑재(`work_location_id` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) | §5.2 C-2 |
+| 27 | Unit 정보     | `unit_id`(QR)·`input_code`·`unit_num`·`model_name`·`version`·`purpose`·`tray_count`·`product_count`·`from_location_id`·`to_location_id`(공정·설비 지점 층위·슬롯은 지시 시점 `slot_info`가 결정) · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2 |
+| 28 | 연결 상태 body | offline conn(broker LWT·정상 종료) body에 `connected_at`(세션 접속 시각·KST) 동반 — LWT는 null인 `header.timestamp` 보완, 공통으로 세션 앵커 역할 · online엔 없음 | §3.4, §5.1 A-1, §5.2 C-1 |
+| 29 | 일괄 보고 계기 | A-2 body `trigger`로 발행 계기 5종 구분 · `manual`(담당자 재로드)이면 마스터 일치해도 일괄보고 응답(C-3) 발행 | §5.1 A-2, §5.2 C-3, §부록 A.10 |
+| 30 | 위치 노드     | pose에 `node_id`(논리 지점 라벨) 동반 — 좌표(x·y·a)와 함께 현재 노드 보고 · 우선은 Core 지시 목적지 노드를 그대로 회신 | §5.1 A-2·A-5 |
+| 31 | Job 지시      | Job 지시 수신확인 임계(Core 측) = 3초 — `job/received` 미도달 시 AMMR HW 단절 처리 | §5.2 C-2, §7.3 |
