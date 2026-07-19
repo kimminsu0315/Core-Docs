@@ -7,7 +7,7 @@
 - 운영 — Pages 빌드 도구와 사이트 자산을 Core 본체에서 작업공간 스킬(core-docs)로 옮김 · 본체엔 산출물목록만 남음 · 빌드는 이 저장소를 clone 한 자리에서 돌고 결과는 여기로만 남음
 - 저장소 — Project_Core → Core-Docs 개명 반영 (index·레이아웃 링크)
 - 변경기록 — 본체의 개인용 원본 폐지 · 이 파일이 단일 자리
-- 커밋 (push 후 기재) · github.com/kimminsu0315/Core-Docs main
+- 커밋 8de080b · github.com/kimminsu0315/Core-Docs main
 
 [d46] 2026-07-17 · 메시지 구조 드리프트 전수 정합 + 학습자료 코드 작성 원칙(C# 컨벤션) 재검토 (개인용·push)
 - 본체 — SRS d107 · SAD d158 (pose·BMS 스트리밍 보고 주기 출처 'HW 설정 가변'→'태블릿 설정' 정정)
