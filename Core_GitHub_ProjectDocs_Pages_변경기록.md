@@ -5,7 +5,7 @@
 - 외부전달 — ICD_AMMR d74→d76 (일괄보고 응답 unit null 판정 명문화 · 사람 읽기용 라벨 조립 예외 단서 · 자격증명을 문서에 싣는 사유 명시 · Battery 임계 순서) · UI정의제안 d51→d56 (예시 Unit 여정을 ICD에 정렬 · Log 분류를 통신 방향 3종[시스템 → AMMR · AMMR → 시스템 · 설정 변경]으로 재정의 · Battery 순서와 초기값 어휘 · 제안 문서 어조 일관화[고정 항목 세 묶음으로 모으고 나머지는 업체 결정 영역임을 앞세움]) · SRS_AMMR d32→d33 (본체 정비분 sync)
 - 학습자료 — 변경 없음
 - 운영 — 산출물 정합 Workstream 9항목 전량 반영 후 소멸 절차로 삭제 · 항목별 결정 근거는 각 산출물 변경기록이 쥔다
-- 커밋 (push 후 기재) · github.com/kimminsu0315/Core-Docs main
+- 커밋 445fb2a (65c5bed..445fb2a) · github.com/kimminsu0315/Core-Docs main
 
 [d47] 2026-07-19 · 직전 싱크 이후 본체 누적분 + 빌드 도구 스킬 이관 (개인용·push)
 - 본체 — SRS d107→d112 · SAD d158→d161
