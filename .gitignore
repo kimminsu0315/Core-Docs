@@ -8,7 +8,7 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# 에디터 (집 VS Code / 회사 Visual Studio)
+# 에디터
 .vscode/
 .vs/
 *.swp
