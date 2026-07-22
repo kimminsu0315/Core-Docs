@@ -1,4 +1,4 @@
-# Core 구현참고 — ASPNET PoC 샘플 코드 v1.0_d11
+# Core 구현참고 — ASPNET PoC 샘플 코드 v1.0_d13
 
 이 파일은 Core 프로젝트 ASP.NET Core 구현 학습용 임시 자료입니다. 본체 SAD v1.0_d118 기준의 핵심 흐름을 짧은 코드로 따라갈 수 있게 구성했습니다. 실제 프로덕션 코드가 아닌 학습 샘플입니다.
 
@@ -7,9 +7,9 @@
 **명명 규칙**: 백엔드 C#은 일반 PascalCase Convention (헝가리언은 WinForms Dashboard 측만).
 
 
-> **기준 본체**: Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d11.md (학습 원본 변경 시 사용자 명시 때만 sync)
-> 이 문서는 `Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d11.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-17 13:00
+> **기준 본체**: Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d13.md (학습 원본 변경 시 사용자 명시 때만 sync)
+> 이 문서는 `Core_구현참고_ASPNET_PoC_SampleCode_v1_0_d13.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-22 15:18
 ---
 
 ## 1. 프로젝트 구조
@@ -43,9 +43,9 @@ Core/
 │   │   ├── GmAdapter.cs             # 실 REST 호출
 │   │   ├── GmAdapterMock.cs         # 테스트용 Mock
 │   │   └── GmPollingWorker.cs       # BackgroundService
-│   ├── Mqtt/
-│   │   ├── IMqttSendPort.cs
-│   │   └── MqttAdapter.cs
+│   ├── Ammr/
+│   │   ├── IAmmrSendPort.cs
+│   │   └── AmmrAdapter.cs
 │   └── (SM/WIP/SignalR/CommandApi 동일 패턴)
 │
 └── Services/                        # 서비스 계층 (§4.5)
@@ -559,23 +559,23 @@ await host.RunAsync();
 
 ---
 
-## 3. 흐름 B — 발신 흐름 ((Z) 방식, AMMR Service → State Service → MQTT Adapter)
+## 3. 흐름 B — 발신 흐름 ((Z) 방식, AMMR Service → State Service → AMMR Adapter)
 
 이 흐름은 본체 d118 구조를 따름 — MQTT 발신은 State Service 단일 게이트웨이 경유 (§5.6 [발신] · §5.10).
 
-### 3.1 Adapter — IMqttSendPort 인터페이스
+### 3.1 Adapter — IAmmrSendPort 인터페이스
 
 State Service가 호출하는 발신 Port.
 
 ```csharp
-// Adapters/Mqtt/IMqttSendPort.cs
+// Adapters/Ammr/IAmmrSendPort.cs
 using Core.Domain;
 
 namespace Core.Adapters.Mqtt;
 
-public interface IMqttSendPort
+public interface IAmmrSendPort
 {
-    // 도메인 객체 → MQTT Payload 변환·발신 (§4.4 MQTT Adapter 책임)
+    // 도메인 객체 → MQTT Payload 변환·발신 (§4.4 AMMR Adapter 책임)
     Task SendJobInstructionAsync(JobInstruction instr, CancellationToken ct);
 }
 
@@ -583,26 +583,26 @@ public interface IMqttSendPort
 public record JobInstruction(string AmmrId, string JobType, string TargetNodeId);
 ```
 
-### 3.2 Adapter — MqttAdapter (수신·발신 양방향)
+### 3.2 Adapter — AmmrAdapter (수신·발신 양방향)
 
 수신: 외부 메시지 → State Service 입력 Channel.
 발신: State Service 발신 게이트웨이가 호출 → MQTT publish.
 
 ```csharp
-// Adapters/Mqtt/MqttAdapter.cs
+// Adapters/Ammr/AmmrAdapter.cs
 using Core.Domain;
 using Core.Infra;
 using Core.Infra.Inputs;
 
 namespace Core.Adapters.Mqtt;
 
-public sealed class MqttAdapter : BackgroundService, IMqttSendPort
+public sealed class AmmrAdapter : BackgroundService, IAmmrSendPort
 {
     private readonly IInputChannel _input;
-    private readonly ILogger<MqttAdapter> _log;
+    private readonly ILogger<AmmrAdapter> _log;
     // private readonly IMqttClient _client;  // MQTTnet 등 실 라이브러리
 
-    public MqttAdapter(IInputChannel input, ILogger<MqttAdapter> log)
+    public AmmrAdapter(IInputChannel input, ILogger<AmmrAdapter> log)
     {
         _input = input;
         _log = log;
@@ -621,7 +621,7 @@ public sealed class MqttAdapter : BackgroundService, IMqttSendPort
         await Task.Delay(Timeout.Infinite, stop);
     }
 
-    // ── 발신 측 (IMqttSendPort) ───────────────────────────
+    // ── 발신 측 (IAmmrSendPort) ───────────────────────────
     // State Service 발신 게이트웨이가 호출 — AMMR Service가 직접 호출 안 함 ((Z) 방식)
     public Task SendJobInstructionAsync(JobInstruction instr, CancellationToken ct)
     {
@@ -661,8 +661,8 @@ public interface IStateService
 // Services/State/StateService.cs (발신 메서드 추가)
 public sealed class StateService : BackgroundService, IStateService
 {
-    private readonly IMqttSendPort _mqttSend;
-    // ... (기존 필드 + 생성자에 IMqttSendPort 추가)
+    private readonly IAmmrSendPort _ammrSend;
+    // ... (기존 필드 + 생성자에 IAmmrSendPort 추가)
 
     // (Z) 방식 — MQTT 발신 단일 게이트웨이
     public async Task SendJobInstructionAsync(JobInstruction instr, CancellationToken ct)
@@ -675,8 +675,8 @@ public sealed class StateService : BackgroundService, IStateService
         // ② SignalR Hub Push (Dashboard 실시간 반영) — 이 샘플은 생략
         // await _signalR.Clients.All.SendAsync("JobIssued", instr, ct);
 
-        // ③ MQTT Adapter 호출 — Adapter는 Payload 변환·발신만
-        await _mqttSend.SendJobInstructionAsync(instr, ct);
+        // ③ AMMR Adapter 호출 — Adapter는 Payload 변환·발신만
+        await _ammrSend.SendJobInstructionAsync(instr, ct);
     }
 }
 ```
@@ -729,7 +729,7 @@ public sealed class AmmrService : BackgroundService
         // ② Job 결정
         var instr = new JobInstruction(ammrId, "Pickup", "Node-A1");
 
-        // ③ State Service 발신 게이트웨이 호출 — MQTT Adapter 직접 호출 안 함 ((Z) 방식)
+        // ③ State Service 발신 게이트웨이 호출 — AMMR Adapter 직접 호출 안 함 ((Z) 방식)
         await _state.SendJobInstructionAsync(instr, ct);
     }
 }
@@ -795,7 +795,7 @@ public class StateServiceTests
 
 | 본체 구조 | 코드 구현 |
 |---|---|
-| §1.1 다Port 격리 (Adapter 6종 분리) | 폴더 구조 `Adapters/Gm/`, `Adapters/Mqtt/` 등 분리 |
+| §1.1 다Port 격리 (Adapter 6종 분리) | 폴더 구조 `Adapters/Gm/`, `Adapters/Ammr/` 등 분리 |
 | §1.1 단일 Port 구현 교체 | `IGmAdapter` + `GmAdapter` / `GmAdapterMock` DI 교체 |
 | §1.3 순서·atomic 보존 (입력 직렬화) | `Channel.SingleReader=true` + State Service 단일 Consumer 루프 |
 | §1.3 atomic 5단계 | `HandleGmRecipeAsync` (InMemory → 검증 → 이력 → Event → Push) |
@@ -803,8 +803,8 @@ public class StateServiceTests
 | §4.6 Read Only 참조 노출 | `IStateService.Recipes` 반환 타입 `IReadOnlyDictionary` |
 | §5장 조회 채널 원칙 (Pull) | TransferService에서 `_state.Recipes.Count` 호출 |
 | §5.6 [발신] 구조 | `IStateService.SendJobInstructionAsync` 단일 게이트웨이 |
-| §4.4 MQTT Adapter 양방향 | `MqttAdapter` 수신(BackgroundService) + 발신(`IMqttSendPort`) 구현 |
-| §4.4 Adapter 책임 (변환만) | `MqttAdapter.SendJobInstructionAsync`이 Payload 직렬화만 |
+| §4.4 AMMR Adapter 양방향 | `AmmrAdapter` 수신(BackgroundService) + 발신(`IAmmrSendPort`) 구현 |
+| §4.4 Adapter 책임 (변환만) | `AmmrAdapter.SendJobInstructionAsync`이 Payload 직렬화만 |
 
 ---
 

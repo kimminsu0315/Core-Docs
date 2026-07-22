@@ -1,13 +1,13 @@
 # Core R&R
 
-> 이 문서는 `Core_RnR_v0_1_d35.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-16 13:33
+> 이 문서는 `Core_RnR_v0_1_d45.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-22 19:36
 
 ---
 
 ## 1. 개요
 
-이 문서는 시스템 개발 영역별 R&R을 정리한 본체 산출물입니다. SRS·SAD 본체를 기준으로 현재 개발 상황에 맞춘 영역별 R&R을 정리합니다. Dashboard·SignalR Hub·Command API는 추후 개발 예정이며 이 문서에서는 제외됩니다.
+이 문서는 시스템 개발 영역별 R&R을 정리한 본체 산출물입니다. SRS·SAD 본체를 기준으로 현재 개발 상황에 맞춘 영역별 R&R을 정리합니다. Dashboard·SignalR Hub·Command API는 추후 개발 예정이며 이 문서에서는 제외됩니다. QR 발행·Unit 관리·작업 실적은 Dashboard 웹 전환 전까지 독립 프로그램으로 먼저 개발하며, 전환 시점에 Dashboard 탭으로 흡수됩니다. 목표 상은 SRS·SAD가 그리는 Dashboard 탭 구조입니다.
 
 진행상태 ✅(완료)는 실제 최적화된 상태가 아닌 임시로라도 처리 가능한 상태, ⏳(진행 중)은 작업이 진행되고 있는 상태, 🔜(대기)는 아직 착수되지 않은 상태를 의미합니다.
 
@@ -24,7 +24,7 @@
 | QR 발행 프로그램       | WinForms 독립 프로그램. 공정 Unit 구성 + QR 스티커 출력·재출력 + 적층 Tray 정보 Mapping + Core REST 호출 | *** | ⏳       | -    | -    |
 | Unit 관리 프로그램     | WinForms 독립 프로그램. GM 제품 정보 조회 + Unit별 구성 조회 + Core REST 호출 | *** | ⏳       | -    | -    |
 | 작업 실적 프로그램     | WinForms 독립 프로그램. QR 리더기 연동 → Unit 정보·현재 위치·다음 공정 표시 + 작업실적 수동 입력 + Core REST 호출 | *** | ⏳       | -    | -    |
-| 물류 AMMR              | Core와 MQTT로 양방향 통신. AMMR 업체용 요구사항 정의서 + 태블릿 전용 View UI 제안서 제공 | *** | ⏳       | -    | 5/29 |
+| 물류 AMMR              | Core와 MQTT로 양방향 통신. 업체 대면본 3종 제공 (물류 AMMR 시스템 요구사항·Interface Control Document·AMMR 태블릿 UI 정의 제안) | *** | ✅       | -    | -    |
 
 ---
 
@@ -35,8 +35,8 @@
 | DB 스키마                  | GM 제품·Recipe / Unit·QR·Unit별 개별 Recipe / Tray / 외주 배치 이력 / CNC 작업대·SM 공정-작업대 Mapping / 시스템 설정값 / 사용자 계정·권한·IP Whitelist / Transfer Lifecycle·Job 발행·결과 / Unit 추적 이력 / Slot 점유·정합성 변화 / AMMR HW 상태 전이 / Adapter 가용성 / 보안 Log | *** | 🔜       | -    | -    |
 | DB 성능 튜닝               | 조회 패턴별 인덱스 + 결합 View + EXPLAIN ANALYZE (운영 누적 후 진입)               | *** | 🔜       | -    | -    |
 | PostgreSQL 운영            | 설치·설정·백업·복구                                                           | *** | ⏳       | -    | -    |
-| Mosquitto MQTT Broker 운영 | 설치·설정·인증(사용자/비밀번호)·Topic 권한·QoS·Last Will·Session 영속성        | *** | ⏳       | -    | 6/19 |
-| MQTT Explorer              | 설치·설정. 통신 모니터링·디버깅 도구                                           | *** | ⏳       | -    | 6/19 |
+| Mosquitto MQTT Broker 운영 | 설치·설정·인증(사용자/비밀번호)·Topic 권한·QoS·Last Will·Session 영속성        | *** | ✅       | -    | -    |
+| MQTT Explorer              | 설치·설정. 통신 모니터링·디버깅 도구                                           | *** | ✅       | -    | -    |
 
 ---
 
@@ -45,8 +45,8 @@
 | 분류              | 내용                                                                             | 담당자        | 진행상태 | 비고 | 일정 |
 |-------------------|----------------------------------------------------------------------------------|---------------|----------|------|------|
 | Core 노출 REST    | -                                                                                | *** | ⏳       | -    | -    |
-| Core 노출 REST    | WIP 프로그램 측 (slot_state·QR 정보·되담기 완료·HealthCheck 수신 + Unit 정보 Mapping·갱신된 Tray 형태 응답) + QR 발행 프로그램 측 (Unit ID 발급·적층 Tray 정보 Mapping) + Unit 관리 프로그램 측 (제품 정보 조회·Unit 구성 조회) | *** | ⏳       | -    | 6/5  |
-| MQTT Topic·메시지 | AMMR ↔ Core. 보고 (HW 상태·slot_state·위치·BMS·Job 결과·Last Will·Snapshot) + Core → AMMR 명령 (Job 지시[표시용 선탑재]·Snapshot 요청) + AMMR 태블릿 → Core 사용자 명령 (Unit 식별값 입력·Unit 정보 조회) | *** | ⏳       | -    | 6/5  |
+| Core 노출 REST    | WIP 프로그램 측 (slot_state·QR 정보·되담기 완료·HealthCheck 수신 + Unit 정보 Mapping·갱신된 Tray 형태 응답) + QR 발행 프로그램 측 (Unit ID 발급·적층 Tray 정보 Mapping) + Unit 관리 프로그램 측 (제품 정보 조회·Unit 구성 조회) | *** | ⏳       | -    | -    |
+| MQTT Topic·메시지 | AMMR ↔ Core. AMMR 보고 (연결 상태[Last Will]·일괄 보고[정합 상태 + 적재 정보]·HW 상태 전이·Slot 상태 전이·위치·BMS·Job 수신 확인·Job 결과·설정값 보고[예비]) + Core → AMMR (Job 지시[표시용 선탑재]·일괄 보고 응답[정합 정정]·일괄 보고 재전송 요청[예비]·설정값 조회 요청[예비]·Core 연결 상태 알림) | *** | ✅       | -    | -    |
 
 ---
 
@@ -55,4 +55,4 @@
 | 항목             | 내용                                                                             | 담당자        | 진행상태 | 비고           | 일정 |
 |------------------|----------------------------------------------------------------------------------|---------------|----------|----------------|------|
 | Core 본체 (구조) | -                                                                                | *** | ⏳       | 상호 코드 참조 | -    |
-| Core 본체 (구조) | Adapter 8종 (GM·SM·일반 공정 WIP·CNC WIP·QR 발행·Unit 관리·작업 실적·MQTT) + Adapter별 HealthMonitor + 서비스 3종 (State·Transfer·AMMR) + 인프라 (InMemory 상태 저장·EF Core (CRUD만 사용)·Channel 입력 Queue·Event 버스·미영속화 이력 백업·Serilog 기반 구조화 Logging) | *** | ⏳       | 상호 코드 참조 | 7/3  |
+| Core 본체 (구조) | Adapter 5종 (GM·SM·일반 공정 WIP·CNC WIP·AMMR — 과도기 독립 프로그램 3종[QR 발행·Unit 관리·작업 실적]은 외부 영역·Dashboard 흡수 시점에 Command API Controller 경계로 합류·Adapter 아님) + Adapter별 HealthMonitor + 서비스 3종 (State·Transfer·AMMR) + 인프라 (InMemory 상태 저장·EF Core (CRUD만 사용)·Channel 입력 Queue·Event 버스·미영속화 이력 백업·Serilog 기반 구조화 Logging) | *** | ⏳       | 상호 코드 참조 | -    |

@@ -1,11 +1,11 @@
-# Core 구현참고 Channels 해설 v1.0_d14
+# Core 구현참고 Channels 해설 v1.0_d16
 
 이 파일은 Core 아키 본체 §4.6 인프라 계층의 Channels 두 구조(FIFO 파이프 / Event 버스)을 실제 구현 코드 수준으로 풀어낸 학습 자료다. 본체와 독립 수명이며, Core 프로젝트 zip 묶음에 동반 자료로 포함된다.
 
 
-> **기준 본체**: Core_구현참고_Channels해설_v1_0_d14.md (학습 원본 변경 시 사용자 명시 때만 sync)
-> 이 문서는 `Core_구현참고_Channels해설_v1_0_d14.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-17 13:00
+> **기준 본체**: Core_구현참고_Channels해설_v1_0_d16.md (학습 원본 변경 시 사용자 명시 때만 sync)
+> 이 문서는 `Core_구현참고_Channels해설_v1_0_d16.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-07-22 15:18
 ---
 
 ## 1. Channels 개요
@@ -56,7 +56,7 @@ public record WipQrInput(int WipId, int SlotId, string UnitId, bool RebundleDone
 public record WipSensorInput(int WipId, int SlotId, bool Occupied)
     : StateServiceInput;
 
-// MQTT Adapter 입력 — AMMR HW 보고
+// AMMR Adapter 입력 — AMMR HW 보고
 public record AmmrStateInput(int AmmrId, AmmrStatus Status, int CurrentNode)
     : StateServiceInput;
 
@@ -105,7 +105,7 @@ builder.Services.AddSingleton<ChannelReader<StateServiceInput>>(inputChannel.Rea
 // Adapter 등록 — Writer만 주입받음
 builder.Services.AddSingleton<SmAdapter>();
 builder.Services.AddSingleton<WipAdapter>();
-builder.Services.AddSingleton<MqttAdapter>();
+builder.Services.AddSingleton<AmmrAdapter>();
 builder.Services.AddSingleton<GmAdapter>();
 // CommandAPI는 Controller라 자동 등록
 
@@ -940,7 +940,7 @@ public async Task OnJobResult(JobResultEvent evt)
             // Pickup 직전 검증 — State Service Pull (§5.6 조회 채널 원칙)
             var ok = await VerifyBeforeJob(next);
             if (ok)
-                await _mqttGateway.Publish(next);
+                await _ammrGateway.Publish(next);
             else
                 await HandleVerificationFail(next);
         }
