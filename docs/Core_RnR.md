@@ -1,13 +1,13 @@
-# Core R&R
+# Core RnR
 
-> 이 문서는 `Core_RnR_v0_1_d65.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-07-28 13:10
+> 이 문서는 `Core_RnR_v1_0_d75.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-11 13:52
 
 ---
 
 ## 1. 개요
 
-이 문서는 시스템 개발 영역별 R&R을 정리한 본체 산출물입니다. SRS·SAD 본체를 기준으로 현재 개발 상황에 맞춘 영역별 R&R을 정리합니다. QR 발행·Unit 관리·작업 실적은 독립 프로그램으로 개발합니다. 이 문서는 영역별 책임 경계와 담당자를 쥐고, 인터페이스·구조의 계약 상세는 SRS·SAD·ICD가 쥡니다.
+이 문서는 시스템 개발 영역별 RnR을 정리한 본체 산출물입니다. SRS·SAD 본체를 기준으로 현재 개발 상황에 맞춘 영역별 RnR을 정리합니다. QR 발행·Unit 관리·작업 실적은 독립 프로그램으로 개발합니다. 이 문서는 영역별 책임 경계와 담당자를 쥐고, 인터페이스·구조의 계약 상세는 SRS·SAD·ICD가 쥡니다.
 
 진행상태 ✅(완료)는 실제 최적화된 상태가 아닌 임시로라도 처리 가능한 상태, ⏳(진행 중)은 작업이 진행되고 있는 상태, 🔜(대기)는 아직 착수되지 않은 상태를 의미합니다.
 
@@ -19,8 +19,8 @@
 |------------------------|---|---------------|----------|------|------|
 | GM 시스템              | 제품 정보·Recipe REST API 제공 | *** | ✅       | -    | -    |
 | SM 시스템              | Core가 쓰는 설비·공정 데이터 REST API 제공 | *** | ✅       | -    | -    |
-| 일반 공정 WIP 프로그램 | WinForms 단독 실행 프로그램. PLC 통신 + 중계 Dashboard로 slot_state 판정 + 사용자 QR 입력·입출고 판정 + Core REST 호출 + HealthCheck 송신 | *** | ⏳       | -    | -    |
-| CNC WIP 프로그램       | WinForms 단독 실행 프로그램. PLC 통신 + 중계 Dashboard로 slot_state 판정(pair_waiting 포함) + 사용자 QR 입력·입출고 판정 + 되담기 Queue 관리 + 이동/되담기 작업 로봇 조율 + Core REST 호출 + HealthCheck 송신 | *** | ⏳       | -    | -    |
+| 일반 공정 WIP 프로그램 | WinForms 단독 실행 프로그램. PLC 통신 + WIP Dashboard로 slot_state 판정 + 사용자 QR 입력·입출고 판정 + Core REST 호출 + 주기 일괄 보고 + HealthCheck 송신 | *** | ⏳       | -    | -    |
+| CNC WIP 프로그램       | WinForms 단독 실행 프로그램. PLC 통신 + WIP Dashboard로 slot_state 판정(pair_waiting 포함) + Pair 판단 자체 수행 + 사용자 QR 입력·입출고 판정 + 되담기 Queue 관리 + 이동/되담기 작업 로봇 조율 + 되담기 완료 보고 + Core REST 호출 + 주기 일괄 보고 + HealthCheck 송신 | *** | ⏳       | -    | -    |
 | QR 발행 프로그램       | WinForms 단독 실행 프로그램. 공정 Unit 구성 + QR 스티커 출력·재출력 + 적층 Tray 정보 Mapping + 외주 배차 확정·복귀 등록(Unit 재편·Unit 구성 등록·부여된 ID로 QR 출력) + Core REST 호출 | *** | ⏳       | -    | -    |
 | Unit 관리 프로그램     | WinForms 단독 실행 프로그램. GM 제품 정보 조회 + Unit 구성 조회·편집 + Core REST 호출 | *** | ⏳       | -    | -    |
 | 작업 실적 프로그램     | WinForms 단독 실행 프로그램. QR 리더기 연동 → Unit 정보·현재 위치·다음 공정 표시 + 작업 실적 수동 입력 + Core REST 호출 | *** | ⏳       | -    | -    |
@@ -43,11 +43,11 @@
 
 ## 4. API 정의
 
-| 분류              | 내용                                   | 담당자        | 진행상태 | 비고 | 일정 |
-|-------------------|----------------------------------------|---------------|----------|------|------|
-| Core 노출 REST    | -                                      | *** | ⏳       | -    | -    |
-| Core 노출 REST    | Core Dashboard·외부 프로그램 REST 창구 | *** | ⏳       | -    | -    |
-| MQTT Topic·메시지 | AMMR ↔ Core 양방향 메시지 채널         | *** | ✅       | -    | -    |
+| 항목              | 내용                                  | 담당자        | 진행상태 | 비고 | 일정 |
+|-------------------|---------------------------------------|---------------|----------|------|------|
+| Core 노출 REST    | -                                     | *** | ⏳       | -    | -    |
+| Core 노출 REST    | Core가 외부에 노출하는 REST 창구 전반 | *** | ⏳       | -    | -    |
+| MQTT Topic·메시지 | AMMR ↔ Core 양방향 메시지 채널        | *** | ✅       | -    | -    |
 
 ---
 
@@ -60,6 +60,6 @@
 | Core Dashboard         | - | *** | 🔜       | -              | -    |
 | Core Dashboard         | WinForms/WPF 클라이언트. SignalR 실시간 수신·REST 명령 송신 | *** | 🔜       | -              | -    |
 | SignalR Hub            | - | *** | 🔜       | -              | -    |
-| SignalR Hub            | Core → Core Dashboard 실시간 Push. State Service 단일 게이트웨이 경유 broadcast | *** | 🔜       | -              | -    |
+| SignalR Hub            | Core → Core Dashboard 실시간 Push. State Service 단일 게이트웨이 경유 broadcast. 연결 수립 시 IP Whitelist·사용자 인증 검증 | *** | 🔜       | -              | -    |
 | Command API Controller | - | *** | ⏳       | -              | -    |
 | Command API Controller | Core Dashboard·독립 프로그램 REST 수신 창구. IP Whitelist·사용자 인증·역할별 권한 검증 + 보안 Log 진입점 | *** | ⏳       | -              | -    |
