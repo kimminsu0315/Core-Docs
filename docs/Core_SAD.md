@@ -1,7 +1,7 @@
 # Core 아키텍처
 
-> 이 문서는 `Core_SAD_v1_0_d562.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-16 23:14
+> 이 문서는 `Core_SAD_v1_0_d564.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-24 13:19
 
 ---
 
@@ -438,7 +438,7 @@ Core의 핵심 비즈니스 로직을 담당하는 3개의 서비스로 구성�
   또한 이 저장소 쓰기 경로는 State Service 내부로 한정되며, 읽기 전용 참조만 다른 서비스에 노출된다. 외부 서비스가 보유 객체의 내부 상태를 직접 변경하지 못하도록 노출 객체는 변경 불가로 정해진다. 이로써 읽기 직접 접근(성능)와 쓰기 권위 일원화가 양립한다.
 - **PostgreSQL + EF Core** — 마스터 데이터(GM 제품·Recipe, Unit별 개별 Recipe, 외주 이력, 시스템 설정, 사용자·권한 등)와 이력 데이터(Transfer 이력·Job 이력·공정-CNC 작업대 Mapping 변경 이력)를 저장한다. 단, AMMR 운영 설정값(AMMR HW 자체 임계 20%/80%·충전 스테이션 번호·시스템 접속 정보·일괄 보고·위치·BMS 보고 주기)은 AMMR 내부에 보유되며 Core 마스터 데이터(시스템 설정)에 포함되지 않는다. **DB는 마스터·이력의 기록 권위 매체이며, 실시간 상태의 권위는 InMemory에 있다.** State Service가 Core 내부 DB 접근의 유일한 게이트웨이이다. Transfer Service·AMMR Service는 DB 권위 데이터가 필요하면 State Service의 내부 API를 경유해 조회한다.
 
-  또한 DB는 보안 Log(사용자 변경 행위·자동 처리 행위 모두 포함)의 영속 매체이기도 하다. 보안 Log는 사용자 행위와 자동 행위를 모두 한 영역으로 수렴한다. 사용자 행위는 변경자·변경 시각·접속 IP를 공통 필드로 보존하며, 시스템 관리·운영 시점 사용자 명령·외주·QR 발행·단말 경유 정합성 회복·인증 등이 여기 든다. 자동 행위는 판정 주체가 State Service 자체라 변경자·접속 IP가 서지 않는다. Block 마킹·해제는 Block 요약 이력을 기록 형식으로 쓰고, Slot을 마킹하지 않는 자동 행위는 보안 Log 항목으로 남는다. State Service가 atomic 안에서 보안 Log 항목 영속화를 동반 수행한다. 운영 단말이 아닌 경로(태블릿 적재 정보 일괄 재로드·WIP Dashboard 식별값 입력)에서 온 조치는 사용자 로그인 정보가 없어 변경자 칸에 그 단말 식별자를, 접속 IP 칸에 그 연결의 원격 주소를 남긴다.
+  또한 DB는 보안 Log(사용자 변경 행위·자동 처리 행위 모두 포함)의 영속 매체이기도 하다. 보안 Log는 사용자 행위와 자동 행위를 모두 한 영역으로 수렴한다. 사용자 행위는 변경자·변경 시각·접속 IP를 공통 필드로 보존하며, 시스템 관리 · 운영 시점 사용자 명령 · 외주·QR 발행 · 단말 경유 정합성 회복 · 인증 등이 여기 든다. 자동 행위는 판정 주체가 State Service 자체라 변경자·접속 IP가 서지 않는다. Block 마킹·해제는 Block 요약 이력을 기록 형식으로 쓰고, Slot을 마킹하지 않는 자동 행위는 보안 Log 항목으로 남는다. State Service가 atomic 안에서 보안 Log 항목 영속화를 동반 수행한다. 운영 단말이 아닌 경로(태블릿 적재 정보 일괄 재로드·WIP Dashboard 식별값 입력)에서 온 조치는 사용자 로그인 정보가 없어 변경자 칸에 그 단말 식별자를, 접속 IP 칸에 그 연결의 원격 주소를 남긴다.
 
   이력 데이터는 두 Table로 분리된다. **Transfer 이력**에는 Transfer Lifecycle Event(생성/무효화/완료/실패 종료)와 이상 신호 Event(멱등 skip 등)가 적재된다. **Job 이력**에는 단위 Job(Move/Pickup/Dropoff/Charge)의 발행 시점과 결과 시점에 각각 1행이 추가된다(EventType으로 행 구분, 같은 JobID로 두 행이 연결됨). 두 행 공통 적재는 시점·AMMR·Slot·Transfer ID이며, 결과 행에는 성공/실패·실패 Reason이 추가 적재된다. Transfer에서 파생된 Job은 Transfer ID로 Transfer 이력과 매칭된다(매칭 대상은 skip 플래그 False 레코드 한정). Charge로 자체 생성된 Job 및 skip 플래그 True 레코드는 매칭 대상이 아니다.
 
@@ -591,7 +591,7 @@ State Service (InMemory 갱신 → 정합성 검사 → Event 발행)
    직접 조회 (Push 채널 아님).
 ```
 
-SM 폴링 주기 마스터는 DB 시스템 설정이며 Core Dashboard 시스템 설정 화면에서 조정한다. Core가 SM 응답에서 쓰는 데이터는 세 종류다 — 공정-CNC 작업대 Mapping(CNC 작업대마다 담당하는 제품과 CNC 공정 · 제품은 모델과 버전 조합으로 가른다), CNC 작업대 Slot Sensor 신호, 장비 상태. Mapping·Slot Sensor 신호·장비 상태는 모두 InMemory 권위의 런타임 상태로 처리된다. Mapping의 진실 원본은 SM이며 Core는 폴링으로 받은 값을 InMemory에 두고, 변경을 감지한 시점의 이력만 DB에 기록한다. Mapping 정보가 없는 CNC 작업대 Sensor 신호는 처리 대상이 아니며, 자동화 대상 설비 목록에 없는 CNC 작업대 신호도 처리하지 않는다. 장비 상태가 통신 끊김인 CNC 작업대의 신호도 같게 다룬다. 설비 측 통신이 끊긴 동안 올라오는 값은 갱신을 보장하지 못하므로 마지막 정합 상태를 유지하고, 통신이 회복된 뒤 들어오는 값으로 다시 정합을 맞춘다. 공정 배정값이 번호형이 아닌 CNC 작업대도 Recipe 공정과 대조되지 않아 배정 대상이 아니다. Recipe 공정과 CNC 작업대 배정값의 대조는 두 값이 정확히 같은지를 보며, 앞부분만 같은 값은 다른 공정으로 다룬다. 자동화 대상 설비 목록 마스터는 DB 시스템 설정이다. CNC 작업대 Slot Sensor로 쓰는 SM 신호는 CONVEYOR_INPUT/OUTPUT_SIGNAL 한 쌍이며, INPUT 신호가 입고 Slot·OUTPUT 신호가 출고 Slot에 대응한다. SM 응답의 설비 항목에서 Core가 쓰는 값은 장비명·장비 상태·모델·공정·버전과 이 한 쌍뿐이며, 항목에 함께 오는 나머지 필드는 쓰지 않는다. 응답 봉투의 처리 결과가 성공(SUCCESS)이 아니면 Adapter가 폴링 실패로 다룬다.
+SM 폴링 주기 마스터는 DB 시스템 설정이며 Core Dashboard 시스템 설정 화면에서 조정한다. Core가 SM 응답에서 쓰는 데이터는 세 종류다 — 공정-CNC 작업대 Mapping(CNC 작업대마다 담당하는 제품과 CNC 공정 · 제품은 모델과 버전 조합으로 가른다), CNC 작업대 Slot Sensor 신호, 장비 상태. Mapping·Slot Sensor 신호·장비 상태는 모두 InMemory 권위의 런타임 상태로 처리된다. Mapping의 진실 원본은 SM이며 Core는 폴링으로 받은 값을 InMemory에 두고, 변경을 감지한 시점의 이력만 DB에 기록한다. Mapping 정보가 없는 CNC 작업대 Sensor 신호는 처리 대상이 아니며, 자동화 대상 설비 목록에 없는 CNC 작업대 신호도 처리하지 않는다. 장비 상태가 통신 끊김인 CNC 작업대의 신호도 같게 다룬다. 설비 측 통신이 끊긴 동안 올라오는 값은 갱신을 보장하지 못하므로 마지막 정합 상태를 유지하고, 통신이 회복된 뒤 들어오는 값으로 다시 정합을 맞춘다. 공정 배정값이 번호형이 아닌 CNC 작업대도 Recipe 공정과 대조되지 않아 배정 대상이 아니다. Recipe 공정과 CNC 작업대 배정값의 대조는 두 값이 정확히 같은지를 보며, 앞부분만 같은 값은 다른 공정으로 다룬다. 자동화 대상 설비 목록 마스터는 DB 시스템 설정이다. CNC 작업대 Slot Sensor로 쓰는 SM 신호는 CONVEYOR_INPUT/OUTPUT_SIGNAL 한 쌍이며, INPUT 신호가 입고 Slot·OUTPUT 신호가 출고 Slot에 대응한다. SM 응답의 설비 항목에서 Core가 쓰는 값은 장비명·장비 상태·모델·공정·버전과 이 한 쌍뿐이며, 항목에 함께 오는 나머지 필드는 쓰지 않는다. 응답의 처리 결과가 성공(SUCCESS)이 아니면 Adapter가 폴링 실패로 다룬다.
 
 **※ SM 수신 데이터 3종**
 
@@ -1099,7 +1099,7 @@ CNC 작업대 Slot은 InMemory에 두 필드를 보유한다: Slot Sensor 식별
 
 Slot 두 필드(Slot Sensor 식별값·Slot Unit 식별값)는 각각 독립 권위에서 갱신되며 두 필드 정합성 검사는 이 둘이 의미적으로 일치하는가(Sensor On 시 Unit ID 있음, Sensor Off 시 Null)를 판단한다. 이 검사는 Slot Sensor 식별값이 On·Off인 경우 한정이며, Sensor Null 케이스는 이 권위 없음 전파로 Null 행 처리되어 검사 영역 밖이다. 두 필드 정합성 검사가 QR Scan 확정 정보 원칙('추정으로 임의 채우지 않음')의 런타임 구현이다.
 
-**Slot Unit 식별값의 확정 근거 — Tray ID.** 확정 등급 Slot Unit 식별값은 QR Scan으로 받는 값을 근거로 한다. QR에 담긴 값은 Tray마다 유니크한 시스템 권위 식별값(Tray ID)이며, State Service는 이 값으로 해당 Tray가 속한 Unit을 식별해 Slot Unit 식별값을 확정한다. 한 Unit의 어느 Tray ID로도 같은 Unit이 풀린다. 사람 읽기용 라벨(`투입코드_유닛번호`)은 제품정보 표시용이며 권위 식별에는 쓰지 않는다.
+**Slot Unit 식별값의 확정 근거 — Tray ID.** 확정 등급 Slot Unit 식별값은 QR Scan으로 받는 값을 근거로 한다. QR에 담긴 값은 Tray마다 유니크한 시스템 권위 식별값(Tray ID)이며, State Service는 이 값으로 해당 Tray가 속한 Unit을 식별해 Slot Unit 식별값을 확정한다. 한 Unit의 어느 Tray ID로도 같은 Unit이 풀린다. 사람 읽기용 라벨(`투입코드_유닛번호`)은 제품 정보 표시용이며 권위 식별에는 쓰지 않는다.
 
 **※ 필드별 갱신 권위**
 
@@ -1369,7 +1369,7 @@ State Service [수신] atomic 처리
 | 채널                                                      | 감지 수단 |
 |-----------------------------------------------------------|---|
 | GM Adapter                                                | REST 폴링 응답 timeout |
-| SM Adapter                                                | REST 폴링 응답 timeout·응답 본문의 처리 결과가 성공이 아님(RESULT) |
+| SM Adapter                                                | REST 폴링 응답 timeout·응답의 처리 결과가 성공이 아님(RESULT) |
 | General Process WIP Adapter · Restack Process WIP Adapter | Adapter 측 주기 감시 방식으로 WIP 프로그램으로부터 주기 수신하는 HealthCheck의 마지막 수신 시각 점검 — 주기 초과 시 두절 사실을 State Service에 전달 |
 | AMMR Adapter                                              | MQTT 라이브러리 disconnect Event 수신 (TCP FIN/RST·PINGRESP 미수신·Socket 예외를 라이브러리 내부에서 통합해 발화 — Adapter는 이 Event만 구독) |
 

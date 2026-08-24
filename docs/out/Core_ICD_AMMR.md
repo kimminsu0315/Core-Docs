@@ -1,7 +1,7 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
-> 이 문서는 `Core_ICD_AMMR_v1_0_d232.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-16 23:17
+> 이 문서는 `Core_ICD_AMMR_v1_0_d235.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-24 13:19
 
 ---
 
@@ -221,7 +221,7 @@ Core도 CONNECT 시 `core/conn` 을 Topic으로 하는 LWT(`{"header": {"timesta
 
 모든 Payload는 **JSON (UTF-8)** 이다. 운영 부하 수준(AMMR 2대·초당 수십 건 이하 메시지)에서 인코딩 비용 부담이 없고, 디버깅·Log 가독성이 높다.
 
-**구조 = `header` + `body`.** 모든 Payload는 봉투 메타를 담는 `header`와 메시지별 내용을 담는 `body` 두 객체로 구성된다. 전송·라우팅 메타를 MQTT 속성이나 Topic에만 의존하지 않고 Payload 안에 자기완결로 담아, Log에 Payload 문자열 하나만 남아도 메시지를 단독으로 해석할 수 있게 한다.
+**구조 = `header` + `body`.** 모든 Payload는 전송·라우팅 메타를 담는 `header`와 메시지별 내용을 담는 `body` 두 객체로 구성된다. 전송·라우팅 메타를 MQTT 속성이나 Topic에만 의존하지 않고 Payload 안에 자기완결로 담아, Log에 Payload 문자열 하나만 남아도 메시지를 단독으로 해석할 수 있게 한다.
 
 `header`는 다음 공통 필드를 담는다.
 
@@ -956,7 +956,9 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | `dropoff` | ✓ 도착 외부 설비 ID | ✓ AMMR slot → 외부 slot | ✓    |
 | `charge`  | –                   | –                       | –    |
 
-**설비 ID·Slot ID**: 설비 ID(예: `WIP-CLN001` 세척·블라스팅 WIP, `CNC-RAC-A02` CNC 작업대)와 Slot ID(예: `WIP-CLN001-A1`, `CNC-RAC-A02-BEFORE`, `CNC-RAC-A02-AFTER`, `AMMR-LOGI001-A1`) 두 층위다. 목적지는 좌표가 아니라 설비 ID이며 AMMR이 자체 맵으로 물리 위치를 해석한다. 전체 목록은 설치 시 Core 측이 제공한다. Charge는 위치·unit 필드가 없다. 충전 스테이션은 태블릿 설정값이 단일 소스다 (§8.5).
+**설비 ID·Slot ID**: 설비 ID(예: `WIP-CLN001` 세척·블라스팅 WIP, `CNC-RAC-A02` CNC 작업대)와 Slot ID(예: `WIP-CLN001-A1`, `CNC-RAC-A02-BEFORE`, `CNC-RAC-A02-AFTER`, `AMMR-LOGI001-A1`) 두 층위다. 목적지는 좌표가 아니라 설비 ID이며 AMMR이 자체 맵으로 물리 위치를 해석한다. 전체 목록은 설치 시 Core 측이 "물류 AMMR 설비 ID · Slot ID 목록"으로 제공한다. Charge는 위치·unit 필드가 없다. 충전 스테이션은 태블릿 설정값이 단일 소스다 (§8.5).
+
+**설비와 Slot의 짝**: `work_location_id`와 `slot_info`의 외부 Slot은 한 짝이다. Pickup의 `from_slot_id`와 Dropoff의 `to_slot_id`는 `work_location_id`가 가리키는 설비에 속한 Slot이어야 한다. Slot ID가 설비 ID로 시작하므로 두 값만으로 판정한다. 다른 설비의 Slot을 지정한 지시는 계약 위반이라 AMMR은 수행하지 않고 거부한다 (`reason` = `job_invalid_request`).
 
 `unit` 구조 (Pickup·Dropoff 선탑재):
 
@@ -1616,7 +1618,7 @@ AMMR HW가 위 8종으로 포괄되지 않는 새로운 물리 상태를 가지�
 | `slot_dest_occupied`        | Slot 측    | Dropoff 목적지 Slot이 점유됨 (도착 시 slot_state occupied) |
 | `slot_dest_obstructed`      | Slot 측    | Dropoff 시 물리 충돌 감지 (Manipulator Vision Sensor) |
 | `slot_other`                | Slot 측    | 그 외 Slot 측 사유 |
-| `job_invalid_request`       | 지시 측    | 지시 자체가 계약에 어긋나 수행 불가 (필수 필드 누락·다른 호기의 Slot 지정·맵에 없는 목적지 설비 ID 등). 단 `error`·`low_battery` 상태 중 수신이면 상태 사유(`ammr_hw_error_state`·`ammr_hw_low_battery`)가 앞선다. 그 상태에서는 지시 내용을 검사하지 않고 거부한다 |
+| `job_invalid_request`       | 지시 측    | 지시 자체가 계약에 어긋나 수행 불가 (필수 필드 누락·다른 호기의 Slot 지정·맵에 없는 목적지 설비 ID·작업 대상 설비와 다른 설비의 Slot 지정 등). 단 `error`·`low_battery` 상태 중 수신이면 상태 사유(`ammr_hw_error_state`·`ammr_hw_low_battery`)가 앞선다. 그 상태에서는 지시 내용을 검사하지 않고 거부한다 |
 
 #### A.5 BMS 필드 단위
 
@@ -1751,5 +1753,5 @@ Job 지시(C-2)와 일괄보고 응답(C-3)의 `unit`이 싣는 Tray 종류. 화
 | 36 | 값 없음 수용   | 값 없음 필드(`…\|null`·header 포함) = null·빈 문자열·빈 객체 동등, 받는 쪽이 '없음' 정규화 | §3.5                                     |
 | 37 | HW 전이 사유   | A-3 `reason` = 7종 확정 enum·필수 · 새 사유는 AMMR이 Core에 알려 Core가 확장 여부를 결정 | §5.1 A-3, §부록 A.11                     |
 | 38 | 주기 발행      | 위치·BMS 스트리밍·주기 일괄 보고 = Core `online` 동안만 발행 · `offline` 이면 중단 · `online` 재감지 시 A-2 재발행 후 재개 | §5.1 A-2·A-5·A-6, §5.2 C-1, §6.8         |
-| 39 | 계약 위반 지시 | 계약에 어긋난 Job 지시(필수 필드 누락·다른 호기 Slot 지정 등) = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`job_invalid_request`·`slot`은 대상 Slot 특정 불가 시 생략·`job_type`·`job_id`는 받은 값 그대로·없었으면 값 없음) · `error`·`low_battery` 중 수신은 상태 사유 우선 | §5.2 C-2, §5.1 A-8, §부록 A.2, §부록 A.4 |
+| 39 | 계약 위반 지시 | 계약에 어긋난 Job 지시(필수 필드 누락·다른 호기 Slot 지정·작업 설비와 Slot 불일치 등) = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`job_invalid_request`·`slot`은 대상 Slot 특정 불가 시 생략·`job_type`·`job_id`는 받은 값 그대로·없었으면 값 없음) · `error`·`low_battery` 중 수신은 상태 사유 우선 | §5.2 C-2, §5.1 A-8, §부록 A.2, §부록 A.4 |
 | 40 | 응답 임계      | 3초 3종 — 재로드(수동 일괄 보고) 응답 대기(태블릿 측·미도달 시 실패 처리·담당자 재시도) · 일괄 보고 재전송 응답(Core 측·예비) · 설정값 조회 응답(Core 측·예비) | §7.3, §5.2 C-3·C-4·C-5                   |

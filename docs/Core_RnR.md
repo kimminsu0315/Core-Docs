@@ -1,7 +1,7 @@
 # Core RnR
 
-> 이 문서는 `Core_RnR_v1_0_d75.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-11 13:52
+> 이 문서는 `Core_RnR_v1_0_d76.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-24 11:18
 
 ---
 
@@ -24,7 +24,7 @@
 | QR 발행 프로그램       | WinForms 단독 실행 프로그램. 공정 Unit 구성 + QR 스티커 출력·재출력 + 적층 Tray 정보 Mapping + 외주 배차 확정·복귀 등록(Unit 재편·Unit 구성 등록·부여된 ID로 QR 출력) + Core REST 호출 | *** | ⏳       | -    | -    |
 | Unit 관리 프로그램     | WinForms 단독 실행 프로그램. GM 제품 정보 조회 + Unit 구성 조회·편집 + Core REST 호출 | *** | ⏳       | -    | -    |
 | 작업 실적 프로그램     | WinForms 단독 실행 프로그램. QR 리더기 연동 → Unit 정보·현재 위치·다음 공정 표시 + 작업 실적 수동 입력 + Core REST 호출 | *** | ⏳       | -    | -    |
-| 물류 AMMR              | Core와 MQTT로 양방향 통신. 업체 대면본 3종 제공 (물류 AMMR 시스템 요구사항·Interface Control Document·AMMR 태블릿 UI 정의 제안) | *** | ✅       | -    | -    |
+| 물류 AMMR              | Core와 MQTT로 양방향 통신. 업체 대면본 4종 제공 (물류 AMMR 시스템 요구사항·Interface Control Document·AMMR 태블릿 UI 정의 제안·물류 AMMR 설비 ID · Slot ID 목록) | *** | ✅       | -    | -    |
 | AMMR 시뮬레이터        | ASP.NET Core 단독 실행 프로그램. 가짜 물류 AMMR 2대·Core 테스트 콘솔 구동 + 내장 MQTT Broker + 웹 패널 조작(Job 지시·사람 개입·장애·통신 단절·저전력 주입) + 오가는 메시지 ICD 적합성 자동 검사. HW 미입고 단계 Core 본체 통신 상대이자 업체 구현 검증 표적 | *** | ⏳       | -    | -    |
 
 ---
