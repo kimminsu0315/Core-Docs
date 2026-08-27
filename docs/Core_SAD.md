@@ -1,7 +1,7 @@
 # Core 아키텍처
 
-> 이 문서는 `Core_SAD_v1_0_d564.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-24 13:19
+> 이 문서는 `Core_SAD_v1_0_d567.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-27 18:49
 
 ---
 
@@ -480,7 +480,7 @@ DB 권위는 **기록 권위**를 의미하며, 이 흐름(InMemory 갱신·정�
 | (b) AMMR HW 단절 시 AMMR 전체 Slot 마킹    | AmmrHwDisconnect                                       | State Service | AmmrHwReconnected (자동)                               | 단절 신호 수신·Job 지시 수신 확인 3초 timeout 둘 중 하나로 진입. AMMR HW 정상 보고 재개로 자연 덮어쓰기 자동 해제 |
 | (c) AMMR HW 장애 시 AMMR 전체 Slot 마킹    | AmmrHwError                                            | State Service | AmmrHwRecovered (자동)                                 | MQTT 경로 살아있고 AMMR HW 자체 실패 또는 계약 위반 payload 수신(보고 전체를 신뢰할 수 없는 상태). AMMR HW 정상 보고 재개 시 권위 자연 덮어쓰기로 자동 해제 |
 | (d) 정합성 불일치 시 Slot 마킹             | IntegrityMismatch / JobFailed                          | State Service | IntegrityRestored·JobFailedResolved (자동)             | CNC 작업대=Core 두 필드 검사 / AMMR·WIP=클라이언트 판정 blocked→IntegrityMismatch·job_failed→JobFailed(AMMR 한정) 수신 시 마킹 / 활성 Unit 대조 축은 계열 무관 — Core 활성 Unit에 없는 Slot Unit 식별값은 IntegrityMismatch로 마킹 / Pickup 실패 결과 수신 시 출발 Slot이 점유로 남아 있으면 IntegrityMismatch로 마킹하고, 그 Slot Unit 회수 또는 다음 Pickup 성공으로 해제한다 |
-| (e) 도착 시점 검증 실패 시 Slot 마킹       | ArrivalValidationFail                                  | AMMR Service  | ArrivalRetryResolved·ArrivalValidationRestored (자동)  | 실패 사유는 (1) 목적지 Slot 점유 (2) Slot Block (3) Manipulator Vision Sensor 충돌 보고. 목적지 Slot 점유는 Fallback 재탐색으로 다른 가용 Slot에서 정상 도착 시 ArrivalRetryResolved로 자동 해제. 그 밖의 사유는 이송을 실패로 종료하고 담당자 조치로 정합이 회복되는 시점에 ArrivalValidationRestored로 해제 |
+| (e) 도착 시점 검증 실패 시 Slot 마킹       | ArrivalValidationFail                                  | AMMR Service  | ArrivalRetryResolved·ArrivalValidationRestored (자동)  | 실패 사유는 (1) 목적지 Slot 점유 (2) Slot Block (3) Manipulator Vision Sensor 충돌 보고. 목적지 Slot 점유는 Fallback 재탐색으로 다른 가용 Slot에서 정상 도착 시 ArrivalRetryResolved로 자동 해제하며, 대체 경로로 옮겨 간 자리에서 난 점유 실패도 같은 사유로 마킹·해제한다. 그 밖의 사유는 이송을 실패로 종료하고 담당자 조치로 정합이 회복되는 시점에 ArrivalValidationRestored로 해제 |
 | (f) 경로 유효성 검증 실패 시 Slot 마킹     | RecipeRouteMismatch / MachinePending / HandoverPending | State Service | RecipeRouteRestored·MachineRestored·SlotCleared (자동) | 마킹 조건·대상 위치·해제 계기는 경로 유효성 축이 쥔다. 설비 대기 위치는 MachinePending·인계 대기 위치는 HandoverPending이다. |
 
 **마킹 주체는 모두 State Service.** (a)~(d)·(f)는 State Service가 직접 판정·atomic 안에서 마킹한다. (e)는 AMMR Service가 도메인 판정(도착 가능성 평가)을 수행하고 State Service에 마킹 갱신 요청하면 State Service가 atomic 안에서 마킹한다. 권위 일원화 원칙의 일관 적용이다.
@@ -966,7 +966,7 @@ Reason(AMMR HW 측 / Slot 측 / 지시 측)는 서비스 계층 책임으로 분
 
 물리적 수행 세부(Manipulator Vision Sensor 감지 등)는 AMMR HW 자체 제어. Core는 Job 수행 결과 통합 보고만 수신.
 
-**※ AMMR 태블릿 표시 (선탑재 + 조건부 정정).** 표시 회신 계열(Slot 변동·Job 결과·상태 전이 회신)은 두지 않는다. 태블릿은 Job 지시(MQTT job/cmd)에 선탑재된 Unit·위치 정보와 자기 slot_state 판정으로 적재 상태·배정 상태를 자체 구성하고, 상단 정보(HW 상태·최근 명령·명령 Slot 등)도 자체 산출한다. 선탑재 Unit 정보에는 Tray 종류가 함께 든다. 물류 AMMR이 Tray 종류에 따라 집고 놓는 방식을 가를 수 있기 때문이다. State Service는 AMMR 일괄 보고·재로드 처리 [수신] atomic 안에서 보고 slot_state·Unit 식별값이 마스터 배정과 어긋난 경우에만 정정(reconcile) 응답을 MQTT 발신 게이트웨이로 해당 AMMR에 회신한다(일치 시 무응답). 회신은 두 층위다 — Core 마스터 기준으로 확정한 Unit 정보와, 입력 Unit의 Recipe·경로 유효성 판정 결과다. 물류 AMMR에는 이 판정 결과가 목적지 Job 배정 정정으로 반영된다. 단 담당자 재로드(수동 발행 일괄 보고)는 일치해도 회신한다. 태블릿이 응답 도착으로 재로드 성공을 판정한다. SignalR Core Dashboard Push는 별개로 같은 atomic 안에서 수행된다.
+**※ AMMR 태블릿 표시 (선탑재 + 조건부 정정).** 표시 회신 계열(Slot 변동·Job 결과·상태 전이 회신)은 두지 않는다. 태블릿은 Job 지시(MQTT job/cmd)에 선탑재된 Unit·위치 정보와 자기 slot_state 판정으로 적재 상태·배정 상태를 자체 구성하고, 상단 정보(HW 상태·최근 명령·명령 Slot 등)도 자체 산출한다. 선탑재 Unit 정보에는 Tray 종류가 함께 든다. 물류 AMMR이 Tray 종류에 따라 집고 놓는 방식을 가를 수 있기 때문이다. Move 지시에는 뒤따를 Pickup·Dropoff에서 다룰 Slot을 함께 싣는다. 통합 Slot WIP은 한 설비 안에 Slot이 여러 열로 서 있어, 설비까지만 지시하면 도착한 뒤 Slot 앞으로 다시 움직여야 하기 때문이다. 이동 목적지 지정은 설비 ID 그대로이며 이 Slot 값은 정차 위치 참고다. 발행 시점의 예정이라 도착 시점 검증에서 갈릴 수 있고, 실제로 다룰 Slot은 뒤따르는 Pickup·Dropoff 지시가 쥔다. State Service는 AMMR 일괄 보고·재로드 처리 [수신] atomic 안에서 보고 slot_state·Unit 식별값이 마스터 배정과 어긋난 경우에만 정정(reconcile) 응답을 MQTT 발신 게이트웨이로 해당 AMMR에 회신한다(일치 시 무응답). 회신은 두 층위다 — Core 마스터 기준으로 확정한 Unit 정보와, 입력 Unit의 Recipe·경로 유효성 판정 결과다. 물류 AMMR에는 이 판정 결과가 목적지 Job 배정 정정으로 반영된다. 단 담당자 재로드(수동 발행 일괄 보고)는 일치해도 회신한다. 태블릿이 응답 도착으로 재로드 성공을 판정한다. SignalR Core Dashboard Push는 별개로 같은 atomic 안에서 수행된다.
 
 ### 5.6 Transfer 전개 및 Job 실행
 
@@ -1038,7 +1038,7 @@ Transfer는 AMMR Service에서 Job Sequence(Move→Pickup→Move→Dropoff)로 �
 
 ※ Null 케이스 자연스러운 차단. InMemory 조회 항목이 Null(권위 없음)이면 검증 조건("점유"·"비어 있음" 등)의 판정 자체가 성립하지 않아 검증 실패로 처리된다 — Pickup은 Transfer 실패 종료, Dropoff는 동적 Fallback. 별도 Null 분기를 두지 않고 검증 게이트의 자연스러운 처리이다. 식별값 Null 케이스는 그 Slot이 Block으로 마킹되어 표면화되므로 "Block 아님" 검사로 자연스럽게 처리된다.
 
-※ 목적지 점유로 인한 Dropoff 검증 실패는 해당 Slot을 Block 마킹 후 그 공정 담당 가용 Slot 재탐색 → 소진 시 대체 경로 탐색 → 대체 실패 시 만재 라벨의 순차 처리이다. 그 밖의 사유는 Block 마킹 후 이송을 실패로 종료한다. AMMR 이동 관점에서는 Move → Move(대체 경로) → Dropoff 순서가 된다.
+※ 목적지 점유로 인한 Dropoff 검증 실패는 해당 Slot을 Block 마킹 후 그 자리가 속한 묶음 안 재탐색 → 소진 시 대체 경로 탐색 → 고를 자리 없으면 만재 라벨의 순차 처리이며, 대체 경로로 옮겨 간 자리에서도 같게 되풀이된다. 그 밖의 사유는 Block 마킹 후 이송을 실패로 종료한다. AMMR 이동 관점에서는 Move → Move(대체 경로) → Dropoff 순서가 된다.
 
 이미 AMMR이 Pickup 진행 중인 Job은 출발 Slot 비움 Event(일반 공정 WIP·CNC WIP·CNC 작업대)로 자동 무효화되지 않는다. 이 절 Pickup 직전 검증이 그 역할을 대신한다. 검증 실패에 따른 상태 변경(만재 라벨 등)은 AMMR Service 판정, State Service 저장으로 이뤄진다. Pickup 검증 실패로 Transfer가 종료되면 AMMR은 다음 Transfer를 매칭받아 그 출발 Slot으로 이동한다. AMMR 이동 관점에서는 Move → Move(다른 출발 Slot) → Pickup 순서가 된다.
 
@@ -1169,18 +1169,18 @@ AMMR Service: TransferList 매칭 시도 (State Service InMemory 직접 조회)
     ├─ 통과 → Dropoff 진행
     └─ 실패 → 해당 Slot Block 마킹 (점유 외 사유는 여기서 이송 실패 종료)
               ↓ 목적지 점유
-              그 공정 담당 다른 가용 Slot 재탐색
+              그 자리가 속한 묶음 안 다른 가용 Slot 재탐색
                   ├─ 가용 Slot 있음 → 루프 (새 Slot 대상 검증)
-                  └─ 가용 Slot 없음 → 대체 경로 탐색
-                      일반 이동:      출발 Slot 복귀
-                      CNC 관련 이동:  1순위 CNC WIP Slot
-                                      2순위 출발 Slot 복귀
-                      ├─ 대체 성공 → 대체 경로로 Dropoff 재시도
-                      └─ 대체 실패 → AMMR Service → State Service:
-                                      만재 라벨 부착 요청
-                                      ↓
-                                    State Service: AMMR Slot
-                                      만재 라벨 InMemory 반영
+                  └─ 가용 Slot 없음 → 대체 경로 탐색 (앞 묶음으로 되감지 않음)
+                      일반 이동:     출발 Slot 복귀
+                      CNC 관련 이동: CNC WIP Slot
+                      ├─ 고를 자리 있음 → 그 자리로 Dropoff 재시도
+                      │                   (도착해 또 점유면 이 검증 처음부터)
+                      └─ 고를 자리 없음 → AMMR Service → State Service:
+                                          만재 라벨 부착 요청
+                                          ↓
+                                        State Service: AMMR Slot
+                                          만재 라벨 InMemory 반영
 
 [AMMR Slot 만재 라벨 — 단위 Slot 잠정 상태]
 - State Service InMemory 권위 (AMMR Slot 필드)
@@ -1227,13 +1227,13 @@ Fallback은 Dropoff 수행 불가 상황에 단계적으로 대응하는 메커�
 | 시점                     | 검증 대상                            | 검증 실패 시 처리 |
 |--------------------------|--------------------------------------|---|
 | Pull 시점                | 목적지 WIP/CNC 작업대 Slot 여유      | skip, TransferList의 다른 Transfer 재탐색 |
-| 도착 시점 (Dropoff 직전) | 목적지 Slot 검증 (여유 + Block 아님) | 목적지 점유로 실패 시 해당 Slot Block + 그 공정 담당 Slot 내 재탐색, 그 공정 가용 Slot 소진 시 동적 Fallback 발동. 그 밖의 사유는 Block 마킹 후 이송 실패 종료 |
-| 동적 Fallback 실패       | 대체 경로 여유                       | 만재 라벨 부착 |
+| 도착 시점 (Dropoff 직전) | 목적지 Slot 검증 (여유 + Block 아님) | 목적지 점유로 실패 시 해당 Slot Block + 그 자리가 속한 묶음 안 재탐색, 묶음 소진 시 동적 Fallback 발동. 대체 경로로 옮겨 간 자리에서도 같게 되풀이. 그 밖의 사유는 Block 마킹 후 이송 실패 종료 |
+| 동적 Fallback 탐색 실패  | 대체 경로에 고를 자리가 있는가       | 만재 라벨 부착 |
 | 6 Slot 모두 만재         | AMMR 전체 적재 상태                  | Charge Job 생성 + 만재 대기 |
 
-Block 상태 Slot은 가용 Slot에서 제외되므로 목적지 선정 단계에서 만재와 동일한 결과(동적 Fallback 또는 만재 라벨 부착)로 이어진다. 도착 시점에 목적지가 Block으로 밝혀진 경우는 아래 사유별 가름을 따른다. 도착 시점 검증은 Slot 단위로 수행되며, 실패 사유는 (1) 목적지 Slot 점유 (2) Slot Block (3) Manipulator Vision Sensor 충돌 보고이다(Block 6경로 (e)). 목적지 Slot 점유는 해당 Slot을 Block 마킹하고 그 공정을 담당하는 다른 가용 Slot으로 재탐색을 반복하며, 그 공정의 가용 Slot이 소진된 시점에 비로소 대체 경로 탐색(되담기·출발 Slot 복귀)으로 전환된다. 그 밖의 사유는 해당 Slot을 Block 마킹하고 이송을 실패로 종료한다.
+Block 상태 Slot은 가용 Slot에서 제외되므로 목적지 선정 단계에서 만재와 동일한 결과(동적 Fallback 또는 만재 라벨 부착)로 이어진다. 도착 시점에 목적지가 Block으로 밝혀진 경우는 아래 사유별 가름을 따른다. 도착 시점 검증은 Slot 단위로 수행되며, 실패 사유는 (1) 목적지 Slot 점유 (2) Slot Block (3) Manipulator Vision Sensor 충돌 보고이다(Block 6경로 (e)). 목적지 Slot 점유는 해당 Slot을 Block 마킹하고 그 자리가 속한 묶음 안에서 다른 가용 Slot으로 재탐색을 반복하며, 그 묶음이 소진된 시점에 비로소 대체 경로 탐색으로 전환된다. 묶음은 그 자리가 놓인 공정을 담당하는 자리 모음이며, 원래 목적지면 그 공정을 담당하는 Slot들이고 임시 보관 자리면 그 통합 Slot의 선반들이다. 이 처리는 대체 경로로 옮겨 간 자리에서도 그대로 되풀이된다 — 골라 간 자리에 도착해 또 점유로 실패하면 그 자리를 같은 사유로 Block 마킹하고 그 자리가 속한 묶음 안에서 다시 고르며, 그 묶음까지 소진되면 만재 라벨을 부착한다. 앞서 소진된 묶음으로는 되감지 않는다. 원래 목적지에 여유가 도로 생기는 것은 만재 라벨 해소가 쥔다. 실패마다 마킹으로 후보가 줄어 재탐색이 유한하게 끝나므로 별도 횟수 제한을 두지 않는다. 그 밖의 사유는 해당 Slot을 Block 마킹하고 이송을 실패로 종료한다.
 
-동적 Fallback 대체 경로는 Job 성격(이동 출발지 종류)에 따라 분기한다. **일반 이동** = CNC 작업대에서 출발하지 않는 이동, Pair 절차 무관 → 출발 Slot 복귀로 단순 처리. **CNC 관련 이동** = CNC 작업대에서 출발하는 이동, 가공 결과 Unit이라 Dropoff 실패 시 1순위로 CNC WIP **통합 Slot**(되담기 완료 Unit이 놓이는 빈 자리)에 임시 보관하고, 2순위는 출발 Slot 복귀다. 예비로 표시된 CNC WIP 선반은 되담기를 수행하지 않는 보관 자리다. 선반 구성과 예비 여부는 되담기 로봇 동선에 매인 설치 시점 고정값이라 운영 중 바뀌지 않으며, Core는 목적지 선정에서 이 구분을 읽는다. 목적지 선정은 그 Unit이 되담기를 받을 Unit인지로 갈린다 — 개별 Recipe에 되담기 항목이 있으면 되담기 허브 쪽 선반을 먼저 고르고 거기에 여유가 없을 때 예비 선반에 두며, 되담기 항목이 없는 임시 보관은 예비 선반을 먼저 고르고 거기에 여유가 없을 때 허브 쪽 선반을 쓴다. 예비 선반의 출고는 Core가 추가한 경로 항목만 닫으며, GM이 전달한 되담기 항목은 되담기를 거치지 않았으므로 닫지 않는다. 되담기를 기다리며 예비 선반에 놓인 Unit은 순서 위치가 되담기를 가리킨 채이므로 허브 쪽에 여유가 나는 시점에 그리로 옮긴다. Core가 Unit을 원래 다음 공정이 아닌 위치로 옮겨 그 자리에 놓인 것이 확인될 때는 그 Unit의 개별 Recipe에 그 위치가 수행하는 공정을 다음 공정으로 추가하며, 그 항목에 배정 사유를 함께 적는다. 도착 전에 목적지가 대체 경로로 바뀌면 실제로 놓인 자리를 기준으로 붙으므로 앞서 정한 목적지 몫을 되돌릴 일이 없다. 통합 Slot에 배치하면 'Tray 되담기', 세척·블라스팅 WIP으로 이동시키면 세척이 그 공정이다. 원래 다음 공정이 이미 그 위치가 수행하는 공정이면 추가 없이 그대로 배치한다. 추가하는 것은 그 위치로 가는 경로 항목이며, 되담기 작업 메커니즘(짝을 이룬 Tray를 스테이션으로 보내 제품을 옮겨 담는 절차)이 이 배정으로 도는 것은 아니다. 이 사유는 Core가 추가한 항목에만 붙고 GM이 전달한 항목에는 붙지 않는다. 사유는 배정 계기에 따라 셋으로 갈린다.
+동적 Fallback 대체 경로는 Job 성격(이동 출발지 종류)에 따라 분기한다. **일반 이동** = CNC 작업대에서 출발하지 않는 이동, Pair 절차 무관 → 출발 Slot 복귀로 단순 처리. **CNC 관련 이동** = CNC 작업대에서 출발하는 이동, 가공 결과 Unit이라 Dropoff 실패 시 CNC WIP **통합 Slot**(되담기 완료 Unit이 놓이는 빈 자리)에 임시 보관한다. CNC 작업대 출고 Slot으로는 되돌리지 않는다. 그 자리에 Unit을 도로 놓으면 그 CNC 작업대가 다음 일을 받지 못해 설비가 서기 때문이며, 통합 Slot에 여유가 없으면 만재 라벨을 부착해 AMMR이 안은 채 대기한다. 예비로 표시된 CNC WIP 선반은 되담기를 수행하지 않는 보관 자리다. 선반 구성과 예비 여부는 되담기 로봇 동선에 매인 설치 시점 고정값이라 운영 중 바뀌지 않으며, Core는 목적지 선정에서 이 구분을 읽는다. 목적지 선정은 그 Unit이 되담기를 받을 Unit인지로 갈린다 — 개별 Recipe에 되담기 항목이 있으면 되담기 허브 쪽 선반을 먼저 고르고 거기에 여유가 없을 때 예비 선반에 두며, 되담기 항목이 없는 임시 보관은 예비 선반을 먼저 고르고 거기에 여유가 없을 때 허브 쪽 선반을 쓴다. 예비 선반의 출고는 Core가 추가한 경로 항목만 닫으며, GM이 전달한 되담기 항목은 되담기를 거치지 않았으므로 닫지 않는다. 되담기를 기다리며 예비 선반에 놓인 Unit은 순서 위치가 되담기를 가리킨 채이므로 허브 쪽에 여유가 나는 시점에 그리로 옮긴다. Core가 Unit을 원래 다음 공정이 아닌 위치로 옮겨 그 자리에 놓인 것이 확인될 때는 그 Unit의 개별 Recipe에 그 위치가 수행하는 공정을 다음 공정으로 추가하며, 그 항목에 배정 사유를 함께 적는다. 도착 전에 목적지가 대체 경로로 바뀌면 실제로 놓인 자리를 기준으로 붙으므로 앞서 정한 목적지 몫을 되돌릴 일이 없다. 통합 Slot에 배치하면 'Tray 되담기', 세척·블라스팅 WIP으로 이동시키면 세척이 그 공정이다. 원래 다음 공정이 이미 그 위치가 수행하는 공정이면 추가 없이 그대로 배치한다. 추가하는 것은 그 위치로 가는 경로 항목이며, 되담기 작업 메커니즘(짝을 이룬 Tray를 스테이션으로 보내 제품을 옮겨 담는 절차)이 이 배정으로 도는 것은 아니다. 이 사유는 Core가 추가한 항목에만 붙고 GM이 전달한 항목에는 붙지 않는다. 사유는 배정 계기에 따라 셋으로 갈린다.
 
 **※ 배정 사유**
 
@@ -1245,12 +1245,12 @@ Block 상태 Slot은 가용 Slot에서 제외되므로 목적지 선정 단계�
 
 **※ 동적 Fallback 대체 경로**
 
-| Job 성격      | 1순위          | 2순위          |
-|---------------|----------------|----------------|
-| 일반 이동     | 출발 Slot 복귀 | —              |
-| CNC 관련 이동 | CNC WIP Slot   | 출발 Slot 복귀 |
+| Job 성격      | 대체 경로      | 소진 시   |
+|---------------|----------------|-----------|
+| 일반 이동     | 출발 Slot 복귀 | 만재 라벨 |
+| CNC 관련 이동 | CNC WIP Slot   | 만재 라벨 |
 
-출발 Slot 복귀는 그 Unit이 아직 그 공정을 떠나지 않은 상태로 되돌리는 것이므로, 출고 확인으로 전진했던 순서 위치를 출고 직전 위치로 되돌린다. 위치를 옮기지 않아 Recipe에 항목을 추가하지 않으므로 배정 사유가 붙지 않고, 대신 복귀 사유 DestinationFull(목적지 만재)을 쓴다. 복귀 Slot의 slot_state는 WIP 프로그램이 그 Unit을 식별하지 못해 blocked로 올라오므로, State Service는 Dropoff atomic에서 채운 Unit 식별값과 이 사유를 응답에 실어 회신한다. WIP 프로그램은 그 값으로 자기 상태를 되돌리고 WIP Dashboard가 사유를 담당자에게 보인다. 복귀 Slot의 정합이 회복되는 시점에 State Service가 OriginReturnedEvent(출발 Slot 복귀)를 발행하고, 이를 구독한 Transfer Service가 그 Unit의 다음 공정 Transfer를 새로 생성해 TransferList에 세운다(멱등). 복귀 Slot의 점유 보고만으로는 이송이 다시 서지 않으므로 이 생성이 출고 확인을 대신한다. 목적지에 여유가 없는 동안은 매칭 시점 검증에서 걸러져 대기하고, 여유가 나면 그대로 매칭된다. 복귀 Slot이 CNC 작업대 출고 Slot이면 회신 경로가 서지 않는다. SM은 폴링 전용이라 Slot 상태를 자기가 판정해 올리지 않고 Slot Sensor 신호만 준다. Core가 Unit 식별값을 되돌려 채우면 다음 폴링의 Sensor 신호와 맞아 정합성 검사로 회복된다.
+출발 Slot 복귀는 일반 이동에만 있으므로 복귀 자리는 늘 WIP Slot이다. 그 Unit이 아직 그 공정을 떠나지 않은 상태로 되돌리는 것이므로, 출고 확인으로 전진했던 순서 위치를 출고 직전 위치로 되돌린다. 위치를 옮기지 않아 Recipe에 항목을 추가하지 않으므로 배정 사유가 붙지 않고, 대신 복귀 사유 DestinationFull(목적지 만재)을 쓴다. 복귀 Slot의 slot_state는 WIP 프로그램이 그 Unit을 식별하지 못해 blocked로 올라오므로, State Service는 Dropoff atomic에서 채운 Unit 식별값과 이 사유를 응답에 실어 회신한다. WIP 프로그램은 그 값으로 자기 상태를 되돌리고 WIP Dashboard가 사유를 담당자에게 보인다. 복귀 Slot의 정합이 회복되는 시점에 State Service가 OriginReturnedEvent(출발 Slot 복귀)를 발행하고, 이를 구독한 Transfer Service가 그 Unit의 다음 공정 Transfer를 새로 생성해 TransferList에 세운다(멱등). 복귀 Slot의 점유 보고만으로는 이송이 다시 서지 않으므로 이 생성이 출고 확인을 대신한다. 목적지에 여유가 없는 동안은 매칭 시점 검증에서 걸러져 대기하고, 여유가 나면 그대로 매칭된다.
 
 **※ 만재 라벨 해소 — AMMR 상태별 분기**
 
@@ -1318,7 +1318,7 @@ State Service는 WIP Slot 상태가 바뀌는 시점마다 공정별 통합 Slot
 | AMMR 상태 전이 (HW 상태 전이·Core 논리 변화·Battery 분류 진입 포함) | 상태 전이 이력 1건                                         |
 | Job 수행 결과 (Move/Pickup/Dropoff/Charge 완료/실패) | Job 이력 1건 + Unit 위치 변경 이력 1건 (Pickup·Dropoff 시) |
 | Transfer Lifecycle Event (생성/무효화/완료/실패 종료) + 이상 신호 Event (멱등 skip 등) | Transfer 이력 사건마다 1건                                 |
-| Job 발행 (Move/Pickup/Dropoff/Charge 지시) | Job 이력 1건 (Charge 는 Transfer 미경유)                   |
+| Job 발행 (Move/Pickup/Dropoff/Charge 지시) | Job 이력 1건 (Charge는 Transfer 미경유)                    |
 
 ### 5.10 운영 단말 → Core 명령 처리
 

@@ -1,7 +1,7 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
-> 이 문서는 `Core_ICD_AMMR_v1_0_d235.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-24 13:19
+> 이 문서는 `Core_ICD_AMMR_v1_0_d236.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-26 23:05
 
 ---
 
@@ -944,14 +944,14 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | `job_id`           | integer          | 필수   | Job 고유 번호. AMMR은 동일 번호로 결과 보고 |
 | `job_type`         | enum (§부록 A.2) | 필수   | 지시할 Job 종류 |
 | `work_location_id` | string           | 조건부 | 작업 대상 외부 설비 ID. Move·Pickup·Dropoff 시 필수 (Move=목적지 / Pickup=출발 외부 설비 / Dropoff=도착 외부 설비) |
-| `slot_info`        | object           | 조건부 | Pickup·Dropoff 시 필수. `{ from_slot_id, to_slot_id }` — 이번 지시의 Slot 이동 방향. Pickup=외부→AMMR / Dropoff=AMMR→외부 (Unit 전체 경로는 `unit`의 `from_location_id`·`to_location_id`) |
+| `slot_info`        | object           | 조건부 | Pickup·Dropoff 시 필수, Move 시 참고용. `{ from_slot_id, to_slot_id }` — Pickup=외부→AMMR / Dropoff=AMMR→외부. Move는 뒤따를 Job과 같은 방향으로 예정 Slot을 싣는다 (Unit 전체 경로는 `unit`의 `from_location_id`·`to_location_id`) |
 | `unit`             | object           | 조건부 | Pickup·Dropoff 시 필수. 대상 Unit 정보 (선탑재). 구조 아래. |
 
 **job_type별 필요 필드**
 
 | job_type  | work_location_id    | slot_info (from → to)   | unit |
 |-----------|---------------------|-------------------------|------|
-| `move`    | ✓ 목적지 설비 ID    | –                       | –    |
+| `move`    | ✓ 목적지 설비 ID    | 참고용 (예정 Slot)      | –    |
 | `pickup`  | ✓ 출발 외부 설비 ID | ✓ 외부 slot → AMMR slot | ✓    |
 | `dropoff` | ✓ 도착 외부 설비 ID | ✓ AMMR slot → 외부 slot | ✓    |
 | `charge`  | –                   | –                       | –    |
@@ -959,6 +959,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 **설비 ID·Slot ID**: 설비 ID(예: `WIP-CLN001` 세척·블라스팅 WIP, `CNC-RAC-A02` CNC 작업대)와 Slot ID(예: `WIP-CLN001-A1`, `CNC-RAC-A02-BEFORE`, `CNC-RAC-A02-AFTER`, `AMMR-LOGI001-A1`) 두 층위다. 목적지는 좌표가 아니라 설비 ID이며 AMMR이 자체 맵으로 물리 위치를 해석한다. 전체 목록은 설치 시 Core 측이 "물류 AMMR 설비 ID · Slot ID 목록"으로 제공한다. Charge는 위치·unit 필드가 없다. 충전 스테이션은 태블릿 설정값이 단일 소스다 (§8.5).
 
 **설비와 Slot의 짝**: `work_location_id`와 `slot_info`의 외부 Slot은 한 짝이다. Pickup의 `from_slot_id`와 Dropoff의 `to_slot_id`는 `work_location_id`가 가리키는 설비에 속한 Slot이어야 한다. Slot ID가 설비 ID로 시작하므로 두 값만으로 판정한다. 다른 설비의 Slot을 지정한 지시는 계약 위반이라 AMMR은 수행하지 않고 거부한다 (`reason` = `job_invalid_request`).
+
+**Move의 예정 Slot (참고용)**: Core는 Move 지시에 뒤따를 Pickup·Dropoff에서 다룰 Slot을 `slot_info`에 미리 싣는다. 방향은 뒤따를 Job과 같아, 출발지로 가는 Move는 Pickup 방향(외부→AMMR)이고 목적지로 가는 Move는 Dropoff 방향(AMMR→외부)이다. AMMR은 `work_location_id`로 시작하는 쪽 Slot을 골라 그 Slot 지점 앞에 선다. 이 값이 없거나 `work_location_id`와 짝이 아니거나 그 Slot 지점을 맵에서 찾지 못하면 설비 기본 지점으로 이동한다. 어느 쪽으로 갔든 Move 결과는 성공으로 보고한다. Move의 `slot_info`에는 위 짝 검증을 걸지 않으며 이 값 때문에 지시를 거부하지 않는다. 이 값은 Core 발행 시점의 예정이라 뒤따르는 Pickup·Dropoff 지시의 `slot_info`와 다를 수 있다. 실제로 다룰 Slot은 그 지시가 쥐며 AMMR은 나중 지시를 따른다.
 
 `unit` 구조 (Pickup·Dropoff 선탑재):
 
@@ -990,7 +992,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
   "body": {
     "job_id": 1023,
     "job_type": "move",
-    "work_location_id": "WIP-CLN001"
+    "work_location_id": "WIP-CLN001",
+    "slot_info": { "from_slot_id": "WIP-CLN001-A1", "to_slot_id": "AMMR-LOGI001-A1" }
   }
 }
 ```
@@ -1725,7 +1728,7 @@ Job 지시(C-2)와 일괄보고 응답(C-3)의 `unit`이 싣는 Tray 종류. 화
 | 8  | 수명 주기      | Keep Alive 60초(Mosquitto 기본) / Broker 단절 감지 90초 (1.5×·MQTT 표준 권장) | §3.6, §7.3                               |
 | 9  | 수명 주기      | Clean Start = true · Session Expiry = 10초 · Will Delay = 10초 (재접속 Clean Start=true가 stale Job 차단 · Will Delay가 순단 offline 억제) | §3.6                                     |
 | 10 | Slot 상태      | Slot은 클라이언트 판정 `slot_state` 4종. 일괄 보고(A-2)에 `unit_or_tray_id` 동반, Unit 상세·확정 배정은 Core가 Job 지시 선탑재·정합 정정으로 제공 | §5.1, §부록 A.7                          |
-| 11 | 목적지         | `work_location_id` = 설비 ID 문자열 (좌표 미전송·AMMR 자체 맵 해석) | §5.2 C-2                                 |
+| 11 | 목적지         | `work_location_id` = 설비 ID 문자열 (좌표 미전송·AMMR 자체 맵 해석) · Move 는 `slot_info` 예정 Slot 지점 우선·없거나 못 찾으면 설비 기본 지점 | §5.2 C-2                                 |
 | 12 | 좌표 단위      | m·rad — 위치 스트리밍(A-5)·일괄 보고(A-2) 공통 | §부록 A.6                                |
 | 13 | BMS            | `current` 부호 = 충전 양수 / 방전 음수 | §5.1 A-6                                 |
 | 14 | Reason 코드    | `ammr_hw_*` 7종 + `slot_*` 5종 (Pickup 충돌 `slot_source_obstructed` 포함) + `job_*` 1종 | §7.1, §부록 A.4                          |
@@ -1740,7 +1743,7 @@ Job 지시(C-2)와 일괄보고 응답(C-3)의 `unit`이 싣는 Tray 종류. 화
 | 23 | 적재 정보      | 일괄 보고(A-2)가 6 Slot slot_state + Slot별 `unit_or_tray_id`(태블릿 보관) 동반 · 적재 정보 재로드 = 담당자가 일괄 보고를 수동 발행(별도 재로드 Topic 없음·`trigger`=`manual`로 구분·응답 = 일괄보고 응답 C-3·일치해도 응답) | §5.1 A-2, §6.5                           |
 | 24 | Core 연결      | `core/conn`(retained·LWT·broadcast) — Core online/offline 발신 → AMMR이 online 시 A-2 재발행·offline 시 태블릿 표시 · 재동기 기본 경로(C-4는 예비) | §3.4, §5.2 C-1, §6.8                     |
 | 25 | Slot 정합      | 정합 판정 주체 = 클라이언트. Core는 결과 수신·unit 확정 배정 보유 · 정합 어긋날 때만 일괄보고 응답(C-3·재로드는 예외로 일치해도 응답) | §2.2, §5.1                               |
-| 26 | Job 지시       | `job_id` 정수(고유) · 표시·취급 정보 선탑재(`work_location_id` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) | §5.2 C-2                                 |
+| 26 | Job 지시       | `job_id` 정수(고유) · 표시·취급 정보 선탑재(`work_location_id` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) · Move 의 `slot_info` = 참고용 예정 Slot(짝 검증 없음·뒤따르는 지시가 권위) | §5.2 C-2                                 |
 | 27 | Unit 정보      | `unit_id`·`input_code`·`unit_num`·`model_name`·`version`·`purpose`·`tray_type`·`tray_count`·`product_count`·`from_location_id`·`to_location_id`(공정·설비 ID 층위·Slot은 지시 시점 `slot_info`가 결정) · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2, §부록 A.12               |
 | 28 | 연결 상태 body | offline conn(broker LWT·정상 종료) body에 `connected_at`(세션 접속 시각·KST) 동반 — LWT는 null인 `header.timestamp` 보완, 공통으로 세션 앵커 역할 · online엔 없음 | §3.4, §5.1 A-1, §5.2 C-1                 |
 | 29 | 일괄 보고 계기 | A-2 body `trigger`로 발행 계기 4종 구분 · `manual`(담당자 재로드)이면 확정 배정과 일치해도 일괄보고 응답(C-3) 발행 · `core_online` 발행 시점부터 주기 재산정(다른 계기는 주기 무영향) | §5.1 A-2, §5.2 C-3, §부록 A.10           |

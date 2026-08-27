@@ -1,7 +1,7 @@
 # 물류 AMMR 설비 ID · Slot ID 목록
 
-> 이 문서는 `Core_설비SlotID_AMMR_v1_0_d14.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-24 13:45
+> 이 문서는 `Core_설비SlotID_AMMR_v1_0_d20.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-28 00:10
 
 ---
 
@@ -17,9 +17,9 @@ Interface Control Document가 설치 시점에 Core 측이 제공한다고 정�
 
 ### 1.2 범위
 
-이 문서는 물류 AMMR이 이동하고 적재·하역하는 AMMR 외부 설비의 식별자만 다룬다. 물류 AMMR 자체의
-Slot ID는 두 층위를 견주기 위해 형식만 함께 적으며, 그 정의는 Core ↔ 물류 AMMR Interface Control
-Document가 갖는다.
+이 문서는 물류 AMMR이 이동하고 적재·하역하는 AMMR 외부 설비의 식별자와, 물류 AMMR 자체의 Slot
+식별자를 함께 다룬다. 자체 Slot은 Core가 인식하는 식별자 체계와 Slot 구성까지 이 문서가 정하며,
+그 값을 주고받는 메시지 계약은 Core ↔ 물류 AMMR Interface Control Document가 갖는다.
 
 다음은 이 문서 범위 밖이다.
 
@@ -30,20 +30,22 @@ Document가 갖는다.
 ### 1.3 설비 구성
 
 대상 설비는 통합 Slot WIP과 CNC 작업대 두 종류다. CNC 작업대는 외부 시스템이 전 설비를
-내려주지만 그 가운데 물류 AMMR 자동화 대상만 이 목록에 오른다.
+내려주지만 그 가운데 물류 AMMR 자동화 대상만 이 목록에 오른다. 물류 AMMR 자체 Slot은 설비가
+아니므로 설비 합계와 별도로 적는다.
 
-| 설비 종류     | 설비 수 | 설비 1대의 Slot 수 | Slot 합계 |
-|---------------|---------|--------------------|-----------|
-| 통합 Slot WIP | 10      | 18                 | 180       |
-| CNC 작업대    | 30      | 2                  | 60        |
-| 합계          | 40      |                    | 240       |
+| 구분          | 대수 | 1대의 Slot 수 | Slot 합계 |
+|---------------|------|---------------|-----------|
+| 통합 Slot WIP | 10   | 18            | 180       |
+| CNC 작업대    | 30   | 2             | 60        |
+| 설비 합계     | 40   |               | 240       |
+| 물류 AMMR     | 2    | 6             | 12        |
 
 ---
 
 ## 2. 식별자 체계
 
 설비 ID와 Slot ID 두 층위다. 이동 목적지는 설비 ID로 지정하고, Unit을 적재하거나 하역하는 대상은
-Slot ID로 지정한다. 두 설비 종류 모두 설비 ID를 앞에 두고 Slot 구분을 뒤에 붙이는 같은 구조를 따른다.
+Slot ID로 지정한다. 설비와 물류 AMMR 모두 앞에 자기 식별자를 두고 Slot 구분을 뒤에 붙이는 같은 구조를 따른다.
 
 | 대상                 | 형식                       | 예                   |
 |----------------------|----------------------------|----------------------|
@@ -51,15 +53,17 @@ Slot ID로 지정한다. 두 설비 종류 모두 설비 ID를 앞에 두고 Slo
 | 통합 Slot WIP의 Slot | `{설비 ID}-{열}{행}`       | `WIP-CLN001-A1`      |
 | CNC 작업대           | `CNC-{장비명}`             | `CNC-RAC-A01`        |
 | CNC 작업대의 Slot    | `{설비 ID}-{구분}`         | `CNC-RAC-A01-BEFORE` |
+| 물류 AMMR            | `AMMR-{타입}{일련번호}`    | `AMMR-LOGI001`       |
+| 물류 AMMR의 Slot     | `{AMMR 식별자}-{열}{행}`   | `AMMR-LOGI001-A1`    |
 
 - 일련번호는 3자리 0채움으로 표기한다 (`001`~`999`).
 - Slot의 열은 `A`부터 `ZZ`까지, 행은 `1`부터 `999`까지 부여하며 행에는 0채움을 적용하지 않는다.
 - CNC 장비명은 외부 시스템이 제공하는 장비명 값을 그대로 쓴다.
 - CNC 작업대 Slot의 구분값은 `BEFORE`와 `AFTER` 두 가지다.
 - CNC 작업대는 WIP이 아니므로 `WIP-` 접두를 쓰지 않는다.
+- 물류 AMMR의 Slot은 열을 `A`로 고정하고 행을 `1`부터 `6`까지 부여한다.
 
-물류 AMMR 자체의 Slot ID도 같은 구조다. 형식은 `AMMR-LOGI001-A1`·`AMMR-LOGI002-A1` 처럼 AMMR 식별자에 열·행을 붙인 꼴이며, 열은 `A`로
-고정하고 행은 `1`부터 `6`까지 부여한다.
+물류 AMMR의 Slot 구성과 실물 목록은 물류 AMMR 절이 정한다.
 
 ---
 
@@ -69,9 +73,9 @@ Slot ID로 지정한다. 두 설비 종류 모두 설비 ID를 앞에 두고 Slo
 
 | 공정          | 코드  | 설비 ID 예   |
 |---------------|-------|--------------|
-| 세척·블라스팅 | `CLN` | `WIP-CLN001` |
-| DP            | `DP`  | `WIP-DP001`  |
 | CNC WIP       | `CNC` | `WIP-CNC001` |
+| DP            | `DP`  | `WIP-DP001`  |
+| 세척·블라스팅 | `CLN` | `WIP-CLN001` |
 
 세척과 블라스팅은 같은 물리 설비를 공유하므로 하나의 공정 코드를 쓴다.
 
@@ -198,7 +202,6 @@ WIP-CLN004
    WIP-CLN004-A4   WIP-CLN004-B4   WIP-CLN004-C4
    WIP-CLN004-A5   WIP-CLN004-B5   WIP-CLN004-C5
    WIP-CLN004-A6   WIP-CLN004-B6   WIP-CLN004-C6
-
 ```
 
 ---
@@ -256,7 +259,63 @@ WIP-CLN004
 
 ---
 
-## 5. 계약 필드 대응
+## 5. 물류 AMMR
+
+### 5.1 Slot ID 구성
+
+물류 AMMR 1대는 1열 6행, 모두 6 Slot이다. Slot ID는 AMMR 식별자 뒤에 열 문자와 행 번호를 붙여 만든다.
+
+```text
+            열 A
+          ┌────────┐
+   행 1   │   A1   │
+          ├────────┤
+   행 2   │   A2   │
+          ├────────┤
+   행 3   │   A3   │
+          ├────────┤
+   행 4   │   A4   │
+          ├────────┤
+   행 5   │   A5   │
+          ├────────┤
+   행 6   │   A6   │
+          └────────┘
+```
+
+위 도식의 위아래는 적재 칸의 위아래와 같다. 행 1이 맨 위 칸이고 행 6이 맨 아래 칸이며, 행 번호가
+커질수록 아래로 내려간다. 통합 Slot WIP과 달리 이 대응은 설치 시점에 확정하지 않는다. Core가
+확정한 값이므로 AMMR 측 구현이 이 배치에 맞춘다.
+
+행 번호는 태블릿 화면이 표시하는 Slot 번호와 같다.
+
+### 5.2 설비 ID · Slot ID
+
+물류 AMMR은 현재 2대를 운영한다. AMMR 식별자는 설치 시점에 Core가 할당하며, 아래가 Core가 확정해
+제공하는 값이다.
+
+운영 대수가 늘거나 바뀌면 Core가 갱신본을 제공한다.
+
+```text
+AMMR-LOGI001
+   AMMR-LOGI001-A1
+   AMMR-LOGI001-A2
+   AMMR-LOGI001-A3
+   AMMR-LOGI001-A4
+   AMMR-LOGI001-A5
+   AMMR-LOGI001-A6
+
+AMMR-LOGI002
+   AMMR-LOGI002-A1
+   AMMR-LOGI002-A2
+   AMMR-LOGI002-A3
+   AMMR-LOGI002-A4
+   AMMR-LOGI002-A5
+   AMMR-LOGI002-A6
+```
+
+---
+
+## 6. 계약 필드 대응
 
 Core ↔ 물류 AMMR Interface Control Document의 어느 필드에 어느 층위가 실리는지 정리한다.
 
@@ -265,5 +324,6 @@ Core ↔ 물류 AMMR Interface Control Document의 어느 필드에 어느 층�
 | `work_location_id`                         | 설비 ID                                  | `WIP-CLN001`, `CNC-RAC-A02`        |
 | `from_location_id`, `to_location_id`       | 설비 ID                                  | `WIP-CLN001`, `CNC-RAC-A02`        |
 | `slot_info`의 `from_slot_id`, `to_slot_id` | Slot ID                                  | `WIP-CLN001-A1`, `AMMR-LOGI001-A1` |
+| `ammr_id`                                  | 물류 AMMR 식별자                         | `AMMR-LOGI001`                     |
 | `slot_id`                                  | 물류 AMMR 자체 Slot ID                   | `AMMR-LOGI001-A3`                  |
 | `node_id`                                  | AMMR 맵의 Node ID. 설비 ID 체계와 별개다 | `WIP-CLN001`                       |
