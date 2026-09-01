@@ -1,7 +1,7 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
-> 이 문서는 `Core_ICD_AMMR_v1_0_d258.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-31 21:52
+> 이 문서는 `Core_ICD_AMMR_v1_2_0_d259.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-09-01 13:27
 
 ---
 
