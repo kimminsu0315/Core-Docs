@@ -1,7 +1,7 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
-> 이 문서는 `Core_ICD_AMMR_v1_0_d236.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-08-26 23:05
+> 이 문서는 `Core_ICD_AMMR_v1_0_d258.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-08-31 21:52
 
 ---
 
@@ -93,7 +93,7 @@ flowchart LR
 | 위치·BMS 스트리밍                        | AMMR                      | 위치 1초·BMS 10초 주기 (초기값·태블릿 설정) |
 | Unit 식별 (Unit ID 확정)                 | Core                      | AMMR은 Tray ID를 자체 인식하지 못한다. Core가 Job 지시(C-2)에 Unit 정보를 선탑재해 태블릿이 보관하며, 정합이 어긋나면 일괄보고 응답(C-3)으로 확정 Unit 정보·Job 배정을 내려줌 |
 | 태블릿 표시 데이터 (적재·배정·상단 정보) | Core 선탑재 / 태블릿 구성 | Core가 Job 지시(C-2)에 선탑재 · 상단·slot_state는 AMMR 자체 산출 · 정합 정정만 일괄보고 응답(C-3) |
-| 충전 중단 결정                           | AMMR / Core               | 자체 임계 도달 시 자율 중단은 AMMR HW. 단, 충전 중 Core가 Job을 지시하면 AMMR은 충전을 중단하고 이탈 후 수행 (§8.4) |
+| 충전 중단 결정                           | AMMR / Core               | 자체 임계 도달 시 자율 중단은 AMMR HW. 단, 충전 중 Core가 Job을 지시하면 AMMR은 충전을 중단하고 이탈 후 수행 (§8.5) |
 
 ### 2.3 AMMR HW ↔ Core 권위 분담
 
@@ -102,7 +102,7 @@ flowchart LR
 | 항목                                              | 권위 매체                 | 비고 |
 |---------------------------------------------------|---------------------------|---|
 | 위치 (node_id, x, y, a) 스트리밍                  | AMMR                      | 1초 주기 (초기값·태블릿 설정) |
-| AMMR HW 상태 전이                                 | AMMR                      | 8종 (§부록 A.1) |
+| AMMR HW 상태 전이                                 | AMMR                      | 9종 (§부록 A.1) |
 | Slot 정합 판정 결과 (slot_state·6 Slot)           | AMMR                      | 초기 일괄 또는 외부 원인 전이 시 1 Slot |
 | Job 지시 수신                                     | AMMR                      | Core Job 지시 수신 즉시 보고 |
 | Job 수행 결과 (Move/Pickup/Dropoff/Charge)        | AMMR                      | Job 종료 시 통합 보고 |
@@ -111,7 +111,7 @@ flowchart LR
 | Battery 저전력 분류 (Core 운영 판단)              | Core (자체 판정)          | Core가 수신한 Battery raw %를 자체 기준으로 분류 — AMMR이 별도 보고하지 않고, Core도 분류 결과를 AMMR에 전달하지 않음 |
 | Unit ID                                           | Core (자체 판정)          | AMMR은 Tray ID를 자체 인식하지 못한다. 태블릿 보관값이 일괄 보고에 실리며, Slot의 Unit 정보 확정은 Core가 회신으로 내려줌 |
 | 태블릿 표시 데이터 (Unit 정보·Job 배정·상단 표시) | Core 선탑재 / 태블릿 구성 | Job 지시(C-2) 선탑재 + AMMR 자체 산출 · 정합 정정만 일괄보고 응답(C-3) |
-| 충전 스테이션 위치                                | AMMR                      | 태블릿 설정 화면의 충전 스테이션 번호가 단일 소스. Core는 충전 스테이션을 지정·보유하지 않음 (§8.5) |
+| 충전 스테이션 위치                                | AMMR                      | 태블릿 설정 화면의 충전 스테이션 번호가 단일 소스. Core는 충전 스테이션을 지정·보유하지 않음 (§8.6) |
 | Job 결정                                          | Core                      | AMMR은 Core 지시를 수행 |
 
 ---
@@ -199,8 +199,8 @@ flowchart LR
 
 #### Retained
 
-- `ammr/{ammr_id}/conn` 은 **Retained = true** 로 발행한다 — `online`은 AMMR이 CONNECT 직후 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료·담당자 명시 해제 시 AMMR이 DISCONNECT 전에 직접 발행한다. Core가 늦게 접속해도 마지막 연결 상태를 즉시 인지한다.
-- `core/conn` 도 **Retained = true** 로 발행한다 — Core가 Broker CONNECT 직후 `online`을 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료 시 Core가 DISCONNECT 전에 직접 발행한다. AMMR이 늦게 접속해도 마지막 Core 연결 상태를 즉시 인지한다.
+- `ammr/{ammr_id}/conn`은 **Retained = true** 로 발행한다 — `online`은 AMMR이 CONNECT 직후 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료·담당자 명시 해제 시 AMMR이 DISCONNECT 전에 직접 발행한다. Core가 늦게 접속해도 마지막 연결 상태를 즉시 인지한다.
+- `core/conn`도 **Retained = true** 로 발행한다 — Core가 Broker CONNECT 직후 `online`을 직접 발행하고, `offline`은 비정상 단절 시 Broker가 LWT로 자동 발행하거나 정상 종료 시 Core가 DISCONNECT 전에 직접 발행한다. AMMR이 늦게 접속해도 마지막 Core 연결 상태를 즉시 인지한다.
 - 그 외 모든 Topic은 Retained = false.
 
 #### Last Will
@@ -215,7 +215,7 @@ AMMR은 CONNECT 시 다음 LWT를 등록한다.
 
 AMMR HW와 Broker의 연결이 Keep Alive 임계 초과로 끊어지면 Broker가 자동 발행한다.
 
-Core도 CONNECT 시 `core/conn` 을 Topic으로 하는 LWT(`{"header": {"timestamp": null, "ammr_id": null, "msg_id": null}, "body": {"status": "offline", "reason": "core_down", "connected_at": "2026-07-10 07:29:58.000"}}` · QoS 1 · Retained true)를 등록한다. Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 발행해 AMMR·태블릿이 Core 다운을 인지한다. `core/conn` payload는 발신 주체가 Core라서 `header.ammr_id` = `null`이다 (§3.5 예외).
+Core도 CONNECT 시 `core/conn`을 Topic으로 하는 LWT(`{"header": {"timestamp": null, "ammr_id": null, "msg_id": null}, "body": {"status": "offline", "reason": "core_down", "connected_at": "2026-07-10 07:29:58.000"}}` · QoS 1 · Retained true)를 등록한다. Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 발행해 AMMR·태블릿이 Core 다운을 인지한다. `core/conn` payload는 발신 주체가 Core라서 `header.ammr_id` = `null`이다 (§3.5 예외).
 
 ### 3.5 Payload 인코딩·구조·공통 필드
 
@@ -325,7 +325,7 @@ sequenceDiagram
 | Broker 측 단절 감지          | 90초                                      | Keep Alive × 1.5 (MQTT 표준 권장) |
 | Clean Start / Session Expiry | true / 10초                               | 재접속 Clean Start=true로 세션 폐기 — 큐된 옛 Job 미배달. Session Expiry 10초는 Will Delay 유효 구간. 아래 근거 참조 |
 | Will Delay Interval          | 10초                                      | LWT(offline) 발행을 유예 — 순단 후 유예 내 재접속하면 미발행(불필요한 단절 처리 회피). Core 결정으로 조정 가능 |
-| Client ID                    | 지정하지 않음 (Broker 가 접속 ID 로 배정) | 배정값은 CONNACK 의 Assigned Client Identifier 로 회신 · Broker 구성 요건 = §9.4 |
+| Client ID                    | 지정하지 않음 (Broker가 접속 ID로 배정)   | 배정값은 CONNACK의 Assigned Client Identifier로 회신 · Broker 구성 요건 = §9.4 |
 | Broker 접속                  | 기본 포트 1883 (평문 MQTT·Mosquitto 기본) | 실제 접속 정보(IP·포트·자격증명)는 설치 시 Core 측이 제공하며, 담당자가 태블릿 설정 화면에 입력한다 |
 
 **Clean Start=true·Session Expiry=10초·Will Delay=10초 근거**: 재접속 시 Clean Start=true로 세션을 폐기하므로 단절 중 Broker에 쌓인 옛 Job 지시가 뒤늦게 배달될 위험을 원천 차단한다. AMMR은 재연결할 때마다 SUBSCRIBE를 다시 수행하고 일괄 보고(A-2)를 재발행한다. Will Delay Interval 10초는 짧은 통신 순단이 유예 내 재연결로 복구될 때 LWT(offline) 발행을 억제해 불필요한 단절 처리를 막으며, Session Expiry 10초는 이 유예가 유효하게 작동하도록 세션을 유지하는 구간이다.
@@ -334,9 +334,9 @@ sequenceDiagram
 
 AMMR은 매 CONNECT 시 다음을 설정한다 — Client ID = 지정하지 않음(빈 값) · Clean Start = true · Session Expiry Interval = 10초 · Will Delay Interval = 10초(LWT) · Keep Alive = 60초 · LWT 등록(§3.4). 모두 Core 확정값이며 AMMR이 임의로 바꾸지 않는다. 현장 사정으로 값을 바꿔야 하면 Core 측에 알린다. 세션·메시지 전달 의미에 영향을 주는 미명시 옵션(예: Message Expiry Interval)은 사용하지 않는다.
 
-**Client ID 미지정 근거**: Broker 가 MQTT 접속 ID 를 Client ID 로 배정하도록 구성한다(§9.4). AMMR 이 값을 따로 넣지 않아도 접속 ID 와 같은 값이 세션 이름이 되므로, 태블릿에 입력할 항목이 늘지 않고 접속 ID·Topic 경로·세션 이름이 한 값으로 모인다. 배정 결과는 CONNACK 의 Assigned Client Identifier 로 회신되어 AMMR 이 확인할 수 있다.
+**Client ID 미지정 근거**: Broker가 MQTT 접속 ID를 Client ID로 배정하도록 구성한다(§9.4). AMMR이 값을 따로 넣지 않아도 접속 ID와 같은 값이 세션 이름이 되므로, 태블릿에 입력할 항목이 늘지 않고 접속 ID·Topic 경로·세션 이름이 한 값으로 모인다. 배정 결과는 CONNACK의 Assigned Client Identifier로 회신되어 AMMR이 확인할 수 있다.
 
-이 구성은 자격증명이 겹쳤을 때의 안전장치이기도 하다. 두 AMMR 에 같은 접속 ID 가 잘못 설정되면 세션 이름까지 같아져 한쪽만 접속을 유지하고 나머지는 즉시 끊긴다(MQTT 세션 인계). 세션 이름이 서로 다르면 두 AMMR 이 동시에 접속한 채 같은 Job 지시를 함께 수신해 같은 작업을 중복 수행하므로, 접속이 반복해서 끊겨 설정 오류가 즉시 드러나는 쪽이 안전하다.
+이 구성은 자격증명이 겹쳤을 때의 안전장치이기도 하다. 두 AMMR에 같은 접속 ID가 잘못 설정되면 세션 이름까지 같아져 한쪽만 접속을 유지하고 나머지는 즉시 끊긴다(MQTT 세션 인계). 세션 이름이 서로 다르면 두 AMMR이 동시에 접속한 채 같은 Job 지시를 함께 수신해 같은 작업을 중복 수행하므로, 접속이 반복해서 끊겨 설정 오류가 즉시 드러나는 쪽이 안전하다.
 
 ### 3.7 수신 확인 원칙
 
@@ -502,7 +502,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       { "slot_id": "AMMR-LOGI001-A5", "slot_state": "empty",    "unit_or_tray_id": null },
       { "slot_id": "AMMR-LOGI001-A6", "slot_state": "empty",    "unit_or_tray_id": null }
     ],
-    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 1.57 },
+    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 90.0 },
     "battery": { "battery_id": "BAT_A01", "soc": 87.3, "voltage": 50.1, "current": -2.1, "temperature": 28.5, "bmu_error": false }
   }
 }
@@ -521,8 +521,11 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | Job 시작 (`idle → move/pickup/dropoff/charge`, 충전 중 Job 지시 수신 시 `charging → move` 등) | A-3 |
 | Job 종료 (`move → idle`, `pickup → idle`, `dropoff → idle`, `charge → charging`(도킹) 등 — Job 종료 직후 상태) | A-8 `hw_state` 필드 (A-3 중복 발행 금지) |
 | 충전 완료 (`charging → idle`) | A-3 |
+| 담당자 조작 (`idle → move/pickup/dropoff/charge`, `move/pickup/dropoff → idle`, `charge → charging`(도킹) — 티칭·테스트) | A-3 |
 | 저전력 진입 (`→ low_battery`) | A-3 (Job 종료와 동시 진입한 경우 A-8의 `hw_state = low_battery`로 보고·A-3 중복 발행 금지) |
 | 저전력 자율 충전 도킹 (`low_battery → charging`) | A-3 |
+| 자체 충전 진입 (`idle → self_charge`, Job 대기 한도 초과) | A-3 |
+| 자체 충전 도킹 (`self_charge → charging`) | A-3 |
 | 장애 진입 (`→ error`, Job 수행 중이 아닐 때 — 자기 진단 실패 등) | A-3 (Job 수행 중 장애는 A-8의 `hw_state = error`로 보고) |
 | 장애 복구 (`error → idle`) | A-3 |
 
@@ -587,14 +590,14 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 - **Trigger**: 1초 주기 (초기값·태블릿 설정) — Core 연결 상태가 `online`인 동안만 발행 (C-1)
 - **QoS**: 0 (연속값, 1건 누락 허용)
 
-| 필드      | 타입         | 필수 | 설명                                                    |
-|-----------|--------------|------|---------------------------------------------------------|
-| `node_id` | string\|null | 필수 | AMMR 맵의 현재 Node ID. 어느 Node 에도 있지 않으면 null |
-| `x`       | float        | 필수 | x 좌표 (단위: m)                                        |
-| `y`       | float        | 필수 | y 좌표 (단위: m)                                        |
-| `a`       | float        | 필수 | 방향각 (단위: rad, 0~2π)                                |
+| 필드      | 타입         | 필수 | 설명                                                   |
+|-----------|--------------|------|--------------------------------------------------------|
+| `node_id` | string\|null | 필수 | AMMR 맵의 현재 Node ID. 어느 Node에도 있지 않으면 null |
+| `x`       | float        | 필수 | x 좌표 (단위: m)                                       |
+| `y`       | float        | 필수 | y 좌표 (단위: m)                                       |
+| `a`       | float        | 필수 | 방향각 (단위: 도, 0~360)                               |
 
-좌표·방향각 단위는 이 위치 스트리밍과 일괄 보고(A-2)가 공통으로 쓴다 (§부록 A.6). Job 지시의 목적지는 좌표가 아니라 설비 ID다 (C-2). `node_id`는 AMMR 맵의 Node ID다. AMMR은 Job 지시 목적지(`work_location_id`)를 자기 맵으로 해석해 이동하고, 현재 위치는 자기 맵 Node ID를 그대로 보고한다. Node 사이를 지나는 동안처럼 어느 Node에도 있지 않을 때는 `null`로 보낸다.
+좌표·방향각 단위는 이 위치 스트리밍과 일괄 보고(A-2)·Job 수행 결과 보고(A-8)가 공통으로 쓴다 (§부록 A.6). Job 지시의 목적지는 좌표가 아니라 설비 ID다 (C-2). `node_id`는 AMMR 맵의 Node ID다. AMMR은 Job 지시 목적지(`work_location_id`)를 자기 맵으로 해석해 이동하고, 현재 위치는 자기 맵 Node ID를 그대로 보고한다. Node 사이를 지나는 동안처럼 어느 Node에도 있지 않을 때는 `null`로 보낸다.
 
 **예시**
 
@@ -609,7 +612,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
     "node_id": "WIP-CLN001",
     "x": 12.51,
     "y": 3.72,
-    "a": 1.58
+    "a": 92.0
   }
 }
 ```
@@ -687,20 +690,21 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | `job_type`   | enum (§부록 A.2)\|null | 필수   | 수행한 Job 종류. 계약 밖 값으로 거부한 경우는 아래 예외를 따른다 |
 | `hw_state`   | enum (§부록 A.1)       | 필수   | Job 종료 직후 AMMR HW 상태. 이 필드에 실린 전이는 A-3로 중복 발행하지 않는다. Charge Job은 도킹 완료 시점 보고라 `charging` |
 | `job_result` | enum (§부록 A.3)       | 필수   | Job 수행 결과 |
-| `reason`     | enum (§부록 A.4)       | 조건부 | `job_result = failure` 시 필수 (`ammr_hw_*`·`slot_*`·`job_*`) |
+| `reason`     | enum (§부록 A.4)       | 조건부 | `job_result = failure` 시 필수 (`ammr_hw_*`·`slot_*`·`job_*`·`equip_*`) |
 | `slot`       | object                 | 조건부 | Pickup·Dropoff 시 필수. 대상 AMMR Slot의 클라이언트 판정 상태. 구조 아래. 수행에 진입하지 않은 거부는 아래 예외를 따른다. |
+| `pose`       | object                 | 필수   | `{node_id, x, y, a}` — Job 종료 시점 위치 (구조 = A-5) |
 
 `slot` 구조 (대상 AMMR Slot을 특정한 지시에 한정):
 
 | 필드              | 타입             | 필수 | 설명 |
 |-------------------|------------------|------|---|
 | `slot_id`         | string           | 필수 | 대상 AMMR Slot ID |
-| `slot_state`      | enum (§부록 A.7) | 필수 | 클라이언트 판정 (Pickup 성공 `occupied`·Dropoff 성공 `empty`·수행 중 실패 `job_failed` — 다만 목적지 Slot 점유로 인한 Dropoff 실패는 대체 목적지 재지시로 이어지는 정상 갈래라 `job_failed`를 싣지 않고 판정값 그대로·수행 미진입 거부(`ammr_hw_error_state`·`ammr_hw_low_battery`·`job_invalid_request`)는 현재 판정 상태 그대로) |
+| `slot_state`      | enum (§부록 A.7) | 필수 | 클라이언트 판정 (Pickup 성공 `occupied`·Dropoff 성공 `empty`·수행 중 실패 `job_failed` — 다만 목적지 Slot 점유로 인한 Dropoff 실패는 대체 목적지 재지시로 이어지는 정상 갈래라 `job_failed`를 싣지 않고 판정값 그대로·설비 접점 실패(`equip_*`)도 Slot을 건드리지 못한 것이라 판정값 그대로·수행 미진입 거부(`ammr_hw_error_state`·`ammr_hw_low_battery`·`job_invalid_request`)는 현재 판정 상태 그대로) |
 | `unit_or_tray_id` | string\|null     | 필수 | 태블릿 보관 적재 식별값 (Unit ID 또는 Tray ID·§1.3). 미점유·미상이면 null |
 
-수행에 진입하지 않은 거부(`ammr_hw_error_state`·`ammr_hw_low_battery`·`job_invalid_request`)는 지시가 대상 AMMR Slot을 특정하지 못하면(`slot_info`에 자기 호기 Slot이 없으면) `slot`을 싣지 않는다. 대상 Slot을 특정할 수 있으면 그 Slot의 현재 판정 상태를 그대로 싣는다 (실패 흔적 없음).
+수행에 진입하지 않은 거부(`ammr_hw_error_state`·`ammr_hw_low_battery`·`job_invalid_request`)는 지시가 대상 AMMR Slot을 특정하지 못하면(`slot_info`에 자기 AMMR Slot이 없으면) `slot`을 싣지 않는다. 대상 Slot을 특정할 수 있으면 그 Slot의 현재 판정 상태를 그대로 싣는다 (실패 흔적 없음).
 
-계약 밖 `job_type` 값을 받아 거부한 경우(`job_invalid_request`)에는 받은 값을 그대로 실어 회신한다. 이 필드에 한해 부록 A.2 일람 밖 문자열을 허용한다. 받은 지시에 `job_type`·`job_id` 값이 없었으면 값 없음으로 싣는다. 잘못 온 지시를 그대로 돌려줘야 Core가 무엇을 잘못 보냈는지 가려낼 수 있어 값 제약을 두지 않는다. `slot`은 위 예외를 그대로 따른다. `job_type`이 계약 밖이어도 지시가 자기 호기 Slot을 특정했으면 그 Slot의 현재 판정 상태를 싣는다.
+계약 밖 `job_type` 값을 받아 거부한 경우(`job_invalid_request`)에는 받은 값을 그대로 실어 회신한다. 이 필드에 한해 부록 A.2 일람 밖 문자열을 허용한다. 받은 지시에 `job_type`·`job_id` 값이 없었으면 값 없음으로 싣는다. 잘못 온 지시를 그대로 돌려줘야 Core가 무엇을 잘못 보냈는지 가려낼 수 있어 값 제약을 두지 않는다. `slot`은 위 예외를 그대로 따른다. `job_type`이 계약 밖이어도 지시가 자기 AMMR Slot을 특정했으면 그 Slot의 현재 판정 상태를 싣는다.
 
 **예시**: Move 성공 (적재 변화가 없는 Job — `slot` 필드 없음)
 
@@ -715,7 +719,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
     "job_id": 1023,
     "job_type": "move",
     "hw_state": "idle",
-    "job_result": "success"
+    "job_result": "success",
+    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 90.0 }
   }
 }
 ```
@@ -738,7 +743,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       "slot_id": "AMMR-LOGI001-A1",
       "slot_state": "occupied",
       "unit_or_tray_id": "7f3d9e2a-1b4c-4f8a-9d6e-5c2b3a7e1f8d"
-    }
+    },
+    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 90.0 }
   }
 }
 ```
@@ -761,7 +767,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       "slot_id": "AMMR-LOGI001-A1",
       "slot_state": "empty",
       "unit_or_tray_id": null
-    }
+    },
+    "pose": { "node_id": "WIP-CLN001", "x": 12.6, "y": 3.8, "a": 90.0 }
   }
 }
 ```
@@ -785,7 +792,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       "slot_id": "AMMR-LOGI001-A1",
       "slot_state": "job_failed",
       "unit_or_tray_id": null
-    }
+    },
+    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 90.0 }
   }
 }
 ```
@@ -804,7 +812,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
     "job_type": "move",
     "hw_state": "error",
     "job_result": "failure",
-    "reason": "ammr_hw_navigation_lost"
+    "reason": "ammr_hw_navigation_lost",
+    "pose": { "node_id": null, "x": 18.3, "y": 6.2, "a": 45.0 }
   }
 }
 ```
@@ -829,7 +838,8 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
       "slot_id": "AMMR-LOGI001-A1",
       "slot_state": "empty",
       "unit_or_tray_id": null
-    }
+    },
+    "pose": { "node_id": "WIP-CLN001", "x": 12.5, "y": 3.7, "a": 90.0 }
   }
 }
 ```
@@ -842,18 +852,23 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 - **Trigger**: 설정값 조회 요청(C-5) 수신 직후 1회
 - **목적**: 태블릿에 설정된 현장 운영값을 Core에 알린다. 필드 순서는 아래 표 순서로 고정한다 (태블릿 설정 화면 순서와 같게 두었다).
 
-| 필드                     | 타입    | 필수 | 설명                                                      |
-|--------------------------|---------|------|-----------------------------------------------------------|
-| `charge_station_id`      | string  | 필수 | 충전 스테이션 번호 (§8.5)                                 |
-| `battery_idle_threshold` | float   | 필수 | Battery 대기 복귀 임계치 (%·초기값 80)                    |
-| `battery_low_threshold`  | float   | 필수 | Battery 저전력 진입 임계치 (%·초기값 20)                  |
-| `host_ip`                | string  | 필수 | 시스템 Host IP — AMMR이 Core MQTT Broker에 접속할 IP 주소 |
-| `host_port`              | integer | 필수 | 시스템 포트 — Core MQTT Broker 접속 포트                  |
-| `mqtt_username`          | string  | 필수 | MQTT 접속 ID (Core MQTT Broker 접속 자격증명)             |
-| `mqtt_password`          | string  | 필수 | MQTT 접속 비밀번호 (Core MQTT Broker 접속 자격증명)       |
-| `snapshot_interval_sec`  | float   | 필수 | 일괄 보고(A-2) 발행 주기 (초·초기값 60)                   |
-| `pose_interval_sec`      | float   | 필수 | 위치 스트리밍(A-5) 발행 주기 (초·초기값 1)                |
-| `bms_interval_sec`       | float   | 필수 | BMS 스트리밍(A-6) 발행 주기 (초·초기값 10)                |
+| 필드                         | 타입    | 필수 | 설명                                                      |
+|------------------------------|---------|------|-----------------------------------------------------------|
+| `host_ip`                    | string  | 필수 | 시스템 Host IP — AMMR이 Core MQTT Broker에 접속할 IP 주소 |
+| `host_port`                  | integer | 필수 | 시스템 포트 — Core MQTT Broker 접속 포트                  |
+| `mqtt_username`              | string  | 필수 | MQTT 접속 ID (Core MQTT Broker 접속 자격증명)             |
+| `mqtt_password`              | string  | 필수 | MQTT 접속 비밀번호 (Core MQTT Broker 접속 자격증명)       |
+| `snapshot_interval_sec`      | float   | 필수 | 일괄 보고(A-2) 발행 주기 (초·초기값 60)                   |
+| `pose_interval_sec`          | float   | 필수 | 위치 스트리밍(A-5) 발행 주기 (초·초기값 1)                |
+| `bms_interval_sec`           | float   | 필수 | BMS 스트리밍(A-6) 발행 주기 (초·초기값 10)                |
+| `reconnect_timeout_sec`      | float   | 필수 | Broker 재연결 한도 (초·초기값 300)                        |
+| `charge_station_id`          | string  | 필수 | 충전 스테이션 번호 (§8.6)                                 |
+| `battery_idle_threshold`     | float   | 필수 | Battery 대기 복귀 임계치 (%·초기값 80)                    |
+| `battery_low_threshold`      | float   | 필수 | Battery 저전력 진입 임계치 (%·초기값 20)                  |
+| `idle_wait_timeout_sec`      | float   | 필수 | Job 대기 한도 (초·초기값 10) — 초과 시 `self_charge` 진입 |
+| `move_timeout_sec`           | float   | 필수 | Move Job 수행 한도 (초·초기값 300)                        |
+| `pickup_dropoff_timeout_sec` | float   | 필수 | Pickup·Dropoff Job 수행 한도 (초·초기값 300)              |
+| `interlock_timeout_sec`      | float   | 필수 | 설비 Interlock 확보 대기 한도 (초·초기값 180)             |
 
 **예시**
 
@@ -865,16 +880,21 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
     "msg_id": "0a1b2c3d-000d-4abc-8def-00000000000d"
   },
   "body": {
-    "charge_station_id": "1",
-    "battery_idle_threshold": 80.0,
-    "battery_low_threshold": 20.0,
     "host_ip": "192.168.0.10",
     "host_port": 1883,
     "mqtt_username": "ammr-logi001",
     "mqtt_password": "ammr-logi001@core",
     "snapshot_interval_sec": 60.0,
     "pose_interval_sec": 1.0,
-    "bms_interval_sec": 10.0
+    "bms_interval_sec": 10.0,
+    "reconnect_timeout_sec": 300.0,
+    "charge_station_id": "1",
+    "battery_idle_threshold": 80.0,
+    "battery_low_threshold": 20.0,
+    "idle_wait_timeout_sec": 10.0,
+    "move_timeout_sec": 300.0,
+    "pickup_dropoff_timeout_sec": 300.0,
+    "interlock_timeout_sec": 180.0
   }
 }
 ```
@@ -935,7 +955,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 
 - **Topic**: `core/ammr/{ammr_id}/job/cmd`
 - **Trigger**: Core의 Job 결정 시점
-- **수신 후 책임**: AMMR은 이 메시지 수신 즉시 `ammr/{ammr_id}/job/received` 로 수신 확인을 보고하고, Job 수행 종료 시점에 `ammr/{ammr_id}/job/report` 로 결과를 보고한다. 계약에 어긋난 지시(필수 필드 누락·다른 호기 Slot 지정 등)를 받은 경우에도 수신 확인은 보내고, 수행 없이 결과 보고로 실패를 회신한다 (`reason` = `job_invalid_request`).
+- **수신 후 책임**: AMMR은 이 메시지 수신 즉시 `ammr/{ammr_id}/job/received`로 수신 확인을 보고하고, Job 수행 종료 시점에 `ammr/{ammr_id}/job/report`로 결과를 보고한다. 계약에 어긋난 지시(필수 필드 누락·다른 AMMR Slot 지정 등)를 받은 경우에도 수신 확인은 보내고, 수행 없이 결과 보고로 실패를 회신한다 (`reason` = `job_invalid_request`).
 - **멱등성**: AMMR은 동일 `job_id` 중복 수신 시 1회만 처리한다 (QoS 1 중복 가능성 대비).
 - **선탑재 정보**: 태블릿 표시와 AMMR 취급에 필요한 값(적재 Unit 정보·출발/도착 위치)을 Core가 이 지시에 미리 싣는다. 태블릿은 이 값을 보관해 화면을 자체 구성한다 (라벨 조립·위치 표시 텍스트 = "AMMR 태블릿 UI 정의 제안" 참조).
 
@@ -956,7 +976,7 @@ Job 지시는 단일 Topic에서 `job_type` 필드로 4종(Move/Pickup/Dropoff/C
 | `dropoff` | ✓ 도착 외부 설비 ID | ✓ AMMR slot → 외부 slot | ✓    |
 | `charge`  | –                   | –                       | –    |
 
-**설비 ID·Slot ID**: 설비 ID(예: `WIP-CLN001` 세척·블라스팅 WIP, `CNC-RAC-A02` CNC 작업대)와 Slot ID(예: `WIP-CLN001-A1`, `CNC-RAC-A02-BEFORE`, `CNC-RAC-A02-AFTER`, `AMMR-LOGI001-A1`) 두 층위다. 목적지는 좌표가 아니라 설비 ID이며 AMMR이 자체 맵으로 물리 위치를 해석한다. 전체 목록은 설치 시 Core 측이 "물류 AMMR 설비 ID · Slot ID 목록"으로 제공한다. Charge는 위치·unit 필드가 없다. 충전 스테이션은 태블릿 설정값이 단일 소스다 (§8.5).
+**설비 ID·Slot ID**: 설비 ID(예: `WIP-CLN001` 세척·블라스팅 WIP, `CNC-RAC-A02` CNC 작업대)와 Slot ID(예: `WIP-CLN001-A1`, `CNC-RAC-A02-BEFORE`, `CNC-RAC-A02-AFTER`, `AMMR-LOGI001-A1`) 두 층위다. 목적지는 좌표가 아니라 설비 ID이며 AMMR이 자체 맵으로 물리 위치를 해석한다. 전체 목록은 설치 시 Core 측이 "물류 AMMR 설비 ID · Slot ID 목록"으로 제공한다. Charge는 위치·unit 필드가 없다. 충전 스테이션은 태블릿 설정값이 단일 소스다 (§8.6).
 
 **설비와 Slot의 짝**: `work_location_id`와 `slot_info`의 외부 Slot은 한 짝이다. Pickup의 `from_slot_id`와 Dropoff의 `to_slot_id`는 `work_location_id`가 가리키는 설비에 속한 Slot이어야 한다. Slot ID가 설비 ID로 시작하므로 두 값만으로 판정한다. 다른 설비의 Slot을 지정한 지시는 계약 위반이라 AMMR은 수행하지 않고 거부한다 (`reason` = `job_invalid_request`).
 
@@ -1247,7 +1267,7 @@ Job 시작 시점의 상단 표시(HW 상태·위치·Battery·최근 명령·�
 
 ### 6.3 Charge Job Sequence
 
-Charge는 Core가 자체 결정하여 **단일 Charge Job**으로 지시한다. `work_location_id`가 없으며, AMMR은 태블릿 설정값으로 보유한 충전 스테이션으로 자체 이동·도킹한다 (§8.5). 도킹·충전·이탈·자체 임계에 따른 충전 중단 결정은 AMMR HW 자율 영역이다.
+Charge는 Core가 자체 결정하여 **단일 Charge Job**으로 지시한다. `work_location_id`가 없으며, AMMR은 태블릿 설정값으로 보유한 충전 스테이션으로 자체 이동·도킹한다 (§8.6). 도킹·충전·이탈·자체 임계에 따른 충전 중단 결정은 AMMR HW 자율 영역이다.
 
 ```mermaid
 sequenceDiagram
@@ -1271,7 +1291,7 @@ sequenceDiagram
     Note over A: 태블릿이 자기 hw_state로<br/>상단 자체 갱신 (대기)
 ```
 
-충전 중에도 Core는 이 AMMR에 Job을 지시할 수 있다. 이 경우 AMMR은 충전을 중단하고 스테이션에서 이탈한 뒤 Job을 수행한다 (§8.4).
+충전 중에도 Core는 이 AMMR에 Job을 지시할 수 있다. 이 경우 AMMR은 충전을 중단하고 스테이션에서 이탈한 뒤 Job을 수행한다 (§8.5).
 
 ### 6.4 사람 개입에 따른 Slot 상태 외부 전이
 
@@ -1330,7 +1350,7 @@ sequenceDiagram
     Note over C: AMMR HW 장애 처리<br/>해당 AMMR 운영 정보 초기화<br/>6 Slot 사용 보류·진행 중 작업 종료
 ```
 
-`hw_state=error` 가 보고되면 Core는 **payload 전체 신뢰 없음**으로 간주하여 Slot 정합 정보(slot_state) 부분은 무시하고 해당 AMMR의 운영 정보를 초기화한다.
+`hw_state=error`가 보고되면 Core는 **payload 전체 신뢰 없음**으로 간주하여 Slot 정합 정보(slot_state) 부분은 무시하고 해당 AMMR의 운영 정보를 초기화한다.
 
 AMMR이 `error` 상태인 동안 Job 지시(C-2)를 수신한 경우 — 수신 확인(A-7)은 발행하고, 그 Job은 수행하지 않은 채 즉시 Job 수행 결과 통합 보고(A-8)로 실패를 회신한다 (`job_result` = `failure` · `reason` = `ammr_hw_error_state` · `hw_state` = `error`). Pickup·Dropoff 지시의 `slot` 동반 여부와 값은 A-8의 수행에 진입하지 않은 거부 규칙을 따른다. `error` 진입 시점에 수신 확인까지 보내고 수행 대기 중이던 Job도 같은 방식으로 실패를 회신하고 폐기한다. 장애 복구(`error`에서 `idle` 전이) 후에도 이 Job들을 소급 수행하지 않으며, 필요한 작업은 Core가 새 Job으로 다시 지시한다. Core는 이 보고를 §7.2 분기 1(AMMR HW 장애 처리)로 처리한다.
 
@@ -1416,6 +1436,10 @@ Job 실패 시 `reason` 필드에 사유를 기재한다. 코드 일람은 §부
 
 이 카테고리 보고 시 Core는 payload를 신뢰하고 해당 Job만 실패로 종료한다. 운영 정보 초기화나 Slot 사용 보류를 하지 않고, 같은 지시를 자동으로 다시 보내지 않으며, 이 AMMR은 곧바로 다음 지시를 받을 수 있다.
 
+#### 설비 측 카테고리 (`equip_*`)
+
+이 카테고리 보고 시 Core는 해당 Job을 실패로 종료하고, 그 AMMR의 운영 정보를 초기화하며 6 Slot을 사용 보류로 둔다. 보고만으로는 AMMR 측 원인인지 설비 측 원인인지 가릴 수 없기 때문이다. 같은 지시를 자동으로 다시 보내지 않는다. 사용 보류는 담당자가 현장을 확인해 적재 정보를 다시 올리면 풀린다.
+
 ### 7.2 Job 결과 실패 처리 (payload 분기)
 
 Job 수행 결과 통합 보고의 payload는 아래 표대로 분기되어 Core가 처리한다. 분기 2~4의 상태 기준은 **장애 아님**(`idle` / `charging` / `low_battery`)이다. `low_battery` 동반 시에도 결과 처리는 동일하며, 신규 Job 배정만 차단된다 (§8.3).
@@ -1427,19 +1451,25 @@ Job 수행 결과 통합 보고의 payload는 아래 표대로 분기되어 Core
 | 2-1 | `hw_state = 장애 아님(idle/charging/low_battery)` + `job_result = failure` + `reason = ammr_hw_low_battery` | 저전력 거부 — payload 신뢰 · 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 · 자율 충전 진행 |
 | 3   | `hw_state = 장애 아님(idle/charging/low_battery)` + `job_result = failure` + `reason = slot_*` | 해당 Slot 정합 판정 반영 → 운영 결정 (Pickup 실패 = 이송 종료 / Dropoff 실패 = 목적지 점유면 대체 목적지 재지시 가능·그 밖은 이송 종료 + 사용 보류) |
 | 3-1 | `hw_state = 장애 아님(idle/charging/low_battery)` + `job_result = failure` + `reason = job_*` | 지시 결손 거부 — payload 신뢰 · 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 · 자동 재지시 없음 |
+| 3-2 | `hw_state = 장애 아님(idle/charging/low_battery)` + `job_result = failure` + `reason = equip_*` | 설비 접점 실패 — 해당 Job 실패 종료 · 운영 정보 초기화 · 6 Slot 사용 보류 · 자동 재지시 없음 |
 | 4   | `hw_state = 장애 아님(idle/charging/low_battery)` + `job_result = success` | 정상 갱신 → 다음 Job 진행 |
 
 ### 7.3 Keep Alive / Timeout 임계값
 
-| 항목                                              | 확정값 | 비고 |
-|---------------------------------------------------|--------|---|
-| MQTT Keep Alive                                   | 60초   | AMMR이 PINGREQ를 보내는 주기 (Mosquitto 기본) |
-| Broker 측 단절 감지 임계                          | 90초   | Keep Alive × 1.5 (MQTT 표준 권장) |
-| LWT 발행 → Core 인지                              | 즉시   | Broker가 자동 발행, Core가 wildcard subscribe로 수신 |
-| Job 지시 수신 확인 임계 (Core 측)                 | 3초    | Core가 Job 지시 후 `job/received` 수신을 기다리는 timeout. 운영 결과 및 AMMR 통신 지연 특성에 따라 조정 가능. |
-| 일괄 보고 재전송 응답 임계 (Core 측·예비)         | 3초    | (C-4 예비 사용 시) Core가 재전송 요청 후 일괄 보고(A-2) 도착을 기다리는 timeout — 미도달 시 재요청 가능. 위 항목과 같은 기준으로 조정 가능. |
-| 설정값 조회 응답 임계 (Core 측·예비)              | 3초    | (C-5 예비 사용 시) Core가 조회 요청 후 설정값 보고(A-9) 도착을 기다리는 timeout — 미도달 시 재요청 가능. 위 항목과 같은 기준으로 조정 가능. |
-| 재로드(수동 일괄 보고) 응답 대기 임계 (태블릿 측) | 3초    | 태블릿이 일괄 보고를 수동 발행([일괄 보고 재로드]) 후 일괄보고 응답(C-3)을 기다리는 timeout. 미도달 시 실패 처리·담당자 재시도. 조정 가능. |
+| 항목                                              | 확정값      | 비고 |
+|---------------------------------------------------|-------------|---|
+| MQTT Keep Alive                                   | 60초        | AMMR이 PINGREQ를 보내는 주기 (Mosquitto 기본) |
+| Broker 측 단절 감지 임계                          | 90초        | Keep Alive × 1.5 (MQTT 표준 권장) |
+| Broker 재연결 한도 (AMMR 측)                      | 초기값 5분  | 태블릿 설정값. 1초 간격 재시도·한도 경과 시 자동 시도 중단·이후 담당자 수동 연결 |
+| LWT 발행 → Core 인지                              | 즉시        | Broker가 자동 발행, Core가 wildcard subscribe로 수신 |
+| Job 지시 수신 확인 임계 (Core 측)                 | 3초         | Core가 Job 지시 후 `job/received` 수신을 기다리는 timeout. 운영 결과 및 AMMR 통신 지연 특성에 따라 조정 가능. |
+| Move Job 수행 한도 (AMMR 측)                      | 초기값 5분  | 태블릿 설정값. 한도 초과 시 수행 중단 + 실패 회신 (`reason` = `ammr_hw_job_timeout`) |
+| Pickup·Dropoff Job 수행 한도 (AMMR 측)            | 초기값 5분  | 태블릿 설정값. 한도 초과 시 수행 중단 + 실패 회신 (`reason` = `ammr_hw_job_timeout`) |
+| 설비 Interlock 확보 대기 한도 (AMMR 측)           | 초기값 3분  | 태블릿 설정값. 한도 초과 시 확보 실패로 판정 + 실패 회신 (`reason` = `equip_interlock_failed`) |
+| Job 대기 한도 (AMMR 측)                           | 초기값 10초 | 태블릿 설정값. `idle` 지속이 한도를 넘으면 `self_charge` 진입 (§8.4) |
+| 일괄 보고 재전송 응답 임계 (Core 측·예비)         | 3초         | (C-4 예비 사용 시) Core가 재전송 요청 후 일괄 보고(A-2) 도착을 기다리는 timeout — 미도달 시 재요청 가능. 위 항목과 같은 기준으로 조정 가능. |
+| 설정값 조회 응답 임계 (Core 측·예비)              | 3초         | (C-5 예비 사용 시) Core가 조회 요청 후 설정값 보고(A-9) 도착을 기다리는 timeout — 미도달 시 재요청 가능. 위 항목과 같은 기준으로 조정 가능. |
+| 재로드(수동 일괄 보고) 응답 대기 임계 (태블릿 측) | 3초         | 태블릿이 일괄 보고를 수동 발행([일괄 보고 재로드]) 후 일괄보고 응답(C-3)을 기다리는 timeout. 미도달 시 실패 처리·담당자 재시도. 조정 가능. |
 
 **※ 임계값 사이의 관계**
 
@@ -1453,7 +1483,7 @@ Broker는 마지막으로 받은 메시지 시각부터 단절 감지 임계를 
 
 | 시나리오                                 | AMMR 측 동작 | Core 측 동작 |
 |------------------------------------------|---|---|
-| Broker 연결 끊김 (AMMR 측)               | 자동 재연결 시도 (Backoff — 실패할수록 간격을 늘림·간격 값은 업체 정함). 재연결 = 새 세션 (Clean Start=true) — SUBSCRIBE 재수행 + conn online + 일괄 보고 재발행 | LWT 수신 → AMMR HW 단절 처리 |
+| Broker 연결 끊김 (AMMR 측)               | 1초 간격 자동 재연결 시도. 재연결 한도(태블릿 설정값·초기값 5분) 경과 시 자동 시도 중단 — 이후 담당자가 태블릿에서 수동 연결. 재연결 = 새 세션 (Clean Start=true) — SUBSCRIBE 재수행 + conn online + 일괄 보고 재발행 | LWT 수신 → AMMR HW 단절 처리 |
 | 단절 중 Job 지시                         | (수신 없음 — 재접속 시 Clean Start=true로 세션을 폐기해 단절 중 쌓인 옛 Job 지시가 배달되지 않음) | Job 지시 후 3초 안 수신 확인 미도달 → AMMR HW 단절 처리·해당 Job 종료. 재연결 후 뒤늦게 배달되는 옛 Job 지시는 없다 (stale Job 원천 차단) |
 | Job 지시 수신 확인 미수신                | (해당 없음) | AMMR HW 단절과 동일 처리 |
 | Job 결과 미수신 (Core 측)                | (해당 없음 — AMMR은 1회만 보고) | 두절·장애 처리로 자연 처리 (별도 재요청 없음) |
@@ -1482,37 +1512,46 @@ Broker는 마지막으로 받은 메시지 시각부터 단절 감지 임계를 
 
 - 충전 스테이션 도킹의 물리 절차.
 - 충전 동작 자체.
-- 도킹 완료 시점에 **Charge Job 수행 결과(`job/report`)** 1회 보고 → "도킹 완료 보고" 의 의미.
-- 이후 충전 진행·완료는 AMMR HW가 자율 처리하며, **충전 완료 시점에 `state/hw` 로 `charging → idle` 전이를 별도 보고**한다.
-- 자체 임계 도달에 따른 충전 중단 결정은 AMMR HW 자체 처리. 단, 충전 중 Core Job 지시 수신 시의 중단·이탈은 §8.4를 따른다.
+- 도킹 완료 시점에 **Charge Job 수행 결과(`job/report`)** 1회 보고 → "도킹 완료 보고"의 의미.
+- 이후 충전 진행·완료는 AMMR HW가 자율 처리하며, **충전 완료 시점에 `state/hw`로 `charging → idle` 전이를 별도 보고**한다.
+- 자체 임계 도달에 따른 충전 중단 결정은 AMMR HW 자체 처리. 단, 충전 중 Core Job 지시 수신 시의 중단·이탈은 §8.5를 따른다.
 
 ### 8.3 저전력 자율 충전
 
 - Battery가 태블릿 설정의 저전력 임계치(초기값 20%) 이하로 진입하면 AMMR HW가 자체적으로 다음 동작을 수행한다.
   - 현재 진행 중 단위 Job 종료 후 설정 스테이션으로 자율 이동·도킹·충전
-  - 이 동작 진입 시 `state/hw` 로 `low_battery` 보고 (진행 중 Job의 종료와 동시에 진입한 경우엔 Job 수행 결과 보고의 `hw_state = low_battery`로 보고)
-  - 도킹 시점에 `state/hw` 로 `charging` 전이 보고
-  - 태블릿 설정의 대기 임계치(초기값 80%) 완충 시점에 `state/hw` 로 `idle` 전이 보고
+  - 이 동작 진입 시 `state/hw`로 `low_battery` 보고 (진행 중 Job의 종료와 동시에 진입한 경우엔 Job 수행 결과 보고의 `hw_state = low_battery`로 보고)
+  - 도킹 시점에 `state/hw`로 `charging` 전이 보고
+  - 태블릿 설정의 대기 임계치(초기값 80%) 완충 시점에 `state/hw`로 `idle` 전이 보고
 - 이 자율 동작은 Core 다운 여부와 무관하게 작동한다.
 - AMMR HW 상태가 `low_battery` 또는 `charging`인 동안 Core는 신규 Job 배정을 차단한다.
-- `charging` 중에는 Core가 필요하다고 판단하면(대표 사례 = 충전으로 Battery 충분히 회복) 완충을 기다리지 않고 Job을 지시할 수 있다 (§8.4).
+- `charging` 중에는 Core가 필요하다고 판단하면(대표 사례 = 충전으로 Battery 충분히 회복) 완충을 기다리지 않고 Job을 지시할 수 있다 (§8.5).
 - `low_battery` 중에는 이 예외가 없다. Battery가 부족한 상태라 Core는 신규 Job을 지시하지 않고 저전력 자율 충전을 우선한다. 그럼에도 `low_battery` 중 Job 지시가 수신되면 AMMR은 수행하지 않고 즉시 실패 회신한다 (수신 확인 A-7 + A-8 실패 회신·`reason` = `ammr_hw_low_battery`·§7.1).
 
-### 8.4 충전 중 Job 지시 (충전 중단·이탈)
+### 8.4 Job 대기 자체 충전 복귀
+
+- AMMR HW 상태가 `idle`인 채로 Job 대기 한도(태블릿 설정값·초기값 10초)를 넘도록 새 Job 지시가 없으면 AMMR HW가 자체적으로 충전 스테이션으로 이동·도킹·충전한다.
+- 이 동작 진입 시 `state/hw`로 `self_charge`를 보고한다 (`reason` = `idle_timeout`). Battery 잔량과 무관하며, Core 연결 여부와도 무관하다 (§8.7).
+- 복귀 이동은 Core가 지시한 Job이 아니므로 Job 수행 결과(`job/report`)를 발행하지 않는다.
+- 도킹 시점에 `state/hw`로 `charging` 전이를 보고하고(`reason` = `autonomous_docking`), 대기 임계치 완충 시점에 `idle` 전이를 보고한다(`reason` = `charge_completed`).
+- 복귀 중에는 Core가 Job을 지시하지 않는다. 도킹해 `charging`으로 전이한 뒤의 지시 수신은 §8.5를 따른다.
+- 사용 스테이션은 태블릿 설정의 충전 스테이션 번호다 (§8.6).
+
+### 8.5 충전 중 Job 지시 (충전 중단·이탈)
 
 - Core는 충전 중(`charging`)인 AMMR에도 Job을 지시할 수 있다.
 - 이 지시를 받으면 AMMR은 충전을 중단하고 스테이션에서 이탈한 뒤 Job을 수행한다. 수신 확인·결과 보고는 일반 Job과 동일 (§6.2). 충전 이탈에 따른 상태 전이(`charging → move` 등 Job 시작 전이)는 A-3로 보고한다.
 - Core가 어떤 기준으로 충전 중 AMMR에 Job을 지시하는지는 Core 내부 운영 판단 영역이다.
 
-### 8.5 충전 스테이션 설정 (단일 소스)
+### 8.6 충전 스테이션 설정 (단일 소스)
 
 - 충전 스테이션 위치는 **태블릿 설정 화면의 충전 스테이션 번호가 단일 소스**다. Core는 충전 스테이션 위치를 보유·지정하지 않는다.
-- Core 지시 Charge Job(§6.3)과 저전력 자율 충전(§8.3) 모두 이 설정 스테이션을 사용한다.
+- Core 지시 Charge Job(§6.3)·저전력 자율 충전(§8.3)·Job 대기 자체 충전 복귀(§8.4) 모두 이 설정 스테이션을 사용한다.
 
-### 8.6 Core 다운 중 자율 동작
+### 8.7 Core 다운 중 자율 동작
 
 - Core가 다운된 동안 진행 중이던 Job은 완료까지 수행한다.
-- 완료 후 AMMR은 그 위치에서 대기한다 (자율 충전 스테이션 복귀 없음, 단 §8.3 저전력 자율 충전은 예외).
+- 완료 후 AMMR은 대기 상태로 두고, Job 대기 한도가 지나면 충전 스테이션으로 복귀한다 (§8.4). 저전력 자율 충전(§8.3)도 그대로 작동한다.
 - Core 복구 시 Core 연결 상태 발신(§6.8, C-4는 예비) 및 보고 재개로 자연 재동기화한다.
 
 ---
@@ -1552,9 +1591,9 @@ Broker(Mosquitto) 측에 다음 ACL을 적용한다.
 
 ### 9.4 Broker 구성 요건
 
-Broker(Mosquitto) 는 접속한 클라이언트의 Client ID 를 MQTT 접속 ID 로 배정하도록 구성한다(`use_username_as_clientid`). AMMR 은 Client ID 를 지정하지 않으며(§3.6), 이 구성이 접속 ID 를 세션 이름으로 세운다.
+Broker(Mosquitto)는 접속한 클라이언트의 Client ID를 MQTT 접속 ID로 배정하도록 구성한다(`use_username_as_clientid`). AMMR은 Client ID를 지정하지 않으며(§3.6), 이 구성이 접속 ID를 세션 이름으로 세운다.
 
-이 구성이 빠지면 Broker 가 접속마다 임의값을 배정해 세션 이름이 매번 달라진다. 그러면 순단 유예(Will Delay 10초)가 같은 세션으로의 재접속을 알아보지 못해 짧은 끊김마다 offline 이 발행되고, 접속 ID 가 겹친 AMMR 이 동시에 접속해 같은 Job 을 중복 수행한다. Broker 를 재구축·이관할 때 이 항목을 함께 옮긴다.
+이 구성이 빠지면 Broker가 접속마다 임의값을 배정해 세션 이름이 매번 달라진다. 그러면 순단 유예(Will Delay 10초)가 같은 세션으로의 재접속을 알아보지 못해 짧은 끊김마다 offline이 발행되고, 접속 ID가 겹친 AMMR이 동시에 접속해 같은 Job을 중복 수행한다. Broker를 재구축·이관할 때 이 항목을 함께 옮긴다.
 
 ---
 
@@ -1570,20 +1609,23 @@ Broker(Mosquitto) 는 접속한 클라이언트의 Client ID 를 MQTT 접속 ID 
 
 #### A.1 AMMR HW 상태 (`hw_state`)
 
-8종 — Job 수행 중에는 수행 중인 Job 동작을, Job이 없을 때는 운영 상태를 보고한다.
+9종 — 동작 중에는 수행 중인 동작을, 동작이 없을 때는 운영 상태를 보고한다.
 
-| 값            | 분류      | 의미                                                                             |
-|---------------|-----------|----------------------------------------------------------------------------------|
-| `move`        | Job 동작  | Move Job 수행 중 (이동)                                                          |
-| `pickup`      | Job 동작  | Pickup Job 수행 중                                                               |
-| `dropoff`     | Job 동작  | Dropoff Job 수행 중                                                              |
-| `charge`      | Job 동작  | Charge Job 수행 중 (충전 스테이션 이동·도킹)                                     |
-| `idle`        | 운영 상태 | 대기 — 작업 배정 대기 중 (충전 완료 후 또는 작업 종료 후)                        |
-| `charging`    | 운영 상태 | 충전 중 — 충전 스테이션 도킹 후 충전 중                                          |
-| `low_battery` | 운영 상태 | 저전력 — 자체 임계(태블릿 설정·초기값 20%) 이하 진입. 자율 충전 동작 진입 (§8.3) |
-| `error`       | 운영 상태 | 장애 — 고장 또는 수리 중                                                         |
+| 값            | 분류      | 의미 |
+|---------------|-----------|---|
+| `move`        | 동작      | Move 수행 중 |
+| `pickup`      | 동작      | Pickup 수행 중 |
+| `dropoff`     | 동작      | Dropoff 수행 중 |
+| `charge`      | 동작      | Charge 수행 중 (충전 스테이션 이동·도킹) |
+| `idle`        | 운영 상태 | 대기 — 대기 중 |
+| `charging`    | 운영 상태 | 충전 중 — 충전 스테이션 도킹 후 충전 중 |
+| `low_battery` | 운영 상태 | 저전력 — 자체 임계(태블릿 설정·초기값 20%) 이하 진입. 자율 충전 진입 (§8.3) |
+| `self_charge` | 운영 상태 | 자체 충전 — Job 대기 한도(태블릿 설정·초기값 10초) 경과로 자율 복귀·충전. 복귀 중 배정 차단 (§8.4) |
+| `error`       | 운영 상태 | 장애 — 고장 또는 수리 중 |
 
-AMMR HW가 위 8종으로 포괄되지 않는 새로운 물리 상태를 가지면, AMMR은 이를 임의로 8종 중 하나에 끼워 맞추거나 무단으로 새 값을 발행하지 않고 Core에 알린다. enum 확장 여부는 Core가 정한다.
+동작 4종과 `idle`은 AMMR의 현재 동작을 그대로 싣는다. Core 지시 Job으로 수행하든 담당자의 티칭·테스트 조작으로 수행하든 같은 값을 보고한다.
+
+AMMR HW가 위 9종으로 포괄되지 않는 새로운 물리 상태를 가지면, AMMR은 이를 임의로 9종 중 하나에 끼워 맞추거나 무단으로 새 값을 발행하지 않고 Core에 알린다. enum 확장 여부는 Core가 정한다.
 
 #### A.2 Job 종류 (`job_type`)
 
@@ -1613,6 +1655,7 @@ AMMR HW가 위 8종으로 포괄되지 않는 새로운 물리 상태를 가지�
 | `ammr_hw_manipulator_fault` | AMMR HW 측 | Manipulator 동작 실패 |
 | `ammr_hw_vision_fault`      | AMMR HW 측 | Manipulator Vision Sensor 실패 |
 | `ammr_hw_self_diagnostic`   | AMMR HW 측 | 자기 진단 실패 |
+| `ammr_hw_job_timeout`       | AMMR HW 측 | Job 수행 한도 초과 — Move·Pickup·Dropoff 동작이 태블릿 설정 한도(초기값 각 5분) 안에 끝나지 않음. 어느 Job이었는지는 같은 payload의 `job_type`이 가른다 |
 | `ammr_hw_error_state`       | AMMR HW 측 | 장애(`error`) 상태 중 지시 수신 — 수행 불가 거부 |
 | `ammr_hw_low_battery`       | AMMR HW 측 | 저전력 상태 중 지시 수신 — 수행 불가 거부 |
 | `ammr_hw_other`             | AMMR HW 측 | 그 외 AMMR HW 측 사유 |
@@ -1621,7 +1664,9 @@ AMMR HW가 위 8종으로 포괄되지 않는 새로운 물리 상태를 가지�
 | `slot_dest_occupied`        | Slot 측    | Dropoff 목적지 Slot이 점유됨 (도착 시 slot_state occupied) |
 | `slot_dest_obstructed`      | Slot 측    | Dropoff 시 물리 충돌 감지 (Manipulator Vision Sensor) |
 | `slot_other`                | Slot 측    | 그 외 Slot 측 사유 |
-| `job_invalid_request`       | 지시 측    | 지시 자체가 계약에 어긋나 수행 불가 (필수 필드 누락·다른 호기의 Slot 지정·맵에 없는 목적지 설비 ID·작업 대상 설비와 다른 설비의 Slot 지정 등). 단 `error`·`low_battery` 상태 중 수신이면 상태 사유(`ammr_hw_error_state`·`ammr_hw_low_battery`)가 앞선다. 그 상태에서는 지시 내용을 검사하지 않고 거부한다 |
+| `job_invalid_request`       | 지시 측    | 지시 자체가 계약에 어긋나 수행 불가 (필수 필드 누락·다른 AMMR의 Slot 지정·맵에 없는 목적지 설비 ID·작업 대상 설비와 다른 설비의 Slot 지정 등). 단 `error`·`low_battery` 상태 중 수신이면 상태 사유(`ammr_hw_error_state`·`ammr_hw_low_battery`)가 앞선다. 그 상태에서는 지시 내용을 검사하지 않고 거부한다 |
+| `equip_marker_unreadable`   | 설비 측    | 위치 기준 Marker 인식 실패 — 목적지 Slot이 속한 열 또는 CNC 작업대의 Marker를 읽지 못해 위치를 맞출 수 없음. Manipulator Vision Sensor 자체 고장은 `ammr_hw_vision_fault`로 구분한다 |
+| `equip_interlock_failed`    | 설비 측    | 설비 Interlock 확보 실패 — CNC WIP 내부 로봇과 동작이 겹치지 않게 하는 신호를 확보하지 못해 수행 불가. 확보 대기 한도(태블릿 설정값·초기값 3분)를 넘기면 확보 실패로 판정한다 |
 
 #### A.5 BMS 필드 단위
 
@@ -1634,13 +1679,13 @@ AMMR HW가 위 8종으로 포괄되지 않는 새로운 물리 상태를 가지�
 
 #### A.6 좌표·방향각 단위
 
-위치 스트리밍(A-5)·일괄 보고(A-2) 공통 단위다. Job 지시의 목적지는 좌표가 아니라 설비 ID다 (C-2).
+위치 스트리밍(A-5)·일괄 보고(A-2)·Job 수행 결과 보고(A-8) 공통 단위다. Job 지시의 목적지는 좌표가 아니라 설비 ID다 (C-2).
 
 | 필드 | 단위       |
 |------|------------|
 | `x`  | m          |
 | `y`  | m          |
-| `a`  | rad (0~2π) |
+| `a`  | 도 (0~360) |
 
 #### A.7 Slot 정합 상태 (`slot_state`)
 
@@ -1696,12 +1741,14 @@ AMMR HW 상태 전이 보고(A-3)가 싣는 전이 사유 일람.
 | `job_started`            | Job 지시 수행 시작 (대기·충전 중 → Job 동작) |
 | `charge_completed`       | 자체 대기 임계 충족으로 충전 종료            |
 | `battery_low`            | 자체 저전력 임계 통과                        |
-| `autonomous_docking`     | 저전력 자율 충전 도킹                        |
+| `idle_timeout`           | Job 대기 한도 경과로 자체 충전 진입          |
+| `autonomous_docking`     | 자율 충전 도킹 (저전력·자체 충전 공통)       |
 | `self_diagnostic_failed` | 자기 진단 실패로 장애 진입                   |
 | `hardware_fault`         | HW 고장으로 장애 진입                        |
 | `error_cleared`          | 장애 복구 — 점검·수리 후 정상 복귀           |
+| `manual_operation`       | 담당자 티칭·테스트 조작에 따른 전이          |
 
-AMMR HW가 위 7종으로 포괄되지 않는 새로운 전이 사유를 가지면, AMMR은 임의로 새 값을 발행하지 않고 Core에 알린다. enum 확장 여부는 Core가 정한다.
+AMMR HW가 위 9종으로 포괄되지 않는 새로운 전이 사유를 가지면, AMMR은 임의로 새 값을 발행하지 않고 Core에 알린다. enum 확장 여부는 Core가 정한다.
 
 #### A.12 Tray 종류 (`tray_type`)
 
@@ -1714,13 +1761,13 @@ Job 지시(C-2)와 일괄보고 응답(C-3)의 `unit`이 싣는 Tray 종류. 화
 
 ### B. 확정 사항 일람
 
-업체 협의 없이 전량 Core가 확정한다. HW 의존 값도 보고 형식·어휘는 Core가 정하고 AMMR이 맞춘다. 단, 충전 스테이션 번호·Battery 임계치·스트리밍 주기 등 현장마다 달라지는 설치값은 예외로 태블릿 설정에 위임하고, 재연결 Backoff 간격은 업체 재량으로 두며, hw_state가 8종 밖 새 물리 상태를, A-3 전이 사유가 7종 밖 새 사유를 만나면 AMMR이 Core에 알려 Core가 enum 확장 여부를 정한다(§부록 A.1·A.11). 이 표는 이 문서 곳곳에 정의된 확정값의 한눈 일람이다.
+업체 협의 없이 전량 Core가 확정한다. HW 의존 값도 보고 형식·어휘는 Core가 정하고 AMMR이 맞춘다. 단, 충전 스테이션 번호·Battery 임계치·스트리밍 주기 등 현장마다 달라지는 설치값은 예외로 태블릿 설정에 위임하고, hw_state가 9종 밖 새 물리 상태를, A-3 전이 사유가 9종 밖 새 사유를 만나면 AMMR이 Core에 알려 Core가 enum 확장 여부를 정한다(§부록 A.1·A.11). 이 표는 이 문서 곳곳에 정의된 확정값의 한눈 일람이다.
 
 | #  | 분류           | 확정 내용 | 관련 절                                  |
 |----|----------------|---|------------------------------------------|
 | 1  | 프로토콜       | MQTT v5.0 | §3.1                                     |
 | 2  | Topic          | `ammr/{ammr_id}/…` · `core/ammr/{ammr_id}/…` · `core/conn` 체계 (일괄보고 응답·재전송 요청 포함) | §3.3                                     |
-| 3  | Topic          | `ammr_id` = 문자열 `AMMR-LOGI001` 형식 · 설치 시 Core 측 할당 · Topic 경로·접속 사용자명·Client ID 는 이 값의 소문자형 | §3.3, §9.1                               |
+| 3  | Topic          | `ammr_id` = 문자열 `AMMR-LOGI001` 형식 · 설치 시 Core 측 할당 · Topic 경로·접속 사용자명·Client ID는 이 값의 소문자형 | §3.3, §9.1                               |
 | 4  | QoS            | Job 지시·상태·회신·conn = 1 / 스트리밍(pose·bms) = 0 | §3.4                                     |
 | 5  | Retained       | `ammr/…/conn`·`core/conn` Topic만 true (online: 각자 직접 발행 / offline: Broker LWT 또는 정상 종료 시 직접 발행) · 그 외 false | §3.4                                     |
 | 6  | 인코딩         | JSON (UTF-8) | §3.5                                     |
@@ -1728,33 +1775,36 @@ Job 지시(C-2)와 일괄보고 응답(C-3)의 `unit`이 싣는 Tray 종류. 화
 | 8  | 수명 주기      | Keep Alive 60초(Mosquitto 기본) / Broker 단절 감지 90초 (1.5×·MQTT 표준 권장) | §3.6, §7.3                               |
 | 9  | 수명 주기      | Clean Start = true · Session Expiry = 10초 · Will Delay = 10초 (재접속 Clean Start=true가 stale Job 차단 · Will Delay가 순단 offline 억제) | §3.6                                     |
 | 10 | Slot 상태      | Slot은 클라이언트 판정 `slot_state` 4종. 일괄 보고(A-2)에 `unit_or_tray_id` 동반, Unit 상세·확정 배정은 Core가 Job 지시 선탑재·정합 정정으로 제공 | §5.1, §부록 A.7                          |
-| 11 | 목적지         | `work_location_id` = 설비 ID 문자열 (좌표 미전송·AMMR 자체 맵 해석) · Move 는 `slot_info` 예정 Slot 지점 우선·없거나 못 찾으면 설비 기본 지점 | §5.2 C-2                                 |
-| 12 | 좌표 단위      | m·rad — 위치 스트리밍(A-5)·일괄 보고(A-2) 공통 | §부록 A.6                                |
+| 11 | 목적지         | `work_location_id` = 설비 ID 문자열 (좌표 미전송·AMMR 자체 맵 해석) · Move는 `slot_info` 예정 Slot 지점 우선·없거나 못 찾으면 설비 기본 지점 | §5.2 C-2                                 |
+| 12 | 좌표 단위      | m·도 — 위치 스트리밍(A-5)·일괄 보고(A-2)·Job 수행 결과 보고(A-8) 공통 | §부록 A.6                                |
 | 13 | BMS            | `current` 부호 = 충전 양수 / 방전 음수 | §5.1 A-6                                 |
-| 14 | Reason 코드    | `ammr_hw_*` 7종 + `slot_*` 5종 (Pickup 충돌 `slot_source_obstructed` 포함) + `job_*` 1종 | §7.1, §부록 A.4                          |
-| 15 | enum           | `hw_state` = 영문 8종 | §부록 A.1                                |
+| 14 | Reason 코드    | `ammr_hw_*` 8종 + `slot_*` 5종 (Pickup 충돌 `slot_source_obstructed` 포함) + `job_*` 1종 + `equip_*` 2종 | §7.1, §부록 A.4                          |
+| 15 | enum           | `hw_state` = 영문 9종 | §부록 A.1                                |
 | 16 | Job 필드       | `priority` 필드 없음 (Job은 한 번에 하나 지시) | §5.2 C-2                                 |
 | 17 | 재동기화       | Core 측 재연결·재시작 시 Core 연결 상태 발신(C-1 online) → AMMR A-2 재발행 → 불일치 시 일괄보고 응답(C-3) · C-4는 예비 | §5.2 C-1, §5.2 C-3, §5.2 C-4, §6.8       |
 | 18 | 인증           | 사용자명/비밀번호 (소문자 username=`ammr_id` / pw=`{ammr_id}@core`·TLS 없음·사내망 전제) | §9.1                                     |
 | 19 | Topic          | 경로의 `{ammr_id}`는 소문자 (`ammr/ammr-logi001/…`·접속 사용자명과 같은 값) · Broker ACL 적용 | §3.3, §9.2                               |
-| 20 | Charge         | 단일 Charge Job · `work_location_id` 없음 · 충전 스테이션 = 태블릿 설정 단일 소스 | §6.3, §8.5                               |
+| 20 | Charge         | 단일 Charge Job · `work_location_id` 없음 · 충전 스테이션 = 태블릿 설정 단일 소스 | §6.3, §8.6                               |
 | 21 | Broker 접속    | 기본 포트 1883 (평문 MQTT·Mosquitto 기본) · 실제 접속 정보(IP·포트·자격증명)는 설치 시 Core 측 제공·태블릿 설정 입력 | §3.6, §9.1                               |
 | 22 | 표시           | 태블릿 표시 = Job 지시(C-2) 선탑재 + 태블릿 자체 slot_state 판정으로 구성 · 정합 정정만 일괄보고 응답(C-3·조건부) | §4.2, §5.2                               |
 | 23 | 적재 정보      | 일괄 보고(A-2)가 6 Slot slot_state + Slot별 `unit_or_tray_id`(태블릿 보관) 동반 · 적재 정보 재로드 = 담당자가 일괄 보고를 수동 발행(별도 재로드 Topic 없음·`trigger`=`manual`로 구분·응답 = 일괄보고 응답 C-3·일치해도 응답) | §5.1 A-2, §6.5                           |
 | 24 | Core 연결      | `core/conn`(retained·LWT·broadcast) — Core online/offline 발신 → AMMR이 online 시 A-2 재발행·offline 시 태블릿 표시 · 재동기 기본 경로(C-4는 예비) | §3.4, §5.2 C-1, §6.8                     |
 | 25 | Slot 정합      | 정합 판정 주체 = 클라이언트. Core는 결과 수신·unit 확정 배정 보유 · 정합 어긋날 때만 일괄보고 응답(C-3·재로드는 예외로 일치해도 응답) | §2.2, §5.1                               |
-| 26 | Job 지시       | `job_id` 정수(고유) · 표시·취급 정보 선탑재(`work_location_id` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) · Move 의 `slot_info` = 참고용 예정 Slot(짝 검증 없음·뒤따르는 지시가 권위) | §5.2 C-2                                 |
+| 26 | Job 지시       | `job_id` 정수(고유) · 표시·취급 정보 선탑재(`work_location_id` + `slot_info{from_slot_id,to_slot_id}` + `unit`·job_type별 필요분) · Move의 `slot_info` = 참고용 예정 Slot(짝 검증 없음·뒤따르는 지시가 권위) | §5.2 C-2                                 |
 | 27 | Unit 정보      | `unit_id`·`input_code`·`unit_num`·`model_name`·`version`·`purpose`·`tray_type`·`tray_count`·`product_count`·`from_location_id`·`to_location_id`(공정·설비 ID 층위·Slot은 지시 시점 `slot_info`가 결정) · 라벨은 태블릿이 input_code+unit_num 조립 | §1.3, §5.2 C-2, §부록 A.12               |
 | 28 | 연결 상태 body | offline conn(broker LWT·정상 종료) body에 `connected_at`(세션 접속 시각·KST) 동반 — LWT는 null인 `header.timestamp` 보완, 공통으로 세션 앵커 역할 · online엔 없음 | §3.4, §5.1 A-1, §5.2 C-1                 |
 | 29 | 일괄 보고 계기 | A-2 body `trigger`로 발행 계기 4종 구분 · `manual`(담당자 재로드)이면 확정 배정과 일치해도 일괄보고 응답(C-3) 발행 · `core_online` 발행 시점부터 주기 재산정(다른 계기는 주기 무영향) | §5.1 A-2, §5.2 C-3, §부록 A.10           |
-| 30 | 위치 Node      | pose에 `node_id`(AMMR 맵 Node ID) 동반 — 좌표(x·y·a)와 함께 현재 Node 보고 · 어느 Node 에도 있지 않으면 null | §5.1 A-2·A-5                             |
+| 30 | 위치 Node      | pose에 `node_id`(AMMR 맵 Node ID) 동반 — 좌표(x·y·a)와 함께 현재 Node 보고 · 어느 Node에도 있지 않으면 null | §5.1 A-2·A-5·A-8                         |
 | 31 | Job 지시       | Job 지시 수신 확인 임계(Core 측) = 3초 — `job/received` 미도달 시 AMMR HW 단절 처리 | §5.2 C-2, §7.3                           |
-| 32 | 설정 조회      | 설정값 단일 소스 = 태블릿 · Core는 보유하지 않고 설정값 조회 요청(C-5·예비)으로만 확인 · 응답 = 설정값 보고(A-9·10종·정의 표 순서·접속 정보 포함) | §5.1 A-9, §5.2 C-5, §8.5                 |
-| 33 | 세션           | Client ID 미지정 — Broker 가 MQTT 접속 ID 로 배정 (CONNACK Assigned Client Identifier 회신) · 접속 ID 중복 시 세션 인계로 동시 접속 차단 | §3.6, §9.4                               |
+| 32 | 설정 조회      | 설정값 단일 소스 = 태블릿 · Core는 보유하지 않고 설정값 조회 요청(C-5·예비)으로만 확인 · 응답 = 설정값 보고(A-9·15종·정의 표 순서·접속 정보 포함) | §5.1 A-9, §5.2 C-5, §8.6                 |
+| 33 | 세션           | Client ID 미지정 — Broker가 MQTT 접속 ID로 배정 (CONNACK Assigned Client Identifier 회신) · 접속 ID 중복 시 세션 인계로 동시 접속 차단 | §3.6, §9.4                               |
 | 34 | 장애 중 지시   | `error` 상태 중 수신 Job = 수신 확인(A-7) 발행 + A-8 즉시 실패 회신 (`reason`=`ammr_hw_error_state`·`slot`=대상 Slot 특정 시 현재 판정 상태·복구 후 소급 수행 없음) | §6.6, §부록 A.4                          |
-| 35 | 저전력 중 지시 | `low_battery` 상태(저전력 임계 이하) 수신 Job = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`ammr_hw_low_battery`·`slot`=대상 Slot 특정 시 현재 판정 상태) · 충전 중 예외 배정만 별개(§8.4) | §8.3, §부록 A.4                          |
+| 35 | 저전력 중 지시 | `low_battery` 상태(저전력 임계 이하) 수신 Job = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`ammr_hw_low_battery`·`slot`=대상 Slot 특정 시 현재 판정 상태) · 충전 중 예외 배정만 별개(§8.5) | §8.3, §부록 A.4                          |
 | 36 | 값 없음 수용   | 값 없음 필드(`…\|null`·header 포함) = null·빈 문자열·빈 객체 동등, 받는 쪽이 '없음' 정규화 | §3.5                                     |
-| 37 | HW 전이 사유   | A-3 `reason` = 7종 확정 enum·필수 · 새 사유는 AMMR이 Core에 알려 Core가 확장 여부를 결정 | §5.1 A-3, §부록 A.11                     |
+| 37 | HW 전이 사유   | A-3 `reason` = 9종 확정 enum·필수 · 새 사유는 AMMR이 Core에 알려 Core가 확장 여부를 결정 | §5.1 A-3, §부록 A.11                     |
 | 38 | 주기 발행      | 위치·BMS 스트리밍·주기 일괄 보고 = Core `online` 동안만 발행 · `offline` 이면 중단 · `online` 재감지 시 A-2 재발행 후 재개 | §5.1 A-2·A-5·A-6, §5.2 C-1, §6.8         |
-| 39 | 계약 위반 지시 | 계약에 어긋난 Job 지시(필수 필드 누락·다른 호기 Slot 지정·작업 설비와 Slot 불일치 등) = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`job_invalid_request`·`slot`은 대상 Slot 특정 불가 시 생략·`job_type`·`job_id`는 받은 값 그대로·없었으면 값 없음) · `error`·`low_battery` 중 수신은 상태 사유 우선 | §5.2 C-2, §5.1 A-8, §부록 A.2, §부록 A.4 |
+| 39 | 계약 위반 지시 | 계약에 어긋난 Job 지시(필수 필드 누락·다른 AMMR Slot 지정·작업 설비와 Slot 불일치 등) = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`job_invalid_request`·`slot`은 대상 Slot 특정 불가 시 생략·`job_type`·`job_id`는 받은 값 그대로·없었으면 값 없음) · `error`·`low_battery` 중 수신은 상태 사유 우선 | §5.2 C-2, §5.1 A-8, §부록 A.2, §부록 A.4 |
 | 40 | 응답 임계      | 3초 3종 — 재로드(수동 일괄 보고) 응답 대기(태블릿 측·미도달 시 실패 처리·담당자 재시도) · 일괄 보고 재전송 응답(Core 측·예비) · 설정값 조회 응답(Core 측·예비) | §7.3, §5.2 C-3·C-4·C-5                   |
+| 41 | Job 수행 한도  | Move·Pickup·Dropoff 수행 한도(태블릿 설정·초기값 각 5분) 초과 = 수행 중단 + 실패 회신 (`reason`=`ammr_hw_job_timeout`·Job 종류는 `job_type`이 가름) | §7.3, §부록 A.4                          |
+| 42 | 자체 충전      | `idle` 지속이 Job 대기 한도(태블릿 설정·초기값 10초) 초과 = `self_charge` 진입·충전 스테이션 자율 복귀 · 복귀 중 신규 배정 차단 · 도킹 후 지시 수신 시 이탈 수행 | §7.3, §8.4, §부록 A.1                    |
+| 43 | 재연결         | Broker 재연결 = 1초 간격·한도(태블릿 설정·초기값 5분) 경과 시 자동 시도 중단·이후 담당자 수동 연결 | §7.3, §7.4                               |
