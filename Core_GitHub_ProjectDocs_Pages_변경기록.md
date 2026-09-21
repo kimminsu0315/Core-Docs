@@ -1,83 +1,149 @@
 # Core 시스템 문서 페이지 변경 이력
 
-[d60] 2026-09-01 · ICD Tray 종류 값 dipping 교체·RnR 버전 되맞춤 (개인용·push)
+<details>
+<summary>[d61] 2026-09-21 · 산출물 v1.3.0 발행 — AMMR 운전 모드·최근 명령 재요청·안전 정지·원점 복귀 계약 반영 (개인용·push)</summary>
+
+- ICD — d260→d460 · v1.2.0→v1.3.0 (header mode 필수 · A-10 재요청·C-6 수신 확인·C-7 거절 신설 · hw_state 12종·전이 사유 32종 · Job 실패 Reason 개명과 Gripper 사유 신설 · 거부 사유 5종 신설과 우선순위 · 고장 계통 실패 error 전이 필수 · 설비 측 실패 원점 복귀 뒤 error · 장애 중 자율 충전 이동 · Job 동작 Slot 전이 A-4 발행 · 작업 실패 Slot 식별값 유지 · C-3 발행 조건과 trigger · 설정값 17종·한도 초 단위 · 확정 사항 #44~#53)
+- 업체용 SRS — d212→d358 · v1.2.0→v1.3.0 (위 계약의 업체 측 요구 · 운전 모드·Gripper Sensor·원점 복귀·작업 취소·최근 명령 재요청·안전 정지 절 신설 · AMMR 자체 Slot 은 Slot Sensor 단독 감지 · CNC 작업대 가공 중 · 운영 대수 정의)
+- UI 정의제안 — d172→d291 · v1.2.0→v1.3.0 (상단 고정 영역 두 줄·운전 모드 버튼·설비 Slot·AMMR Slot · 수동 조작 화면·하단 안내 줄 신설 · 연결 버튼 설정 화면 이동 · 설정 입력 범위와 일괄 검사 · 수행 한도 초과는 장애 뒤 [Reset] 해제)
+- 설비 ID·Slot ID 목록 — d28→d43 · v1.2.0→v1.2.1 (값 변경 없이 표기·문장 정비)
+- 본체 — SRS d407→d563 · SAD d597→d736 · v1.2.0→v1.3.0 (업체용 SRS 를 따름 · SRS = 같은 AMMR 요구와 자동화 대상 밖 CNC 작업대 공정 인계 · SAD = 운전 모드 축·최근 명령 재요청 처리·장애 진입 일원화·거부 사유별 이송 처리·Pickup 원위치) · RnR d78 무변경
+- 페이지 — 변경 이력을 기록마다 접어 보는 형식으로 전환
+
+</details>
+
+<details>
+<summary>[d60] 2026-09-01 · ICD Tray 종류 값 dipping 교체·RnR 버전 되맞춤 (개인용·push)</summary>
+
 - 외부전달 — ICD_AMMR d259→d260 (부록 A.12 Tray 종류 값을 `stack` 에서 `dipping` 으로 교체 · 본체는 이 Tray 를 한글 이름으로만 적고 값의 권위는 ICD 단독이라 다른 산출물 파급 없음)
 - 본체 — SRS d407 · SAD d597 무변경 · RnR d77→d78 (본문 무변경 · 파일명 버전 자리를 v1_2_0 에서 v1_0_0 으로 되맞춤)
 - 버전 — 전달본은 v1.2.0 유지. 업체 미전달 판이라 자리를 올리지 않고 같은 판을 다시 냈다. 버전 자리 올림 기준도 흐름 규모로 재정의해, 계약 값 교체는 마이너이고 메이저는 전체 흐름이 바뀌는 규모다. RnR 은 세트 메이저만 따르고 마이너·패치는 자기 것이 아니라 v1.0.0 이 맞는 값이다.
 - 학습자료 — 10건 발행 제외 유지 (본체 원본이 _archive 자리라 소스 없음·소스 복귀 시 자동 재발행)
 
-[d59] 2026-09-01 · 산출물 버전 계열에 패치 자리 신설·v1.2.0 상향 (개인용·push)
+</details>
+
+<details>
+<summary>[d59] 2026-09-01 · 산출물 버전 계열에 패치 자리 신설·v1.2.0 상향 (개인용·push)</summary>
+
 - 본체 — SAD d596→d597 · SRS d406→d407 · RnR d76→d77 (셋 다 본문 무변경 · 파일명 버전 자리를 v1_0 에서 v1_2_0 으로 상향해 세 자리 표기로 전환)
 - 외부전달 — ICD_AMMR d258→d259 · SRS_AMMR d211→d212 · UI정의제안 d171→d172 · 설비SlotID_AMMR d27→d28 (본문 무변경 · 본체와 같은 버전 상향)
 - 배경 — 종전 두 칸 표기는 자구 정정과 하위 호환 확장을 한 칸에 담아 업체 전달본의 변경 크기가 구분되지 않았다. 패치 자리를 신설하고 버전 올림 시점을 업체 전달로 못박았다 (메이저는 산출물 세트 공통·마이너와 패치는 문서별·본체 산출물은 대응 전달본을 따른다).
 - 학습자료 — 10건 발행 제외 유지 (본체 원본이 _archive 자리라 소스 없음·소스 복귀 시 자동 재발행)
 
-[d58] 2026-09-01 · AMMR 태블릿 설정값 확장·설비 측 실패 사유 신설·드리프트 정합 102~111차 누적 (개인용·push)
+</details>
+
+<details>
+<summary>[d58] 2026-09-01 · AMMR 태블릿 설정값 확장·설비 측 실패 사유 신설·드리프트 정합 102~111차 누적 (개인용·push)</summary>
+
 - 본체 — SAD d567→d596 · SRS d391→d406 · RnR d76 무변경 (AMMR 태블릿 설정값 5종 신설[Broker 재연결 한도·Job 대기 한도·Move 수행 한도·Pickup·Dropoff 수행 한도·설비 Interlock 대기 한도] · HW 상태에 자체 충전 추가 9종과 Job 대기 한도 초과 시 충전 스테이션 복귀 · 설비 측 실패 사유 2종 신설과 잠금 처분[위치·적재 정보 초기화·해당 Slot 사용 보류] · 진행 중 이송 처리를 적재 여부로 구분하고 이송 누락 검출 신설 · Job 수행 결과 보고에 종료 시점 위치 편입 · 티칭·테스트 조작 시 시스템 연결 해제 요구 신설)
 - 외부전달 — ICD_AMMR d236→d258 · SRS_AMMR d196→d211 · UI정의제안 d159→d171 · 설비SlotID_AMMR d20→d27 (ICD 방향각 단위를 라디안에서 도로 교체[전송값 자체가 바뀌는 계약 변경]하고 Job 수행 결과에 pose 필수 필드 신설 · 설정값 보고 필드를 15종으로 확장하고 임계값 일람에 AMMR 측 한도 4종 편입 · Broker 재연결을 1초 간격·한도 5분·이후 수동 연결로 확정 · 설비 측 Reason 2종 등재 · UI 설정 화면을 네 영역으로 재배치하고 상단 정보에 진행 한도 표시 신설 · 목록에 물류 AMMR 자체 식별자와 통합 Slot WIP 갱신본 조항 편입)
 - 학습자료 — 10건 발행 제외 유지 (본체 원본이 _archive 자리라 소스 없음·소스 복귀 시 자동 재발행)
 
-[d57] 2026-08-28 · 예정 Slot 계약 반영·드리프트 정합 100~101차 누적 (개인용·push)
+</details>
+
+<details>
+<summary>[d57] 2026-08-28 · 예정 Slot 계약 반영·드리프트 정합 100~101차 누적 (개인용·push)</summary>
+
 - 본체 — SAD d564→d567 · SRS d389→d391 · RnR d76 무변경 (Move 지시 선탑재에 뒤따를 Pickup·Dropoff 예정 Slot 추가 · Fallback 대체 자리 도착 실패 경로 신설과 CNC 작업대 출고 Slot 복귀 제외 · WIP 세 종류를 아우르는 자리의 미정의 축약 세 자리 정정)
 - 외부전달 — ICD_AMMR d235→d236 · SRS_AMMR d195→d196 · UI정의제안 d158→d159 · 설비SlotID_AMMR d14→d20 (ICD 에 Move 참고용 예정 Slot 계약 신설 · UI 명령 Slot 칸에 그 값 반영 · 목록에 물류 AMMR 자체 Slot 수록과 적재 칸 방향 명시 · 식별자 형식 표기·공정 나열 순서 통일·ammr_id 대응 행 추가)
 - 학습자료 — 10건 발행 제외 유지 (본체 원본이 _archive 자리라 소스 없음·소스 복귀 시 자동 재발행)
 
-[d56] 2026-08-24 · 설비 ID·Slot ID 목록 신규 발행·정비 누적 반영 (개인용·push)
+</details>
+
+<details>
+<summary>[d56] 2026-08-24 · 설비 ID·Slot ID 목록 신규 발행·정비 누적 반영 (개인용·push)</summary>
+
 - 발행셋 확장 — 외부전달에 설비 ID·Slot ID 목록(Core_설비SlotID_AMMR) 추가. 업체 대면본이자 벤더번들 4종의 하나라 사이트에도 둔다. 산출물목록 out 항목 4번으로 등재.
 - 본체 — SAD d562→d564 · SRS d388→d389 · RnR d75→d76 (보안 Log 사용자 행위 열거 구분자 정리·SM 응답 처리결과 어휘 통일 등 정비 누적)
 - 외부전달 — ICD_AMMR d232→d235 · SRS_AMMR d194→d195 · UI정의제안 d158 무변경 (ICD Payload header 서술·Slot 방향 규칙·설비 Slot 짝 규칙 반영 누적)
 - 학습자료 — 10건 발행 제외 유지 (본체 원본이 _archive 자리라 소스 없음·소스 복귀 시 자동 재발행)
 
-[d55] 2026-08-17 · 드리프트 점검 42~97차 누적 반영·산출물 버전 계열 v1.0 정렬 (개인용·push)
+</details>
+
+<details>
+<summary>[d55] 2026-08-17 · 드리프트 점검 42~97차 누적 반영·산출물 버전 계열 v1.0 정렬 (개인용·push)</summary>
+
 - 본체 — SRS d275→d388 · SAD d344→d562 · RnR d65→d75 (확정 후 GM 갱신 정책 전환[첫 Unit 발행 시점부터 제품 속성·수량·Recipe 고정] · 되담기 완료 사건 신설과 수동 등록 범위 축소 · Tray 종류 축 도입[SRS 취급 요구·SAD 선탑재 정보 포함] · 작업대 단독 표기를 CNC 작업대로 전수 통일 · 설비·Slot ID 형식 placeholder 를 SM 필드명으로 · 부연 대시를 마침표로 잇는 자구 정리)
 - 외부전달 — ICD_AMMR d169→d232 · SRS_AMMR d137→d194 · UI정의제안 d109→d158 (ICD Job 지시 unit 에 tray_type 신설[부록 enum·예시·확정 일람 동반] · 값 없음 관대 수용을 양방향 대칭으로 · 거부 회신 job_id 되싣기 · UI 배정 상태 화면에 Tray 종류 표시 추가와 표시값 갱신 규칙 정리 · SRS_AMMR 은 본체 추종 전파)
 - 발행 — 본체 버전 계열이 v1.0 으로 올라 산출물목록 stem 3건(RnR·ICD·UI정의제안)을 v0_1→v1_0 으로 교정. 안 고치면 빌드가 소스를 못 찾는다.
 - 학습자료 — 10건 발행 제외 유지. 본체 `docs/학습자료` 원본이 여전히 `_archive` 자리라 소스가 없다. 산출물목록 설정은 그대로 둬 소스가 돌아오면 자동으로 다시 발행된다.
 
-[d54] 2026-07-29 · 산출물 어긋남 정비 37~41차 누적 반영·학습자료 발행 중단 (개인용·push)
+</details>
+
+<details>
+<summary>[d54] 2026-07-29 · 산출물 어긋남 정비 37~41차 누적 반영·학습자료 발행 중단 (개인용·push)</summary>
+
 - 본체 — SRS d133→d275 · SAD d187→d344 · RnR d46→d65 (직전 싱크 이후 정비 사이클이 여러 차례 돌아 개정 폭이 큼 — Slot 상태 판정·보고 주체를 AMMR 단위로 올림 · SM 실물 어휘를 장비명으로 통일 · 일반 공정 WIP 두절 적용 단위를 중계 단위로 명시 · RnR 은 타 문서 참조를 걷고 추상화 수준으로 자기완결)
 - 외부전달 — ICD_AMMR d88→d169 · SRS_AMMR d51→d137 · UI정의제안 d60→d109 (본체 정합 전파 · 부록 B 표기를 Topic 으로 · 단절 해제 후 시스템 권위 값 회복 경로 보강 · 저장 입력값 유지 조건에서 점유 enum 태그를 센서 판별 어휘로)
 - 학습자료 — 10건 전부 발행 제외. 본체 `docs/학습자료` 원본이 `_archive` 로 옮겨져 소스가 없다. 사이트의 learn 섹션과 인덱스 카드가 내려간다. 산출물목록 설정은 그대로 둬 소스가 돌아오면 자동으로 다시 발행된다.
 
-[d53] 2026-07-23 · 산출물 어긋남 정비 5차 반영·설비 구성 신설·자격증명 소문자 확정 (개인용·push)
+</details>
+
+<details>
+<summary>[d53] 2026-07-23 · 산출물 어긋남 정비 5차 반영·설비 구성 신설·자격증명 소문자 확정 (개인용·push)</summary>
+
 - 본체 — SRS d127→d133 (CNC 작업대 출고 사건을 출고 Slot Sensor On 기준으로 정정 · 통합 Slot WIP 선반 구성표와 CNC 작업대 셀 구성 신설 · 만재 AMMR 목적지 제외 문장 삭제[Core 내부 배정 결정이라 SAD 영역] · Slot 예약 항목 추가 후 원복) · SAD d178→d187 (두 Sensor 조합 작업대 점유 상태 표 신설 · 공정 WIP·CNC 작업대 병목 상태 서술과 임계 기본값 확정 · 목적지 Slot 예약 신설 후 철회하고 Pickup 실패·Dropoff Fallback 을 AMMR 이동 관점으로 보강 · Adapter 계층 분류표 이름 통일) · RnR d45→d46 (외부 영역에 AMMR 시뮬레이터 행 추가)
 - 외부전달 — ICD_AMMR d87→d88 (자격증명 소문자 확정 — 발급 규칙·발급 값 표·증설 규칙·설정값 보고 예시·확정 사항 일람 일괄) · SRS_AMMR d47→d51 (본체 H-1·H-3 동반 정정과 설비 구성 반영 · SM 설비 총수·자동화 대상 목록 관리 방식은 노출 금지라 제외)
 - 학습자료 — 변경 없음 (직전 싱크 상태 유지)
 - 작업공간 — 시뮬레이터를 Core 본체 밖 별도 프로젝트로 분리 (발행 대상 아님)
 
-[d52] 2026-07-22 · 산출물 어긋남 정비 4차 반영·발행본 머리 시각 산정 변경 (개인용·push)
+</details>
+
+<details>
+<summary>[d52] 2026-07-22 · 산출물 어긋남 정비 4차 반영·발행본 머리 시각 산정 변경 (개인용·push)</summary>
+
 - 본체 — SRS d120→d127 · SAD d167→d178 (WIP slot_state 전이 Event 를 전용 이름으로 분리해 두 WIP 흐름·소비 표와 발화 갈래 서술을 맞춤 · 단절 표면화에 순단 유예 경과 동반) · RnR d35→d45
 - 외부전달 — ICD_AMMR d79→d87 (머리글을 걷어내고 확정값 성격·기준 본체 우선 관계를 문서 개요로 옮김) · SRS_AMMR d36→d47 (CNC WIP 동작 로직 챕터 도입문 추가) · UI정의제안 d59→d60
 - 학습자료 — 8건 갱신 (ASPNET PoC d11→d13 · 어댑터입력처리 d20→d22 · Channels d14→d16 · 권위일원화 d11→d13 · 처리주체분기 d16→d18 · 어댑터헬스모니터 d10→d12 · 애플리케이션로그 d12→d13 · DI와동시성 d14→d15)
 - 발행 — 문서 머리 최종 업데이트가 소스 파일 최종 수정 시각으로 바뀌어 전 문서 시각이 다시 잡힘 (직전 출력 대조 역산 폐지)
 - 커밋 358db54 (a4ccf0a..358db54)·18파일 · github.com/kimminsu0315/Core-Docs main
 
-[d51] 2026-07-21 · 식별자 표기 붙임꼴 정렬 + 충전 스테이션 값 숫자화 (개인용·push)
+</details>
+
+<details>
+<summary>[d51] 2026-07-21 · 식별자 표기 붙임꼴 정렬 + 충전 스테이션 값 숫자화 (개인용·push)</summary>
+
 - 본체 — SRS d119→d120 (AMMR ID 형식을 WIP와 같은 분류코드+일련번호 붙임꼴로 정렬[AMMR-LOGI001]·일련번호 자릿수와 CNC 작업대 예외 사유 명시 · Core 연결 상태 알림으로 어휘 통일하고 끊김 인지 시 태블릿 표시 요구 추가) · SAD d165→d167 (동기화 원칙 절의 옛 문서 표현 정리 12자리 · AMMR 측 Core 다운 인지 절 신설[비정상 단절은 Broker 대리 발신·정상 종료는 Core 직접 발신])
 - 외부전달 — ICD_AMMR d77→d79 (AMMR ID 붙임꼴 전수 51곳[자격증명 표 컬럼 폭 재정렬] · 충전 스테이션 값을 CHG-01에서 1로 숫자화하고 타입 string 유지해 UI정의제안의 단순 정수 입력과 정합) · UI정의제안 d58→d59 (화면 삽화 6곳 붙임꼴 반영·박스 폭 보존) · SRS_AMMR d35→d36 (본체 정합)
 - 학습자료 — 기술개념모음 d12→d13 (예시 코드 설비 식별자를 현행 명명 규칙으로 · CNC-01에서 CNC-RAC-A01)
 - 시뮬 — 블라스팅 지점을 세척과 한 지점으로 합치고 충전 스테이션 값을 숫자로 (SRS 공정 코드 CLN 단일 정합) · 공개 대상 아님
 - 커밋 500e629 (6e86166..500e629) · github.com/kimminsu0315/Core-Docs main
 
-[d50] 2026-07-20 · UI 정의제안 Log 모형 렌더 정정 (개인용·push)
+</details>
+
+<details>
+<summary>[d50] 2026-07-20 · UI 정의제안 Log 모형 렌더 정정 (개인용·push)</summary>
+
 - 외부전달 — UI정의제안 d57→d58 (Log 화면 모형의 닫는 코드펜스 누락 정정 · 마지막 코드블록이 닫히지 않아 발행 페이지에서 모형이 코드블록으로 잡히지 않고 문단으로 흘러 박스가 뭉개지던 자리 · 원본 마크다운은 정상이라 파일만으로는 드러나지 않았고 발행본 렌더 확인으로 포착)
 - 점검 — 본체·외부전달·학습자료 21개 산출물 코드펜스 짝 전수 확인 · 홀수는 이 파일 한 건뿐
 - 본체·학습자료 — 변경 없음
 
-[d49] 2026-07-20 · SRS 영역 경계 정정(코드 식별자 자연어화) + ICD 설정 조회 경로 신설 (개인용·push)
+</details>
+
+<details>
+<summary>[d49] 2026-07-20 · SRS 영역 경계 정정(코드 식별자 자연어화) + ICD 설정 조회 경로 신설 (개인용·push)</summary>
+
 - 본체 — SRS d117→d119 (§0.4를 'Slot 상태 보고'로 고쳐 Core 측 처리 서술 네 자리를 걷고 클라이언트가 지킬 보고·정정 반영 요구로 뒤집음 · slot_state·occupied·empty·blocked·job_failed·pair_waiting 전 자리를 Slot 상태·정상 점유·비어 있음·사용 보류·작업 실패·Pair 대기로 치환 · §8.5에 태블릿 설정값 조회 요구 추가) · SAD d164→d165 (MQTT Adapter 발신 목록에 설정값 조회 요청 예비 경로)
 - 외부전달 — ICD_AMMR d76→d77 (표시용 회신이 없다는 부정 서술 11자리를 현재 상태 기술로 정리 · 설정 상태 조회 요청 C-5와 설정 상태 보고 A-9 신설[충전 스테이션·대기 임계치·저전력 임계치·일괄보고 주기·위치 주기·BMS 주기 6종·태블릿 설정 화면 순서] · A-3 prev_state와 A-4 prev_slot_state를 필수로 · A-8에 Move 성공 예시 추가) · SRS_AMMR d33→d35 (본체 정합) · UI정의제안 d56→d57 (Log 화면 모형 내부 표를 본문 영역 끝까지 확장)
 - 학습자료 — 변경 없음
 - 운영 — 본체분류기준 d29→d30 (SAD 본문에 SRS 참조 표기를 남기지 않는 실제 운영으로 §4 정정 · §6에 외부 인터페이스 계약 필드명·상태값 표기 판정 사례 누적) · 공개 대상 아님
 
-[d48] 2026-07-20 · 산출물 정합 정비 9항목 전량 반영 (개인용·push)
+</details>
+
+<details>
+<summary>[d48] 2026-07-20 · 산출물 정합 정비 9항목 전량 반영 (개인용·push)</summary>
+
 - 본체 — SRS d112→d117 (Core 접속 알림을 외부 요구로 명문화 · CNC 작업대 지점 층위 신설[지점 = CNC-{장비명} · 그 아래 Slot] · Battery 임계치 초기값 표기와 대기·저전력 순서 · 보안 Log 묶음 연번 정정) · SAD d161→d164 (태블릿 재로드 입력을 추정 등급으로 통일 · 잔존 Unit Transfer 발동을 등급 무관으로 확장 · Job 지시 지점·슬롯 이층 정합)
 - 외부전달 — ICD_AMMR d74→d76 (일괄보고 응답 unit null 판정 명문화 · 사람 읽기용 라벨 조립 예외 단서 · 자격증명을 문서에 싣는 사유 명시 · Battery 임계 순서) · UI정의제안 d51→d56 (예시 Unit 여정을 ICD에 정렬 · Log 분류를 통신 방향 3종[시스템 → AMMR · AMMR → 시스템 · 설정 변경]으로 재정의 · Battery 순서와 초기값 어휘 · 제안 문서 어조 일관화[고정 항목 세 묶음으로 모으고 나머지는 업체 결정 영역임을 앞세움]) · SRS_AMMR d32→d33 (본체 정비분 sync)
 - 학습자료 — 변경 없음
 - 운영 — 산출물 정합 Workstream 9항목 전량 반영 후 소멸 절차로 삭제 · 항목별 결정 근거는 각 산출물 변경기록이 쥔다
 - 커밋 445fb2a (65c5bed..445fb2a) · github.com/kimminsu0315/Core-Docs main
 
-[d47] 2026-07-19 · 직전 싱크 이후 본체 누적분 + 빌드 도구 스킬 이관 (개인용·push)
+</details>
+
+<details>
+<summary>[d47] 2026-07-19 · 직전 싱크 이후 본체 누적분 + 빌드 도구 스킬 이관 (개인용·push)</summary>
+
 - 본체 — SRS d107→d112 · SAD d158→d161
 - 외부전달 — ICD_AMMR d45→d74 · UI정의제안 d45→d51 · SRS_AMMR d27→d32
 - 학습자료 — 어댑터입력처리 d19→d20 · 애플리케이션로그 d10→d11
@@ -86,120 +152,207 @@
 - 변경기록 — 본체의 개인용 원본 폐지 · 이 파일이 단일 자리
 - 커밋 8de080b · github.com/kimminsu0315/Core-Docs main
 
-[d46] 2026-07-17 · 메시지 구조 드리프트 전수 정합 + 학습자료 코드 작성 원칙(C# 컨벤션) 재검토 (개인용·push)
+</details>
+
+<details>
+<summary>[d46] 2026-07-17 · 메시지 구조 드리프트 전수 정합 + 학습자료 코드 작성 원칙(C# 컨벤션) 재검토 (개인용·push)</summary>
+
 - 본체 — SRS d107 · SAD d158 (pose·BMS 스트리밍 보고 주기 출처 'HW 설정 가변'→'태블릿 설정' 정정)
 - 외부전달 — ICD_AMMR d45 (§3.6 정상 시나리오에 일괄 보고 처리 메모 추가·§6.1 일관) · SRS_AMMR d27 (보고 주기 표기 정정)
 - 학습자료 — 어댑터입력처리 d19 (§7.3~§7.5 job/report A-8 단일 slot 모델 재작성·ParseTopic state 분기·record/직렬화 wire 어휘 정합) · 처리주체분기 d16 (job_result boolean→enum·AmmrHwStatus Failure→Error·§5.5 인용 갱신) · Application_Log d10 · Channels해설 d14 · 권위일원화 d11 · ASPNET_PoC d11 · DI와동시성 d14 · 어댑터헬스모니터 d10 · DB부하측정 d11 (C# 표준 컨벤션 + 메시지 정본 정합)
 - 커밋 34a2798 (58d84ab..34a2798) · github.com/kimminsu0315/Project_Core main
 
-[d45] 2026-07-17 · 외부전달 ICD·UI 실데이터·purpose 정합 반영 (개인용·push)
+</details>
+
+<details>
+<summary>[d45] 2026-07-17 · 외부전달 ICD·UI 실데이터·purpose 정합 반영 (개인용·push)</summary>
+
 - 외부전달 — ICD_AMMR d44 (GM 실데이터 샘플 교체·unit purpose 필드 신설·input_code 대시 표기·적대 감사 플래그 4건 정합) · UI정의제안 d45 (purpose 용도 전용 행·초기연결/설정 모형 정렬·감사 플래그 정합)
 - 커밋 58d84ab (e547b3c..58d84ab) · github.com/kimminsu0315/Project_Core main
 
-[d44] 2026-07-16 · AMMR 메시지 payload 구조 개편 + UI 헤더·갱신 정합 (개인용·push)
+</details>
+
+<details>
+<summary>[d44] 2026-07-16 · AMMR 메시지 payload 구조 개편 + UI 헤더·갱신 정합 (개인용·push)</summary>
+
 - 외부전달 — ICD_AMMR d40 (payload header/body 분리·헤더 유니폼[timestamp→ammr_id→msg_id·core/conn·broker LWT null]·msg_id 필수·필드 중요도순[slots↔pose·battery_id 선두]·C-2 work_location+slot_info{from,to}·A-5/A-6 보고주기 태블릿 설정·상단 표시 UI 정합·최근 명령/명령 Slot) · UI정의제안 d40 (최근 명령 Slot 라벨·최근 명령/Slot 갱신 시점 명문화·표시값 두 축 갱신 표·설정 위치(pose)/배터리 보고 주기·모형 AMMR 이름 좌측 칸 분리[사이드바 열 정렬·폭 113])
 - 커밋 0555769 (677cb08..0555769) · github.com/kimminsu0315/Project_Core main
 
-[d43] 2026-07-16 · slot 재설계 + 이벤트 모델·명명 컨벤션 재설계 반영 (개인용·push · 2세션 누적)
+</details>
+
+<details>
+<summary>[d43] 2026-07-16 · slot 재설계 + 이벤트 모델·명명 컨벤션 재설계 반영 (개인용·push · 2세션 누적)</summary>
+
 - 본체 — SRS d106 · SAD d157 — slot 정합 판정 재설계(클라 판정 slot_state·display 회신 제거·명령 선탑재·reconcile·WIP 확장) + 이벤트 모델·명명 재설계(도메인 이벤트 PascalCase 일괄·slot_state 통합 AmmrSlotStateEvent·BlockReleasedEvent 유지·Block 요약 이력 DB 강등·pair_waiting 넓은 의미 처리·BMS 3축·payload 4필드·enum 표·표기 규칙 신설) · RnR d35
 - 외부전달 — ICD_AMMR d36 (slot_state payload·display 회신 제거·§3.5 표시 회신 잔재 정정) · UI정의제안 d38 (슬롯 셀 slot_state 표시·헤더 최근명령/작업Slot) · SRS_AMMR d26
 - 학습자료 — 어댑터입력처리 d18 (§7.5 세분화 이벤트 제거·record 정합[RestackPlacements·Heading·AmmrBmsInput]·wire Topic·JSON 키 snake)
 - 커밋 988a21b (e034600..988a21b) + 변경기록 보정 · github.com/kimminsu0315/Project_Core main
 
-[d42] 2026-07-15 · 식별자 명명 규칙 전면 도입 + Core 공정 관리 제거 (개인용·push)
+</details>
+
+<details>
+<summary>[d42] 2026-07-15 · 식별자 명명 규칙 전면 도입 + Core 공정 관리 제거 (개인용·push)</summary>
+
 - 본체 — SRS d104 (§1.2 식별자 명명 규칙 신설: 통합WIP=WIP-{CLN|DP|CNC}{D3}·CNC작업대=CNC-{SM MACHINE_NAME}-{BEFORE|AFTER}·AMMR=AMMR-{LOGI|PROC}-{D3}·슬롯 ID화 · 되담기 WIP→CNC WIP · Core 공정 관리 제거: Recipe는 GM 소유·투입 단위 Unit 부속·Core는 조회만) · SAD d154 (개명·CNC 작업대 슬롯 스킴·공정 관리 파급) · RnR d34
 - 외부전달 — ICD_AMMR d33 (ammr-001→AMMR-LOGI-001·slot_index→slot_id 풀 ID·node 라벨 새 스킴·§5.2 라벨 형식 재작성) · UI정의제안 d37 (표시 라벨 되담기 WIP→CNC WIP·목업 ASCII 폭 정합) · SRS_AMMR d25
 - 학습자료 — 처리주체분기·Channels해설 개명 반영
 - 커밋 e034600 (1aff54e..e034600)·10파일 · github.com/kimminsu0315/Project_Core main
 
-[d41] 2026-07-15 · ack 용어 정리 + ICD 생명순 문서 전체 반영 (개인용·push)
+</details>
+
+<details>
+<summary>[d41] 2026-07-15 · ack 용어 정리 + ICD 생명순 문서 전체 반영 (개인용·push)</summary>
+
 - 본체 — SAD d153 (앱계층 Ack 8곳 우리말화: Job Ack·도킹 Ack→'Job 결과 보고'·'도킹 완료 보고', 단순 Ack→'단순 확인 응답' · ack/ACK는 MQTT 패킷 이름[CONNACK·PINGRESP]에만 예약)
 - 외부전달 — ICD_AMMR d31 (§3.3 Topic 표·§3.4 QoS 표를 메시지 카탈로그 생명순으로 재배치[conn=1번] · '도킹 Ack'→'도킹 완료 보고' 2곳 · CONNACK 유지)
 - 학습자료 — 어댑터입력처리 d14 ('단순 ACK'→'단순 확인 응답' 3곳)
 - 커밋 1aff54e (ede2024..1aff54e)·5파일 · github.com/kimminsu0315/Project_Core main
 
-[d40] 2026-07-15 · 외부전달 ICD 설계 변경 + 메시지 생명순 재번호 동기화 (개인용·push)
+</details>
+
+<details>
+<summary>[d40] 2026-07-15 · 외부전달 ICD 설계 변경 + 메시지 생명순 재번호 동기화 (개인용·push)</summary>
+
 - 본체 — SRS d101 (AMMR 주기 일괄 보고에 Slot별 적재 정보 포함·적재 정보 스냅샷 통합 반영 — 이전 push 누락 누적분) · SAD d152 (재동기화 경로를 Core 연결 상태 발신 push 기반으로 교체)
 - 외부전달 — ICD_AMMR d30 (job/ack→job/report 개명 · Core 연결 상태 core/conn 신설 · C-5 예비화 · §3.7 수신확인 표 분리 · 메시지 A/C 생명순 재번호[conn=1번]) · UI정의제안 d36 (시스템 연결 판정에 Core 측 연결 상태 반영)
 - 커밋 ede2024 (2305baf..ede2024)·6파일·github.com/kimminsu0315/Project_Core main
 
-[d39] 2026-07-14 · UI 활성화 프리스크립션 제거 (개인용·push)
+</details>
+
+<details>
+<summary>[d39] 2026-07-14 · UI 활성화 프리스크립션 제거 (개인용·push)</summary>
+
 - 외부전달 — UI정의제안 d34 (일괄 보고 주기 필드 활성 시점은 업체 결정 영역 — 활성화 문구 제거)
 - 커밋 2305baf (8ae1f2e..2305baf)·3파일
 
-[d38] 2026-07-14 · UI 목업 정정 (개인용·push)
+</details>
+
+<details>
+<summary>[d38] 2026-07-14 · UI 목업 정정 (개인용·push)</summary>
+
 - 외부전달 — UI정의제안 d33 (§9.3 설정 화면 모형에 '일괄 보고 주기' 필드 반영·§6.2 표와 정합)
 - 커밋 8ae1f2e (1b0a454..8ae1f2e)·3파일
 
-[d37] 2026-07-14 · 순단 설계 후속 정정 (개인용·push)
+</details>
+
+<details>
+<summary>[d37] 2026-07-14 · 순단 설계 후속 정정 (개인용·push)</summary>
+
 - 외부전달 — SRS_AMMR d24 (BMS 주기 5→10초 정정) · ICD_AMMR d27 (CONNECT 설정 절 신설·미명시 옵션 미사용 명시)
 - 커밋 1b0a454 (9eeceef..1b0a454)·4파일
 
-[d36] 2026-07-14 · 누적 작업 전체 동기화 (개인용·push)
+</details>
+
+<details>
+<summary>[d36] 2026-07-14 · 누적 작업 전체 동기화 (개인용·push)</summary>
+
 - 본체 — SRS d100 · SAD d148 · RnR d33 (직전 본문 push d32 이후 누적분 일괄)
 - 외부전달 — SRS_AMMR d23 · ICD_AMMR d26 · UI정의제안 d32 (와이파이 음영 순단 대비 통신 설계 반영)
 - 학습자료 10건 — 재빌드 (변경분만 시각 갱신)
 - 커밋 9eeceef (8743470..9eeceef)·13파일
 
-[d35] 2026-07-12 · 인덱스 접기 버튼 위치 오른쪽 정렬 (개인용·push)
+</details>
+
+<details>
+<summary>[d35] 2026-07-12 · 인덱스 접기 버튼 위치 오른쪽 정렬 (개인용·push)</summary>
+
 - index.html — "모두 접기/펼치기" 버튼을 오른쪽 끝 정렬로(로컬 뷰어 인덱스와 위치 일치)·배경 흰색 통일
 - 커밋 8743470 (0d132ff..8743470)·2파일
 
-[d34] 2026-07-12 · 인덱스 접기 버튼 + 문서 햄버거 재표시 (개인용·push)
+</details>
+
+<details>
+<summary>[d34] 2026-07-12 · 인덱스 접기 버튼 + 문서 햄버거 재표시 (개인용·push)</summary>
+
 - index.html — 폴더 "모두 접기/펼치기" 마스터 버튼 추가 (로컬 뷰어 인덱스와 일치·생성기 build_index)
 - head-custom.html — 햄버거 스크롤 숨김에 "멈추면 0.6초 뒤 재표시" 추가 (아래로 스크롤 중엔 숨김 유지·소섹션 도달 시 복귀). 세 렌더면(로컬·번들·깃) 공통 적용
 - 커밋 0d132ff (3b93fe3..0d132ff)·3파일
 
-[d33] 2026-07-12 · head-custom v1.6 이식 — 문서 페이지 목차 동작을 로컬 뷰어·번들과 일치 (개인용·push)
+</details>
+
+<details>
+<summary>[d33] 2026-07-12 · head-custom v1.6 이식 — 문서 페이지 목차 동작을 로컬 뷰어·번들과 일치 (개인용·push)</summary>
+
 - head-custom.html — 로컬 뷰어 v1.6 목차 UX 이식: D1 사이드바 상시(목차없음 표시)·D2 개요접힘+toc-open 진입·D3 단일 개요토글·D4 키보드 T/Esc·D5 스크롤스파이 상위버블·D6 홈경로 VIEWER_HOME 주입·D7 앵커여백. mermaid CDN·셀렉터 유지
 - 본체·외부전달·학습자료 — 재빌드 (본문 불변·시각 유지, 자산만 갱신)
 - 커밋 3b93fe3 (2b16214..3b93fe3)·3파일
 
-[d32] 2026-07-12 · 누적 작업 전체 동기화 (개인용·push)
+</details>
+
+<details>
+<summary>[d32] 2026-07-12 · 누적 작업 전체 동기화 (개인용·push)</summary>
+
 - 본체 — SRS d97 · SAD d147 · RnR d32 (직전 push d31 이후 누적분 일괄)
 - 외부전달 — SRS_AMMR d21 · ICD_AMMR d21 · UI정의제안 d31
 - 학습자료 10건 — 재빌드 (변경분만 시각 갱신)
 - 커밋 2b16214 (ea10c00..2b16214)·8파일
 
-[d31] 2026-07-04 · 누적 작업 전체 동기화 (개인용·push)
+</details>
+
+<details>
+<summary>[d31] 2026-07-04 · 누적 작업 전체 동기화 (개인용·push)</summary>
+
 - 본체 — SRS d81 · SAD d133 · RnR d31 (직전 push 이후 누적분 일괄)
 - 외부전달 — SRS_AMMR d14 · ICD_AMMR d15 · UI정의제안 d27
 - 학습자료 10건 — 재빌드 (변경분만 시각 갱신)
 - 커밋 c8a525c (fa8eb6c..c8a525c)·18파일
 
-[d30] 2026-06-16 · out/ 시각 자동 통일 + index 설명글 괄호 제거 (개인용·push)
+</details>
+
+<details>
+<summary>[d30] 2026-06-16 · out/ 시각 자동 통일 + index 설명글 괄호 제거 (개인용·push)</summary>
+
 - 외부전달 out/ — 시각을 본체와 동일 시각 자동으로 통일 (내용 바뀌면 시각 갱신·NEW) · 업체엔 별도 산출물로 전달하므로 Pages 시각·NEW 는 내부 표시용 · 생성기 out/ 고정 분기 제거 · 매뉴얼 §6.2 · 산출물목록 주석
 - index 설명글 — 본체·외부전달 설명글 괄호 제거 (SAD (C4 L1~L3) · UI/ICD (MQTT))
 - ICD_AMMR — 시각 2026-06-16 21:31 (담은 변경이 시각 자동 통일로 NEW 표면화) · SAD 2026-06-16 20:30 · SRS_AMMR/UI 2026-05-25 18:01 유지
 - 커밋 fa8eb6c (0033208..fa8eb6c)·3파일
 
-[d29] 2026-06-16 · 색채어 sweep 산출물 반영 (개인용·push)
+</details>
+
+<details>
+<summary>[d29] 2026-06-16 · 색채어 sweep 산출물 반영 (개인용·push)</summary>
+
 - 본체 — SAD d126 (본문·다이어그램·코드블록 색채어 일상어화: 결/결로→방식·것·축·원칙 / 박힘→정해진다 / 흡수→처리 / 본질→핵심 / 본체(일반명사)→주·기준 · 약 95 occurrence · 식별자·enum·영어 컴포넌트명 보존)
 - 외부전달 — ICD_AMMR (박은→담은)
 - 나머지(SRS·RnR·out/SRS_AMMR·out/UI·learn) = 색채어 무변경 (빌드 자동B 시각 유지)
 - 검사 스코프 — Manifest §5.2 색채어스캔 신설·본체 편입 (d42 본체 제외 폐기), check_vocab·sweep-scan 코드블록 본문 포함
 - 커밋 0033208 (363ad6c..0033208)·4파일
 
-[d28] 2026-06-16 · SAD 머리 인용구 마침표 정정 (개인용·push)
+</details>
+
+<details>
+<summary>[d28] 2026-06-16 · SAD 머리 인용구 마침표 정정 (개인용·push)</summary>
+
 - 본체 — SAD d125 (머리 인용구 셋째 줄 "Core 시스템을 C4 Model L1~L3 수준에서 서술한다" → "… 서술한다." · 산출물 마침표 양식 정합·d27 구조 정렬 후속)
 - 그 외 무변경 (index 빌드 시각만 갱신)
 - 커밋 363ad6c (f7cb9c0..363ad6c)·3파일 17+/8−·github.com/kimminsu0315/Project_Core main
 
-[d27] 2026-06-16 · 산출물 본문 구조 표준 정렬 반영 동기화 (개인용·push)
+</details>
+
+<details>
+<summary>[d27] 2026-06-16 · 산출물 본문 구조 표준 정렬 반영 동기화 (개인용·push)</summary>
+
 - 본체 — SRS d74 (섹션 heading H1→H2·하위 H3 재레벨·제목/버전안내/목차 H2 유지·앵커 불변) · SAD d124 (머리 인용구 3줄 신설·§1 개요 → 아키텍처 개요)
 - 외부전달 — UI정의제안 d20 (머리 기준 본체 추가·§1 → 태블릿 UI 개요·현재문서 버전줄 제거) · SRS_AMMR d9 (heading 재레벨) · ICD_AMMR d8 (현재문서 버전줄 제거)
 - 학습자료 10건 — 재빌드
 - 표준 단일 진실 = 작업운영 §8.11 산출물 본문 구조 표준 (heading H2·개요 [무엇]개요·머리 인용구·상단 알림 인라인·버전/업데이트 빌드 자동 주입)
 - 커밋 f7cb9c0 (2702b9b..f7cb9c0)·17파일 833+/799−·github.com/kimminsu0315/Project_Core main
 
-[d26] 2026-06-15 · 외부전달(out/) Pages 빌드 보정 (개인용·push)
+</details>
+
+<details>
+<summary>[d26] 2026-06-15 · 외부전달(out/) Pages 빌드 보정 (개인용·push)</summary>
+
 - out/ 3건(SRS_AMMR·ICD_AMMR·AMMR_Tablet_UI) 헤더 상단 `> **dN 갱신**` 노트 = 빌드서 제거 (소스 유지·빌드만)
 - out/ 헤더 `최종 업데이트` = 직전 페이지 싱크 시각 `2026-05-25 18:01` 고정 — 생성기 자동B(바이트 diff→현재 시각) 우회, notation·rebuild 로는 안 바뀜, 실제 본체 내용 sync 때만 산출물목록서 갱신
 - index.html 하단 시각 = 빌드/푸시 시각 유지 (out/ 링크 data-updated·link-updated = 18:01 따라감)
 - 본체(main)·학습(learn) = 현행 자동 시각·노트 유지
 - 생성기 make_doc_body(out 노트 제거)·메인 루프(out 시각 고정) + 산출물목록 out/ updated 18:01 수정
 
-[d25] 2026-06-15 · 표기·어휘 전수 sweep(본체·외부전달 그룹) 반영 전체 동기화 (개인용·push 완료)
+</details>
+
+<details>
+<summary>[d25] 2026-06-15 · 표기·어휘 전수 sweep(본체·외부전달 그룹) 반영 전체 동기화 (개인용·push 완료)</summary>
 
 - 본체 3건 — SRS d69·SAD d120·RnR d27(담당자 마스킹) → docs/Core_*.md
 - 외부전달 3건 — SRS_물류AMMR d8·ICD_AMMR d7·UI정의제안 d18 → docs/out/*.md
@@ -207,7 +360,10 @@
 - .gitignore 신설 + 변경기록 슬롯 rename (옛 변경로그 제거)
 - 커밋 516fc7e (3c3f94a..516fc7e)·22파일 822+/792−·github.com/kimminsu0315/Project_Core main
 
-[d24] 2026-05-25 · 학습자료 영역 신설 — docs/learn/ 폴더트리 + 학습자료 → docs 동기화 구성 ((B) 직접 편집)
+</details>
+
+<details>
+<summary>[d24] 2026-05-25 · 학습자료 영역 신설 — docs/learn/ 폴더트리 + 학습자료 → docs 동기화 구성 ((B) 직접 편집)</summary>
 
 **(B) 학습자료 영역 신설** (학습 허브 index.md 제외, 읽는 순서 번호·난이도 한글 파일명):
 - 학습자료/기술참고/기술개념모음 d5       → docs/learn/01_기술개념모음_기초.md
@@ -227,7 +383,10 @@
 - 학습자료 영역 = 개인깃 전용 (회사깃 제외, 사내 비공개) — GitHubPages 매뉴얼 d15 동반
 - push 미진행 — 구성만, 사용자 트리거 시 개인용 push
 
-[d23] 2026-05-25 · 전체 파일 동기화 (개인용) + §3.1 마스킹 규칙 변경 반영 ((A) 자동 동기화 + (B) 직접 편집 동반)
+</details>
+
+<details>
+<summary>[d23] 2026-05-25 · 전체 파일 동기화 (개인용) + §3.1 마스킹 규칙 변경 반영 ((A) 자동 동기화 + (B) 직접 편집 동반)</summary>
 
 **(A) 본체 → docs 동기화 6건** — 본체 본문 복사 + 도입부 시간 갱신:
 - 본체/1_SRS/Core_SRS_v2_0_d68.md                → docs/Core_SRS.md
@@ -250,7 +409,10 @@
 
 개인용 repo push 동반 (GitHub_ProjectDocs)
 
-[d22] 2026-05-24 · index.html 자세 보강 ((B) 직접 편집 자취, 사용자 결정 자세)
+</details>
+
+<details>
+<summary>[d22] 2026-05-24 · index.html 자세 보강 ((B) 직접 편집 자취, 사용자 결정 자세)</summary>
 
 **1. L256 폴더명 슬래시 제거**:
 - `<span class="folder-name">out/</span>` → `<span class="folder-name">out</span>`
@@ -272,7 +434,10 @@
 - GitHubPages 매뉴얼 §6 본문 보강 — 대상 적용 자리 자세 자세 (d9 → d10)
 - 옛: "본체 영역 3건에만 자리 있음" → 새: "본체 + 외부전달 모두 NEW 대상"
 
-[d21] 2026-05-24 · 전체 파일 동기화 — 개인용 + 외부전달 영역 포함 ((A) 자동 동기화 + (B) 직접 편집 동반)
+</details>
+
+<details>
+<summary>[d21] 2026-05-24 · 전체 파일 동기화 — 개인용 + 외부전달 영역 포함 ((A) 자동 동기화 + (B) 직접 편집 동반)</summary>
 
 **대상 파일 6건 — 본체 본문 그대로 복사 + 도입부 양식 + 시간 갱신**:
 
@@ -293,7 +458,10 @@
 
 **마스킹 워크플로우 첫 적용 자취** — GitHubPages 매뉴얼 d9 §3.1 RnR 개인용 마스킹 신설 직후 첫 동기화에서 자세 박음. 본 사이클 검증 통과.
 
-[d20] 2026-05-22 · 본체 SAD d117 → d118 결식 결로 박힌 결의 docs 동기화 ((A) 자동 동기화 결식, 부수 자리 점검 §6.3 결로 박힌 본체 SAD 보강 4자리 결과 후속)
+</details>
+
+<details>
+<summary>[d20] 2026-05-22 · 본체 SAD d117 → d118 결식 결로 박힌 결의 docs 동기화 ((A) 자동 동기화 결식, 부수 자리 점검 §6.3 결로 박힌 본체 SAD 보강 4자리 결과 후속)</summary>
 
 - **docs/Core_SAD.md** = 본체 SAD d118 본문 결로 갈음 + 도입부 기준 파일명 자리 갱신 (`Core_SAD_v1_0_d117.md` → `Core_SAD_v1_0_d118.md`) + 도입부 시간 결 갱신 (`2026-05-22 00:06` → `2026-05-22 16:57`).
 - **index.html L241 `data-updated`** = `2026-05-22T00:06` → `2026-05-22T16:57`.
@@ -302,7 +470,10 @@
 - Core SRS·Core RnR 결식 결로 박힌 결의 `data-updated`·`.link-updated` 무변경 (본체 SRS·RnR 무변경 결로).
 - 외부전달 영역 docs/out/* 결식 결로 박힌 결 미박음 (사용자 결식 = "외부 폴더 제외").
 
-[d19] 2026-05-22 · R&R 파일명 `Core_R&R_*` → `Core_RnR_*` 결로 갈음 ((B) 직접 결식, 부수 자리 점검 §6.2 결, `&` 다운로드 실패 자리 정정)
+</details>
+
+<details>
+<summary>[d19] 2026-05-22 · R&amp;R 파일명 `Core_R&amp;R_*` → `Core_RnR_*` 결로 갈음 ((B) 직접 결식, 부수 자리 점검 §6.2 결, `&amp;` 다운로드 실패 자리 정정)</summary>
 
 - index.html L219 결식 결로 `href="./Core_R&R.html"` → `href="./Core_RnR.html"` 결로 갈음 + `data-updated="2026-05-21T18:30"` → `data-updated="2026-05-22T12:43"` 결로 갱신.
 - index.html L223 결식 결로 `<span class="link-title">Core_R&R</span>` → `<span class="link-title">Core_RnR</span>` 결로 갈음 (표시 텍스트 결식 결로 파일명 결과 통일).
@@ -312,7 +483,10 @@
 - L224 결식 결로 박힌 `<span class="link-desc">R&R시스템 영역별 개발</span>` 결식 결로 박힌 결은 본문 어휘 결로 책임 분담 의미 결로 자연 유지 — 파일명 결만 갈음.
 - 별도 파일 GitHubPages d4 → d5 결식 결로 박음 — 본문 안 R&R 박힌 4자리 (§2 매핑 표 L33, §3 박지 않을 결 L94, §6 NEW 배지 식별자 예시 L155, §7 자취 결식 예시 L188) 결로 RnR 결로 갈음.
 
-[d18] 2026-05-22 · NEW 배지 시각·자리·동작 결식 갈음 ((B) 직접 결식)
+</details>
+
+<details>
+<summary>[d18] 2026-05-22 · NEW 배지 시각·자리·동작 결식 갈음 ((B) 직접 결식)</summary>
 
 - index.html CSS 결식 결로 `.tag-new` 클래스 제거, `.badge-new` 클래스 신설 — 파랑 (`#3B82F6`) + 흰 글자, pill shape 결식 (`border-radius: 10px`, `font-size: 9px`, `padding: 2px 6px`, `letter-spacing: 0.5px`, `text-transform: uppercase`). 일반적 NEW 배지 결식 (작고 둥근 파란 결로 박힘).
 - index.html body 끝 JS 결식 갈음 — localStorage 키 결식 `core_docs_last_visit` (단일 ISO 결) → `core_docs_visits` (객체 결식, `{"<href>": "<ISO 시각>", ...}`) 결로 갈음. 식별자 결식 결로 각 `.link-item`의 `href` 속성 결로 박음 (예: `./Core_R&R.html`). 파일별 분리 결식 결로 박음.
@@ -323,7 +497,10 @@
   - 본체 결 변경 부재 결로 docs/*.md 도입부·각 링크 `.link-updated` 결식 결로는 시간 결 그대로.
 - 별도 파일 GitHubPages d3 → d4 결식 결로 박음 — §6 NEW 배지 결식 결로 본 갈음 자취 결식 박음 (시각·자리·동작 갱신). Pages 변경기록 결식 결로는 매뉴얼 자체 변경 자취 박힘 부재 (§1 결식 결로 docs/ 하위 범위 결로 박힘).
 
-[d17] 2026-05-22 · NEW 배지 결식 박음 (별도 파일 GitHubPages §6 결) + 회사용 레포 결로 갈음 ((B) 직접 결식)
+</details>
+
+<details>
+<summary>[d17] 2026-05-22 · NEW 배지 결식 박음 (별도 파일 GitHubPages §6 결) + 회사용 레포 결로 갈음 ((B) 직접 결식)</summary>
 
 - index.html L196 레포 주소 결식 결로 회사용 결로 갈음 — `https://github.com/kimminsu0315/Project_Core` → `[회사용 repo]`. 직전 d16 결식 결로 박혀 있던 개인용 결식 결로는 본 사이클 결로 회사용 결로 갈음 (별도 파일 GitHubPages §3 (2) 결식 결로 박혀 있는 두 결식 중 회사용 결로 박힘 — "회사깃에 올릴 수 있도록" 사용자 결식 결로 박힘).
 - index.html CSS 결식 결로 `.tag-new` 클래스 신설 — 진한 빨강 (`#B83227`) + 흰 글자 결로 박음 (기존 태그 결식 `.tag-repo`/`.tag-int`/`.tag-ext`/`.tag-draft` 결과 차별 결로 박힘).
@@ -334,14 +511,22 @@
   - 본체 결 변경 부재 결로 docs/*.md 도입부·각 링크 `.link-updated` 결식 결로는 시간 결 그대로.
 - 별도 파일 GitHubPages d2 → d3 결식 결로 박음 — §6 NEW 배지 결식 신설, 기존 §6 자취 결식 → §7 결로 밀림. Pages 변경기록 결식 결로는 매뉴얼 자체 변경 자취 박힘 부재 (§1 결식 결로 docs/ 하위 범위 결로 박힘).
 
-[d16] 2026-05-22 · index.html L196 레포 주소 결식 결로 개인용 결로 갈음 — `[회사용 repo]` → `https://github.com/kimminsu0315/Project_Core`. 직전 d14 결로 회사용 결로 갈음 박혀 있던 결을 본 사이클 결로 개인용 결로 되돌림. 매뉴얼 §11.2 (2) 버전 결식 결로 박힘 (회사용·개인용 두 결식 결로 박음, 동기화 결식 결로 박힐 시 선택 결로 박을 결).
+</details>
+
+<details>
+<summary>[d16] 2026-05-22 · index.html L196 레포 주소 결식 결로 개인용 결로 갈음 — `[회사용 repo]` → `https://github.com/kimminsu0315/Project_Core`. 직전 d14 결로 회사용 결로 갈음 박혀 있던 결을 본 사이클 결로 개인용 결로 되돌림. 매뉴얼 §11.2 (2) 버전 결식 결로 박힘 (회사용·개인용 두 결식 결로 박음, 동기화 결식 결로 박힐 시 선택 결로 박을 결).</summary>
+
 - 동반 시간 결 세 자리 결식 결로 갱신 (매뉴얼 §11.4 결, 별도 파일 GitHubPages §5 결):
   - docs/Core_SRS.md·docs/Core_SAD.md 도입부 시간 결 갱신 (`2026-05-21 18:30` → `2026-05-22 00:06`) — 직전 별도 작업 결로 본체 파일명 자취 정정 박은 docs 두 결식만 갱신.
   - index.html L283 페이지 전체 시간 결 갱신 (`2026-05-21 18:30` → `2026-05-22 00:06`).
   - index.html Core SRS (L222)·Core SAD (L233) `.link-updated` 시간 결 갱신 (`2026-05-21 18:30` → `2026-05-22 00:06`). Core_R&R (L211) 결식 결로는 본 사이클 결 변경 부재 결로 시간 결 그대로.
 - 별도 파일 GitHubPages d1 → d2 결식 결로 박음 — §4·§5 결식에 박힘 시점 결식 명시 추가 (클로드가 응답 박는 시점의 시간 결로 박음, 컨테이너 `TZ=Asia/Seoul date` 결식 결로 박힐 시각 결로 박음, 사용자 결식 결로 명시 결로 박힐 시 그 결로 갈음).
 
-[d15] 2026-05-21 · 본체 영역 동기화 (매뉴얼 §11.2 (A) 자동 트리거 결)
+</details>
+
+<details>
+<summary>[d15] 2026-05-21 · 본체 영역 동기화 (매뉴얼 §11.2 (A) 자동 트리거 결)</summary>
+
 - 본체/1_SRS/Core_SRS_v2_0_d68.md  → docs/Core_SRS.md
 - 본체/2_SAD/Core_SAD_v1_0_d117.md → docs/Core_SAD.md
 - 운영/Core_R&R_v0_1_d23.md        → docs/Core_R&R.md
@@ -357,55 +542,110 @@
 
 매뉴얼 §7.13 결 개선 자취 (d109) — 헤더 "사이클 공통 결" → "전 세션 공통 결" + 진행 표시 단위 결식 결로 별도 작업·단순 정정 결 추가 + 종결 응답 결 강제 명시 + 박힘 누락 자가 검수 결식 신설.
 
-[d14] 2026-05-21 · index.html L190 레포 주소 결식 결로 회사용 결로 갈음 — `https://github.com/kimminsu0315/Project_Core` → `[회사용 repo]`. 매뉴얼 §11.2 (2) 버전 결식 결로 박힘 (회사용·개인용 두 결식 결로 박음, 동기화 결식 결로 박힐 시 선택 결로 박을 결).
+</details>
+
+<details>
+<summary>[d14] 2026-05-21 · index.html L190 레포 주소 결식 결로 회사용 결로 갈음 — `https://github.com/kimminsu0315/Project_Core` → `[회사용 repo]`. 매뉴얼 §11.2 (2) 버전 결식 결로 박힘 (회사용·개인용 두 결식 결로 박음, 동기화 결식 결로 박힐 시 선택 결로 박을 결).</summary>
+
 - index.html L274 최종 업데이트 시간 결식 결로 현재 시간 KST 결로 갱신 — `2026-05-18 13:43 KST` → `2026-05-21 15:41 KST`. 매뉴얼 §11.4 결식 결로 박힘 (docs 결식 결로 박힐 시 결식 결로 항상 갱신 결).
 - 매뉴얼 §11 GitHub Pages 동기화 결식 결로 신설 자취 (큐 10 결) — 매뉴얼 결식 결로 박힘, Pages 변경기록 결식 결로는 인프라 결만 결식 결로 박을 결.
 
-[d13] 2026-05-18 · index.html `out/` 폴더 접기·펼치기 결 박음 — HTML5 `<details open>`/`<summary>` 결로 폴더 헤더 + 외부 전달 3건 묶음. 기본 펼침 상태(`open` 속성), 폴더 헤더 클릭 시 접힘 ↔ 펼침 토글. JavaScript 부재.
+</details>
+
+<details>
+<summary>[d13] 2026-05-18 · index.html `out/` 폴더 접기·펼치기 결 박음 — HTML5 `&lt;details open&gt;`/`&lt;summary&gt;` 결로 폴더 헤더 + 외부 전달 3건 묶음. 기본 펼침 상태(`open` 속성), 폴더 헤더 클릭 시 접힘 ↔ 펼침 토글. JavaScript 부재.</summary>
+
 - 화살표 ▼(펼침)/▶(접힘) 결 — `.summary-arrow` 클래스, 접힘 시 `transform: rotate(-90deg)` 0.2s 트랜지션.
 - 기존 marker 결 제거 — `summary::-webkit-details-marker { display: none }` + `summary::marker { display: none }` + `summary { list-style: none; cursor: pointer }`.
 - 트리 라인(├─/├─/└─)·태그·링크 결 무변경.
 
-[d12] 2026-05-18 · index.html 인덱스 외부 전달 3건을 `📁 out/` 폴더 헤더 + 트리 라인 결로 묶음 — `.folder-header`·`.folder-icon`·`.folder-name`·`.folder-desc`·`.tree-prefix` CSS 클래스 신규. 내부 결 3건(R&R·SRS·SAD)·Repo 결은 기존 형식 그대로 유지.
+</details>
 
-[d11] 2026-05-16 · head-custom.html 모바일(≤1100px) 표 강제 폭 맞춤 — `display: table; width: 100%; table-layout: fixed; overflow: visible` (Primer 기본 `display: block; width: max-content; overflow: auto`를 덮어, 가로 스크롤 대신 셀 wrap으로 세로 늘어남)
+<details>
+<summary>[d12] 2026-05-18 · index.html 인덱스 외부 전달 3건을 `📁 out/` 폴더 헤더 + 트리 라인 결로 묶음 — `.folder-header`·`.folder-icon`·`.folder-name`·`.folder-desc`·`.tree-prefix` CSS 클래스 신규. 내부 결 3건(R&amp;R·SRS·SAD)·Repo 결은 기존 형식 그대로 유지.</summary>
+
+
+
+</details>
+
+<details>
+<summary>[d11] 2026-05-16 · head-custom.html 모바일(≤1100px) 표 강제 폭 맞춤 — `display: table; width: 100%; table-layout: fixed; overflow: visible` (Primer 기본 `display: block; width: max-content; overflow: auto`를 덮어, 가로 스크롤 대신 셀 wrap으로 세로 늘어남)</summary>
+
 - index.html `<head>`에 viewport meta 박음 — `<meta name="viewport" content="width=device-width, initial-scale=1">` (Jekyll layout을 거치지 않는 정적 페이지라 viewport meta가 빠져 모바일에서 데스크탑 폭 980px로 축소 렌더되던 문제 해결)
 
-[d10] 2026-05-16 · 모바일 햄버거 스크롤 방향 토글 — `body.scroll-down` 클래스 기반, 다운 시 `transform: translateY(-120%)`로 숨김, 업 시 다시 표시. 페이지 최상단 80px 이내에서는 항상 표시, ±5px 데드존으로 미세 흔들림 무시.
+</details>
+
+<details>
+<summary>[d10] 2026-05-16 · 모바일 햄버거 스크롤 방향 토글 — `body.scroll-down` 클래스 기반, 다운 시 `transform: translateY(-120%)`로 숨김, 업 시 다시 표시. 페이지 최상단 80px 이내에서는 항상 표시, ±5px 데드존으로 미세 흔들림 무시.</summary>
+
 - 데스크탑 사이드바 접기 버튼 박음 — 사이드바 상단 우측 `toc-top-bar` 안 `‹` 버튼, 클릭 시 `body.toc-collapsed-desktop` 추가 → 사이드바 좌측 슬라이드아웃 + 본문 padding 해제 + 햄버거 버튼 표시. 햄버거 클릭 시 펼침 복귀(모바일은 기존 `toc-open` 토글 동작 유지, 데스크탑에서는 `toc-collapsed-desktop` 제거).
 - 햄버거 버튼 transition에 `transform 0.25s ease` 추가 (스크롤 토글 슬라이드 연출).
 
-[d9] 2026-05-16 · 모바일(≤1100px) 표 안 인라인 코드(`<code>`) 강제 wrap — `word-break: break-all` + `overflow-wrap: anywhere` (ICD 토픽 경로·타임스탬프 등 끊을 수 없는 토큰이 컬럼 폭을 부풀려 가로 스크롤·헤더 깨짐 유발하던 문제 해결)
+</details>
+
+<details>
+<summary>[d9] 2026-05-16 · 모바일(≤1100px) 표 안 인라인 코드(`&lt;code&gt;`) 강제 wrap — `word-break: break-all` + `overflow-wrap: anywhere` (ICD 토픽 경로·타임스탬프 등 끊을 수 없는 토큰이 컬럼 폭을 부풀려 가로 스크롤·헤더 깨짐 유발하던 문제 해결)</summary>
+
 - 모바일 한정 표 안 코드 폰트 축소 — `font-size: 0.82em` (컬럼 압박 추가 완화)
 - 모바일 TOC 햄버거 토글 박음 — 좌상단 fixed 햄버거 버튼(44×44, 흰 배경 박스), 클릭 시 사이드바 좌측 슬라이드인 + dim 오버레이, dim 클릭/TOC 항목 클릭 시 자동 닫기
 - 데스크탑(≥1101px)에서는 햄버거 버튼·dim 자동 숨김 — 기존 좌측 고정 사이드바 동작 무변경
 - 기존 모바일 분기 `.toc-sidebar { display: none; }` 제거, `transform: translateX(-100%)` 슬라이드 방식으로 교체
 
-[d7] 2026-05-15 14:24 · Mermaid CDN 버전 specific 핀 — `mermaid@11` → `mermaid@11.12.0` (민수님 VSCode 확장 동일 버전, 매뉴얼 §8.6/§8.7 명시 기준)
+</details>
+
+<details>
+<summary>[d7] 2026-05-15 14:24 · Mermaid CDN 버전 specific 핀 — `mermaid@11` → `mermaid@11.12.0` (민수님 VSCode 확장 동일 버전, 매뉴얼 §8.6/§8.7 명시 기준)</summary>
+
 - ELK 레이아웃 제거 (`flowchart.defaultRenderer: 'elk'` 삭제) → dagre 기본 복귀 (vscode와 동일 엔진, 매뉴얼 §8.3 가이드와 일관성)
 - VSCode 렌더와 동일 layout 검증 후 정식 적용 예정
 
-[d6] 2026-05-15 13:15 · 변경기록 파일명: `CHANGELOG.md` → `Core_GitHub_ProjectDocs_Pages_변경기록.md` (repo 명명 컨벤션 정렬)
+</details>
+
+<details>
+<summary>[d6] 2026-05-15 13:15 · 변경기록 파일명: `CHANGELOG.md` → `Core_GitHub_ProjectDocs_Pages_변경기록.md` (repo 명명 컨벤션 정렬)</summary>
+
 - 사이드바 헤더(링크) 클릭 시 자식 접기/펼치기 토글 동작 추가 (점프는 기본 동작 유지)
 - Mermaid 엔진 변경 시도 — v10 → v11, dagre → ELK layout, useMaxWidth false → true (크기 정상화)
 
-[d5] 2026-05-15 13:00 · 사이드바 트리 구조 DOM화 — h1 > h2 > h3 부모-자식 관계 (기존 flat list + CSS 들여쓰기 → 진짜 트리)
+</details>
+
+<details>
+<summary>[d5] 2026-05-15 13:00 · 사이드바 트리 구조 DOM화 — h1 &gt; h2 &gt; h3 부모-자식 관계 (기존 flat list + CSS 들여쓰기 → 진짜 트리)</summary>
+
 - 항목 개별 접기/펼치기 토글(▾/▸) + 사이드바 상단 [모두 펼치기/접기] 버튼
 - 본문 상단 `## 목차` 섹션 Jekyll 페이지에서 JS로 자동 제거 (사이드바와 중복 해소, .md 파일 자체는 무수정)
 - 변경기록 파일 신규 추가
 
-[d4] 2026-05-15 11:58 · index에 SAD 항목 추가 (Draft 태그, ICD 위)
+</details>
+
+<details>
+<summary>[d4] 2026-05-15 11:58 · index에 SAD 항목 추가 (Draft 태그, ICD 위)</summary>
+
 - 본문 마크다운 클로드 스타일 전체 적용 (Primer 위 덮어쓰기 — 배경/링크/표/코드블록/인용 모두 통일)
 - TOC 트리 들여쓰기 강화 (h2/h3/h4 3단계, 색·크기 차등)
 - 사이드바 홈 버튼 카드 형태로 강조
 
-[d3] 2026-05-15 11:32 · 좌측 TOC 사이드바 신규 추가 (h2/h3 자동 추출, scrollspy)
+</details>
+
+<details>
+<summary>[d3] 2026-05-15 11:32 · 좌측 TOC 사이드바 신규 추가 (h2/h3 자동 추출, scrollspy)</summary>
+
 - 화면 폭 ≤ 1100px 자동 숨김
 - 사이드바 상단에 홈 백링크 표시
 
-[d2] 2026-05-15 11:26 · Mermaid 옵션 보강 — maxTextSize 100k, maxEdges 1k, securityLevel loose, useMaxWidth false
+</details>
+
+<details>
+<summary>[d2] 2026-05-15 11:26 · Mermaid 옵션 보강 — maxTextSize 100k, maxEdges 1k, securityLevel loose, useMaxWidth false</summary>
+
 - `.mermaid` 컨테이너 가로 스크롤 허용 (대형 다이어그램 대응)
 
-[d1] 2026-05-15 11:01 · 신규: index.html (메인 페이지), _config.yml (Jekyll 설정), _includes/head-custom.html (Mermaid 처리)
+</details>
+
+<details>
+<summary>[d1] 2026-05-15 11:01 · 신규: index.html (메인 페이지), _config.yml (Jekyll 설정), _includes/head-custom.html (Mermaid 처리)</summary>
+
 - Primer 테마 + kramdown(GFM) + Rouge syntax highlight
 - .md → 자동 .html 변환 (front matter 불필요, `defaults`로 layout 자동 적용)
+
+</details>
