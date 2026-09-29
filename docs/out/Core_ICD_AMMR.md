@@ -1,7 +1,7 @@
 # Core ↔ 물류 AMMR Interface Control Document
 
-> 이 문서는 `Core_ICD_AMMR_v1_3_0_d460.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-09-21 10:50
+> 이 문서는 `Core_ICD_AMMR_v1_4_0_d478.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-09-23 14:59
 
 ---
 
@@ -80,7 +80,7 @@ flowchart LR
 - **Core PC** — Core 본체 프로세스와 Mosquitto Broker가 같은 PC에서 운영된다.
 - **물류 AMMR** — 현재 2대 운영. 추후 증설 가능성 있음. 각 AMMR은 Broker에 클라이언트로 접속한다.
 - **태블릿** — AMMR 본체에 Mount된다. AMMR과 함께 Core와 MQTT로 통신하는 단말이며 별도 통신 채널이 없다. 화면은 세 갈래 출처를 결합해 구성한다.
-  - Core 선탑재: 적재 상태·배정 상태 표시 정보 (Job 지시 C-2)
+  - Core 선탑재: 적재 상태 화면 표시 정보 (Job 지시 C-2)
   - 태블릿 자체 산출: 상단 고정 영역 표시값·slot_state
   - Core 정정: 정합이 어긋날 때 일괄보고 응답(C-3)
 - **연결 망** — 사내 내부망 한정. 외부 인터넷 노출 없음.
@@ -97,7 +97,7 @@ flowchart LR
 | Slot 정합 판정 결과 보고 (slot_state)         | AMMR                      | 초기 연결 일괄 + 상태 전이 시 1 Slot (Job 동작·사람 개입 무관) |
 | 위치·BMS 스트리밍                             | AMMR                      | 위치 1초·BMS 10초 주기 (초기값·태블릿 설정) |
 | Unit 식별 (Unit ID 확정)                      | Core                      | AMMR은 Tray ID를 자체 인식하지 못한다. Core가 Job 지시(C-2)에 Unit 정보를 선탑재하고, 정합 정정은 일괄보고 응답(C-3)이 맡는다 (§5.2 C-3) |
-| 태블릿 표시 데이터 (적재·배정·상단 고정 영역) | Core 선탑재 / 태블릿 구성 | Core가 Job 지시(C-2)에 선탑재 · 상단 고정 영역·slot_state는 AMMR 자체 산출 · 정합 정정만 일괄보고 응답(C-3) |
+| 태블릿 표시 데이터 (적재 상태·상단 고정 영역) | Core 선탑재 / 태블릿 구성 | Core가 Job 지시(C-2)에 선탑재 · 상단 고정 영역·slot_state는 AMMR 자체 산출 · 정합 정정만 일괄보고 응답(C-3) |
 | 충전 중단 결정                                | AMMR / Core               | 자체 임계 도달 시 자율 중단은 AMMR HW. 단, 충전 중 Core가 Job을 지시하면 AMMR은 충전을 중단하고 이탈 후 수행 (§8.5) |
 | 최근 명령 재요청·재발행                       | AMMR / Core               | 담당자가 태블릿에서 요청하면 AMMR이 발행하고, Core는 요청에 실린 Job을 그대로 다시 지시한다 (§6.9) |
 
@@ -269,7 +269,7 @@ Core 프로세스나 Core 측 연결이 끊기면 Broker가 이 LWT를 자동 �
 
 모든 `timestamp`는 KST(UTC+9) 기준 현지시각이며, 시간대 오프셋 없이 `YYYY-MM-DD HH:MM:SS.mmm` 형식으로 전달한다 (예: `2026-07-10 07:30:00.123`).
 
-표시에 쓰이는 문자열 값(`job_type`·출발/도착 설비 ID 등 Core가 Job 지시(C-2)에 선탑재하는 값)은 UTF-8 문자열 그대로 전달되고, 태블릿은 한글 매핑·조립 없이 그대로 표시한다. 대부분 영문 enum·식별자이며, `purpose`처럼 한글이 담기는 자유 문자열도 있다. 태블릿이 자체 판정하는 `slot_state`도 와이어에는 이 영문 enum으로 싣는다 (화면 표시 방식 = "AMMR 태블릿 UI 정의 제안"). 
+표시에 쓰이는 문자열 값(`job_type`·출발/도착 설비 ID 등 Core가 Job 지시(C-2)에 선탑재하는 값)은 UTF-8 문자열 그대로 전달되고, 태블릿은 한글 매핑·조립 없이 그대로 표시한다. 대부분 영문 enum·식별자이며, `purpose`처럼 한글이 담기는 자유 문자열도 있다. 태블릿이 자체 판정하는 `slot_state`도 와이어에는 이 영문 enum으로 싣는다 (화면 표시 방식 = "AMMR 태블릿 UI 정의 제안").
 
 사람 읽기용 라벨(`투입코드_유닛번호`)은 예외다. 태블릿이 선탑재된 `input_code`와 `unit_num`을 붙여 만든다 (§1.3).
 
@@ -525,7 +525,7 @@ AMMR은 매 CONNECT 시 다음 여섯을 설정한다.
 - **목적**: Core가 해당 AMMR의 운영 상태를 일괄 재구축하기 위한 입력. 실리는 것은 HW 상태·위치·6 Slot 정합 상태(slot_state)·Slot별 Unit 식별값·Battery다
 - **회신**: Core는 이 보고로 운영 상태를 재구축하고, 필요하면 일괄보고 응답(C-3 `state/reconcile`)을 내려준다. 발행 조건 네 갈래는 §5.2 C-3 이 정의한다. 응답에는 받은 `trigger` 값을 그대로 싣는다
 
-**전이와 함께 나는 계기**: `error_cleared`는 그 전이 보고(A-3)를 먼저 낸 뒤 이 보고를 발행한다. `mode_changed`는 전환과 함께 HW 상태 전이가 날 때만 같은 순서를 따른다.
+**전이와 함께 나는 계기**: `error_cleared`는 그 전이 보고(A-3)를 먼저 낸 뒤 이 보고를 발행한다. `mode_changed`는 전환과 함께 HW 상태가 바뀔 때만 같은 순서를 따르며, 진행 중이던 Move·Charge를 멈춰 바뀌는 상태는 그 실패 회신(A-8)에 실리므로 회신을 먼저 낸다 (§8.9).
 
 | 필드       | 타입              | 필수 | 설명                                                         |
 |------------|-------------------|------|--------------------------------------------------------------|
@@ -802,7 +802,7 @@ AMMR은 매 CONNECT 시 다음 여섯을 설정한다.
 | 필드              | 타입             | 필수 | 설명 |
 |-------------------|------------------|------|---|
 | `slot_id`         | string           | 필수 | 대상 AMMR Slot ID |
-| `slot_state`      | enum (§부록 A.7) | 필수 | Job 종료 시점의 클라이언트 판정 · Pickup 성공 = `occupied` · Dropoff 성공 = `empty` · 수행 중 실패 = Slot에 Unit이 남아 있으면 `job_failed`, 비어 있으면 `empty` · Unit이 남아 있어도 Slot을 건드리지 못한 실패 = `job_failed` 대신 판정값 그대로 (도착 Slot 점유 `slot_dest_occupied`[Dropoff는 대체 목적지 재지시로 이어지는 정상 갈래·Pickup은 사람이 채운 점유를 A-4로 보고한 값]와 설비 접점 실패 `equip_*`가 여기 든다) · 수행에 진입하지 않은 거부 = 아래 문단 · 코드별 값 = §부록 A.4 |
+| `slot_state`      | enum (§부록 A.7) | 필수 | Job 종료 시점의 클라이언트 판정 · Pickup 성공 = `occupied` · Dropoff 성공 = `empty` · 수행 중 실패(Pickup·Dropoff) = Slot에 Unit이 남아 있으면 `job_failed`, 비어 있으면 `empty` · Unit이 남아 있어도 Slot을 건드리지 못했거나 집기·놓기 결과를 Gripper Sensor로 확인한 실패 = `job_failed` 대신 판정값 그대로 (출발 Slot 비어 있음 `slot_source_empty`·도착 Slot 점유 `slot_dest_occupied`[Dropoff는 대체 목적지 재지시로 이어지는 정상 갈래·Pickup은 사람이 채운 점유를 A-4로 보고한 값]·설비 접점 실패 `equip_*`·Gripper 파지 확인 `ammr_hw_gripper_empty`·`ammr_hw_gripper_holding`가 여기 든다) · 수행에 진입하지 않은 거부 = 아래 문단 · 코드별 값 = §부록 A.4 |
 | `unit_or_tray_id` | string\|null     | 필수 | 태블릿 보관 적재 식별값 (Unit ID 또는 Tray ID·§1.3). 미점유·미상이면 null. `slot_state`가 `job_failed`여도 보관 식별값을 그대로 싣는다 (담당자가 확인해 벗어나기 전까지 그 Slot은 `job_failed`를 유지·§부록 A.7) |
 
 수행에 진입하지 않은 거부(§부록 A.4)의 `slot` 처리는 두 갈래다.
@@ -1483,7 +1483,7 @@ sequenceDiagram
 
 ### 6.2 Job Sequence
 
-Core는 하나의 이송 요청을 Job Sequence(Move → Pickup → Move → Dropoff)로 전개하여 **한 번에 하나씩** 지시한다. 각 Job 지시 후 AMMR은 수신 확인(`job/received`)을 보고하고, Pickup·Dropoff 동작으로 AMMR Slot 상태가 바뀌면 그 시점에 Slot 상태 전이(`state/slot`)를 보고한 뒤, Job 종료 시점에 결과(`job/report`)를 보고한다. Core는 앞선 Slot 상태 전이를 상태로만 반영하고 배정·이송 판단은 결과로 한다. 태블릿은 Job 결과와 지시에 선탑재된 값으로 적재·배정 화면을 자체 갱신한다.
+Core는 하나의 이송 요청을 Job Sequence(Move → Pickup → Move → Dropoff)로 전개하여 **한 번에 하나씩** 지시한다. 각 Job 지시 후 AMMR은 수신 확인(`job/received`)을 보고하고, Pickup·Dropoff 동작으로 AMMR Slot 상태가 바뀌면 그 시점에 Slot 상태 전이(`state/slot`)를 보고한 뒤, Job 종료 시점에 결과(`job/report`)를 보고한다. Core는 앞선 Slot 상태 전이를 상태로만 반영하고 배정·이송 판단은 결과로 한다. 태블릿은 Job 결과와 지시에 선탑재된 값으로 적재 상태 화면을 자체 갱신한다.
 
 ```mermaid
 sequenceDiagram
@@ -1503,7 +1503,7 @@ sequenceDiagram
         end
         A->>B: PUBLISH job/report (결과 + Job 종료 직후 hw_state·slot)
         B->>C: 전달
-        Note over A: 태블릿이 Job 결과·선탑재 값으로<br/>적재·배정 화면 자체 갱신
+        Note over A: 태블릿이 Job 결과·선탑재 값으로<br/>적재 상태 화면 자체 갱신
     end
 ```
 
@@ -1539,11 +1539,11 @@ sequenceDiagram
     A->>B: PUBLISH job/received
     B->>C: 전달 (수신 확인)
     Note over A: 설정 스테이션으로 이동·도킹<br/>(AMMR HW 자율)
-    A->>B: PUBLISH job/report (Charge success = 도킹 완료 보고, hw_state=charging)
+    A->>B: PUBLISH job/report (Charge success = 도킹 완료 보고, hw_state=charging 또는 docked)
     B->>C: 전달
-    Note over A: 태블릿 상단 자체 갱신 (충전 중)
+    Note over A: 태블릿 상단 자체 갱신 (재충전 임계 이하면 충전 중 · 아니면 도킹)
 
-    Note over A: 충전 진행 (AMMR HW 자율)<br/>자체 임계로 충전 중단 결정
+    Note over A: charging 이었으면 충전 진행 (AMMR HW 자율)<br/>충전 종료 임계 도달 시 충전 중단
     A->>B: PUBLISH state/hw (charging → docked 전이)
     B->>C: 전달
     Note over C: 충전 완료 인지
@@ -1554,7 +1554,7 @@ sequenceDiagram
 
 ### 6.4 사람 개입에 따른 Slot 상태 외부 전이
 
-사람이 AMMR Slot에서 Unit을 임의로 꺼내거나 올려놓는 경우 등 외부 원인 전이. Job이 다루는 Slot이라도 사람 손으로 생긴 전이는 이 절을 따르며, 그 Job의 결과는 A-8이 따로 알린다. Pickup이 Unit을 놓으려던 AMMR Slot이 이렇게 점유되면 AMMR은 그 Slot에 놓지 않고 Unit을 집어 온 자리에 되돌려 놓는다 (§8.10). 태블릿이 slot_state를 자체 판정해 해당 Slot을 보고하고(A-4) 화면도 자체 반영한다. Core 지시 없이 일어난 변경이므로 해당 Slot의 Core 배정 정보(Unit·Job)는 무효가 되어 태블릿은 그 Slot의 Core 관련 정보를 비운다.
+사람이 AMMR Slot에서 Unit을 임의로 꺼내거나 올려놓는 경우 등 외부 원인 전이. Job이 다루는 Slot이라도 사람 손으로 생긴 전이는 이 절을 따르며, 그 Job의 결과는 A-8이 따로 알린다. Pickup이 Unit을 놓으려던 AMMR Slot이 이렇게 점유되면 AMMR은 그 Slot에 놓지 않고 Unit을 문 채 그 자리에서 `error`로 전이한다 (§8.10). 태블릿이 slot_state를 자체 판정해 해당 Slot을 보고하고(A-4) 화면도 자체 반영한다. Core 지시 없이 일어난 변경이므로 해당 Slot의 Core 배정 정보(Unit·Job)는 무효가 되어 태블릿은 그 Slot의 Core 관련 정보를 비운다.
 
 - 꺼내서 점유가 끊겼으면: `empty`로 보고
 - 새로 올려놓거나 꺼냈다 다시 올려 점유가 되살아났는데 식별되지 않으면: `blocked`로 보고
@@ -1591,7 +1591,7 @@ sequenceDiagram
     B->>C: 전달
     Note over C: Core 확정 배정으로 Slot별 확정
     C->>B: PUBLISH state/reconcile (Core 확정 배정 6개 일괄)
-    B->>A: 전달 → 태블릿 적재·배정 화면 일괄 정정<br/>확정 못 한 Slot은 사용 보류 유지
+    B->>A: 전달 → 태블릿 적재 상태 화면 일괄 정정<br/>확정 못 한 Slot은 사용 보류 유지
 ```
 
 ### 6.6 AMMR HW 장애 보고
@@ -1619,7 +1619,7 @@ sequenceDiagram
 
 AMMR이 `error` 상태인 동안 받은 Job 지시는 `ammr_hw_error_state`로 거부한다 (C-2 · `hw_state` = `error`). Pickup·Dropoff 지시의 `slot` 동반 여부와 값은 A-8의 수행에 진입하지 않은 거부 규칙을 따른다. `error` 진입 시점에 수신 확인을 보냈지만 아직 수행에 들어가지 않은 Job도 같은 방식으로 실패를 회신하고 폐기한다. 필요한 작업은 장애가 풀린 뒤 Core가 새 Job으로 다시 지시한다. Core는 이 보고를 §7.2 분기 1(AMMR HW 장애 처리)로 처리한다.
 
-**장애 복구 시 발행**: 장애는 원인과 무관하게 담당자가 현장을 조치한 뒤 태블릿에서 [Reset]을 눌러 해제한다. [Reset] 해제는 Manipulator가 원점에 있을 때만 받으며, 원점에 있지 않으면 담당자 원점 복귀(§8.11)를 먼저 한다.
+**장애 복구 시 발행**: 장애는 원인과 무관하게 담당자가 현장을 조치한 뒤 [Reset]으로 해제한다. [Reset]은 태블릿의 [Reset] 버튼이나 AMMR 본체의 물리 해제 버튼으로 하며, 어느 쪽이든 받는 조건과 이어지는 전이·보고(`reason` = `manual_reset`)가 같다. [Reset] 해제는 Manipulator가 원점에 있을 때만 받으며, 원점에 있지 않으면 담당자 원점 복귀(§8.11)를 먼저 한다.
 
 해제로 `error`에서 벗어나 그 시점의 실제 상태(`idle`·`charging`·`docked` · 장애 중 자율 충전 이동 중이었으면 `self_charge`·`low_battery`)로 전이하면 AMMR은 전이 보고(A-3 · `reason` = `manual_reset`)를 낸 뒤 일괄 보고(A-2)를 `trigger` = `error_cleared`로 발행한다. 장애 처리로 Core가 비운 운영 정보와 사용 보류로 둔 6 Slot이 이 보고로 회복된다. 단절과 달리 MQTT 연결이 끊기지 않아 재연결 경로를 타지 않으므로 이 계기가 그 자리를 대신한다.
 
@@ -1707,7 +1707,7 @@ sequenceDiagram
 
 ### 6.9 최근 명령 재요청
 
-실패로 끝난 작업을 담당자 요청으로 다시 지시하는 흐름이다. Core는 요청의 `job_id`로 그 AMMR에 발행한 Job을 찾아 payload를 그대로 쓰고 `job_id`만 새로 발급한다. 재발행 순서의 첫 Job에는 요청의 `job_id`를 `resume_job_id`에 그대로 실어, 태블릿이 그 사이 들어온 다른 Job 지시와 가릴 수 있게 한다. 목적지·Slot·`unit`은 그때 값 그대로이며 다시 판정하지 않는다. 태블릿은 요청 직전에 요청할 Job이 다루던 AMMR Slot(Pickup = `to_slot_id`·Dropoff = `from_slot_id`) 하나만 적재 정보 저장 때와 같이 다시 판정하고(`job_failed`여도 보관 식별값이 있으면 `occupied`·없으면 `blocked`·다른 Slot은 그대로), 일괄 보고(`trigger` = `resume`)를 먼저 발행해 Core 측 운영 상태와 사용 보류를 회복시킨 뒤 그 일괄보고 응답을 받고 요청을 보낸다.
+실패로 끝난 작업을 담당자 요청으로 다시 지시하는 흐름이다. Core는 요청의 `job_id`로 그 AMMR에 발행한 Job을 찾아 payload를 그대로 쓰고 `job_id`만 새로 발급한다. 재발행 순서의 첫 Job에는 요청의 `job_id`를 `resume_job_id`에 그대로 실어, 태블릿이 그 사이 들어온 다른 Job 지시와 가릴 수 있게 한다. 목적지·Slot·`unit`은 그때 값 그대로이며 다시 판정하지 않는다. 태블릿은 요청 직전에 요청할 Job이 다루던 AMMR Slot(Pickup = `to_slot_id`·Dropoff = `from_slot_id`) 하나만 적재 정보 저장 때와 같이 다시 판정하고(`job_failed`여도 보관 식별값이 있으면 `occupied`·없으면 `blocked`·Move는 다루는 Slot이 없어 재판정하지 않는다·다른 Slot은 그대로), 일괄 보고(`trigger` = `resume`)를 먼저 발행해 Core 측 운영 상태와 사용 보류를 회복시킨 뒤 그 일괄보고 응답을 받고 요청을 보낸다.
 
 담당자가 [최근 명령 재요청]을 누른 뒤 답이 올 때까지는 다른 Job이 끼어들지 않는다. Core는 `resume` 계기 일괄 보고를 받은 뒤 최근 명령 재요청을 처리할 때까지 이 AMMR에 새 Job을 내지 않는다. 일괄보고 응답(C-3)을 보낸 뒤 재요청 대기 임계(§7.3) 안에 요청이 오지 않으면 보류를 풀고 다시 이어간다. 보류 전에 이미 나간 Job이 그동안 도착하면 AMMR이 수행 없이 거부한다 (`ammr_hw_resume_pending`·C-2).
 
@@ -1804,7 +1804,7 @@ Job 실패 시 `reason` 필드에 사유를 기재한다. 코드 일람은 §부
 2. 시점 사유 — 앞선 Job 수행 중 수신
 3. 내용 사유 — 지시가 계약에 어긋남
 
-HW 상태 사유는 회신 시점 상태 하나로 정해져 서로 겹치지 않는다 (일시 정지는 §8.8이 정한다 — 수행 중이던 Job이 살아 있으면 시점 사유, 자율 충전 이동 중 멈춘 것이면 멈추기 전 상태의 사유). 앞선 사유로 거부할 때는 뒤 사유를 검사하지 않는다.
+HW 상태 사유는 회신 시점 상태 하나로 정해져 서로 겹치지 않는다 (일시 정지는 §8.8이 정한다. 수행 중이던 Job이 살아 있으면 시점 사유, 자율 충전 이동 중 멈춘 것이면 멈추기 전 상태의 사유). 앞선 사유로 거부할 때는 뒤 사유를 검사하지 않는다.
 
 #### AMMR HW 측 카테고리 (`ammr_hw_*`)
 
@@ -1819,7 +1819,7 @@ HW 상태 사유는 회신 시점 상태 하나로 정해져 서로 겹치지 �
 
 이 카테고리 보고 시 Core는 해당 Slot의 클라이언트 정합 판정 결과를 반영해 운영을 결정한다.
 
-- Pickup 측 실패: 해당 이송을 종료한다. 다만 Unit을 놓을 AMMR Slot이 점유돼 집어 온 자리에 되돌려 놓은 실패(`slot_dest_occupied`)는 Unit이 되돌아온 자리의 정합이 회복되면 같은 운반이 다시 지시될 수 있다
+- Pickup 측 실패: 해당 이송을 종료한다. Unit을 놓을 AMMR Slot이 점유된 실패(`slot_dest_occupied`)는 AMMR이 Unit을 문 채 `error`로 전이해 함께 회신하므로 장애 처리(§7.2 분기 1)로 받는다
 - Dropoff 측 실패: 목적지 Slot이 점유된 경우에만 대체 목적지를 재판단해 그 자리로 가는 Move부터 새로 지시할 수 있다. 실어 온 AMMR Slot이 비어 있었던 경우(`slot_source_empty`)는 이송을 실패로 종료한다
 - 동작 중 물리 충돌(`slot_source_obstructed`·`slot_dest_obstructed`)과 원인을 가릴 수 없는 그 외 Slot 측 사유(`slot_other`): AMMR이 그 자리에서 `error`로 전이해 함께 회신하므로 장애 처리(§7.2 분기 1)로 받는다
 
@@ -1848,7 +1848,7 @@ Job 수행 결과 통합 보고의 payload는 아래 표대로 분기되어 Core
 | 2-1 | `hw_state = 장애 아님` + `job_result = failure` + `reason = AMMR HW 측 수행 불가 거부(ammr_hw_error_state 제외·§부록 A.4)` | 수행 조건 거부 — 로봇은 정상인데 수행 조건이 안 맞음 · payload 신뢰 · 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 · 자율 충전·수동 조작 진행, 담당자 해제 대기 또는 최근 명령 재요청 대기 |
 | 2-2 | `hw_state = 장애 아님` + `job_result = failure` + `reason = ammr_hw_job_cancelled` | 담당자 취소 — payload 신뢰 · 해당 Job 실패 종료 · 적재 상태였으면 AMMR이 그 Slot을 사용 보류로 올려 보고한다 |
 | 2-3 | `hw_state = manipulator_homing` + `job_result = failure` + `reason = ammr_hw_error_state` (장애에서 시작한 담당자 원점 복귀 중 거부) | 위 2의 예외 — payload 신뢰 · 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 (§8.11) |
-| 3   | `hw_state = 장애 아님` + `job_result = failure` + `reason = slot_*` | 해당 Slot 정합 판정 반영 → 운영 결정 · Pickup·Dropoff 갈래 = §7.1 Slot 측 카테고리 · `slot_other`와 물리 충돌 2종은 `hw_state = error`와 함께 오는 것이 계약이라 분기 1 |
+| 3   | `hw_state = 장애 아님` + `job_result = failure` + `reason = slot_*` | 해당 Slot 정합 판정 반영 → 운영 결정 · Pickup·Dropoff 갈래 = §7.1 Slot 측 카테고리 · `slot_other`와 물리 충돌 2종, Pickup의 `slot_dest_occupied`는 `hw_state = error`와 함께 오는 것이 계약이라 분기 1 |
 | 3-1 | `hw_state = 장애 아님` + `job_result = failure` + `reason = job_*` | 지시 측 거부 — payload 신뢰 · 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 · 자동 재지시 없음 |
 | 3-2 | `hw_state = 장애 아님` + `job_result = failure` + `reason = equip_*` | 설비 접점 실패 — 해당 Job 실패 종료 · 자동 재지시 없음 · 운영 정보·Slot 상태 유지 · 원점 복귀 뒤 `error` 전이가 이어 오고 그 보고로 장애 처리 · [Reset] 해제로 회복 |
 | 4   | `hw_state = 장애 아님` + `job_result = success` | 정상 갱신 → 다음 Job 진행 |
@@ -1987,8 +1987,8 @@ Job이 없는 동안 AMMR HW가 스스로 충전 스테이션으로 돌아가 �
 AMMR HW가 자체 안전 장치로 멈추는 세 갈래다. 물리 정지는 AMMR HW가 자율로 수행하며 Core는 상태 전이 보고로 인지한다.
 
 - **Safety Field 감지** — 안전 라이다의 보호 영역에 물체가 들어오면 일시 정지(`paused`)로 전이하고 `state/hw`로 보고한다 (`reason` = `safety_field_triggered`). 물체가 영역에서 벗어나면 스스로 재개하며 재개 전이를 보고한다 (`reason` = `safety_field_cleared`). Buzzer는 울리지 않는다.
-- **범퍼 충돌** — 충돌이 감지되면 일시 정지(`paused`)로 전이하고 `state/hw`로 보고한다 (`reason` = `bumper_impact`). AMMR 자체 Buzzer가 울리며 담당자가 태블릿에서 [Reset]을 눌러야 해제된다. 해제 시 재개 전이를 보고한다 (`reason` = `manual_reset`).
-- **긴급정지 버튼** — 장애(`error`)로 전이하고 `state/hw`로 보고한다 (`reason` = `ammr_hw_emergency_stop`). Job 수행 중이면 아래 Job 처리대로 실패 회신에 싣는다. AMMR 자체 Buzzer가 울리며 담당자가 태블릿에서 [Reset]을 눌러야 해제된다. 해제 시 그 시점의 실제 상태(`idle`·`charging`·`docked`)로의 전이를 보고한다 (`reason` = `manual_reset` · §6.6).
+- **범퍼 충돌** — 충돌이 감지되면 일시 정지(`paused`)로 전이하고 `state/hw`로 보고한다 (`reason` = `bumper_impact`). AMMR 자체 Buzzer가 울리며 담당자의 [Reset]으로만 해제된다. 장애 해제와 같이 태블릿의 [Reset] 버튼이나 AMMR 본체의 물리 해제 버튼 어느 쪽으로도 해제된다 (§6.6). 해제 시 재개 전이를 보고한다 (`reason` = `manual_reset`).
+- **긴급정지 버튼** — 장애(`error`)로 전이하고 `state/hw`로 보고한다 (`reason` = `ammr_hw_emergency_stop`). Job 수행 중이면 아래 Job 처리대로 실패 회신에 싣는다. AMMR 자체 Buzzer가 울리며 담당자의 [Reset]으로만 해제된다. 해제 시 그 시점의 실제 상태(`idle`·`charging`·`docked`)로의 전이를 보고한다 (`reason` = `manual_reset` · §6.6).
 - **Buzzer 끄기** — 범퍼 충돌·긴급정지로 울리는 Buzzer는 담당자가 태블릿에서 끌 수 있다. 꺼도 `paused`·`error`는 그대로이며 해제는 [Reset]으로만 한다. 상태 전이가 아니라 보고하지 않는다.
 
 **Job 처리**: 일시 정지 두 갈래는 수행 중이던 Job이 살아 있어 해제 후 이어서 수행하며, 그동안 Job 수행 결과(`job/report`)를 발행하지 않는다. 멈춘 동안 담당자가 작업 취소나 수동 전환으로 끝내면 이어가지 않는다 (§6.10·§8.9). 긴급정지는 수행 중이던 Job을 실패로 회신한다 (`job_result` = `failure` · `reason` = `ammr_hw_emergency_stop` · `hw_state` = `error`). Core는 이 보고를 §7.2 분기 1로 처리하며, 복구 후 Slot 사용 보류는 태블릿이 올리는 일괄 보고로 자연 해제된다 (§6.6).
@@ -2025,10 +2025,11 @@ Pickup·Dropoff를 수행하는 동안(도중 `paused`와 접근 중 중단 뒤 
 
 **보고는 그대로**: 모드는 보고에 영향을 주지 않는다. 수동 모드에서도 상태 전이·Slot 전이·스트리밍·일괄 보고를 그대로 발행한다.
 
-**티칭·테스트 조작 중 이상**: 조작 중 실패는 모드와 무관하게 Job 수행 중과 같이 처리한다. 다만 회신할 Job이 없어 Job 수행 결과(`job/report`)는 발행하지 않고 상태 전이(A-3)로 보고하며, 전이 사유에 Job 실패 사유와 같은 코드(§부록 A.4)를 싣는다.
+**티칭·테스트 조작 중 이상**: 조작 중 실패는 모드와 무관하게 Job 수행 중과 같이 처리한다. 다만 회신할 Job이 없어 Job 수행 결과(`job/report`)는 발행하지 않고 상태 전이(A-3)로 보고하며, 전이 사유에 Job 실패 사유와 같은 코드(§부록 A.4)를 싣는다. Slot은 Job 실패가 아니므로 `job_failed`로 두지 않고 평소와 같이 판정해 전이를 A-4로 보고한다.
 
 - Gripper 파지 확인 실패(`ammr_hw_gripper_empty`·`ammr_hw_gripper_holding`): `error`로 전이해 멈춘다
-- 출발 Slot 비어 있음·설비 Interlock 확보 실패·위치 기준 Marker 인식 실패·Pickup 적재 AMMR Slot 점유·Dropoff 목적지 Slot 점유(`slot_source_empty`·`equip_interlock_failed`·`equip_marker_unreadable`·`slot_dest_occupied`): §8.10과 같이 원점 복귀한다. 복귀 시작 전이를 A-3로 보고하고 복귀 뒤 전이도 §8.10과 같다
+- Pickup 적재 AMMR Slot 점유(`slot_dest_occupied`): Unit을 문 채 `error`로 전이해 멈춘다 (§8.10)
+- 출발 Slot 비어 있음·설비 Interlock 확보 실패·위치 기준 Marker 인식 실패·Dropoff 목적지 Slot 점유(`slot_source_empty`·`equip_interlock_failed`·`equip_marker_unreadable`·`slot_dest_occupied`): §8.10과 같이 원점 복귀한다. 복귀 시작 전이를 A-3로 보고하고 복귀 뒤 전이도 §8.10과 같다
 - 수행 한도 초과(`ammr_hw_job_timeout`): `error`로 전이한다. Move였으면 장애 중 자율 충전 이동(§6.6) 대상이고 Pickup·Dropoff였으면 멈춘 채 담당자 확인을 기다린다
 - 동작 중 물리 충돌(`slot_source_obstructed`·`slot_dest_obstructed`)·그 외 Slot 측 사유(`slot_other`): 원점 복귀 없이 그 자리에서 `error`로 전이한다
 
@@ -2044,30 +2045,33 @@ Pickup·Dropoff를 수행하는 동안(도중 `paused`와 접근 중 중단 뒤 
 
 ### 8.10 접근 중 중단 시 원점 복귀
 
-Pickup·Dropoff 수행 중 다음 다섯 갈래로 중단되면 AMMR은 멈춘 사유로 실패를 먼저 회신한 뒤 Manipulator를 원점으로 되돌린다.
+Pickup·Dropoff 수행 중 다음 네 갈래로 중단되면 AMMR은 멈춘 사유로 실패를 먼저 회신한 뒤 Manipulator를 원점으로 되돌린다.
 
 - 출발 Slot 비어 있음 (`slot_source_empty`). Pickup은 도착 뒤 Manipulator Vision으로 외부 출발 Slot을 확인해 Unit이 없을 때다
 - 설비 Interlock 확보 실패 (`equip_interlock_failed`)
 - 위치 기준 Marker 인식 실패 (`equip_marker_unreadable`)
-- Pickup 적재 AMMR Slot 점유 (`slot_dest_occupied`) — Unit을 집어 올렸는데 사람이 놓을 AMMR Slot을 먼저 채워 Unit을 놓을 수 없음. 그 점유는 전이 시점에 A-4로 보고된다 (§6.4)
-- Dropoff 목적지 Slot 점유 (`slot_dest_occupied`) — 도착 뒤 Manipulator Vision으로 확인한 목적지 Slot에 이미 Unit이 있어 놓을 수 없음. Unit은 싣고 온 AMMR Slot에 그대로 두며 Core는 대체 목적지를 재지시할 수 있다 (§6.4)
+- Dropoff 목적지 Slot 점유 (`slot_dest_occupied`) — 도착 뒤 Manipulator Vision으로 확인한 목적지 Slot에 이미 Unit이 있어 놓을 수 없음. Unit은 싣고 온 AMMR Slot에 그대로 두며 Core는 대체 목적지를 재지시할 수 있다 (§7.1)
 
-실패 회신(A-8)의 `hw_state`는 `manipulator_homing`이다. Unit을 물고 있으면 집어 온 자리에 되돌려 놓은 뒤 팔을 되돌리고, 물고 있지 않으면 팔만 되돌린다. 마친 뒤 전이는 A-3로 보고한다.
+실패 회신(A-8)의 `hw_state`는 `manipulator_homing`이다. 네 갈래 모두 Unit을 물기 전이라 팔만 되돌린다. 마친 뒤 전이는 A-3로 보고한다.
 
 - 정상: `idle` (`reason` = `manipulator_homing_completed`)
 - 설비 측 실패(`equip_*`)였으면: `error` (`reason` = 실패 회신과 같은 `equip_interlock_failed`·`equip_marker_unreadable`). 장애 중 자율 충전 이동을 이어간다(§6.6)
-- 되돌려 놓기나 팔 되돌리기에 실패하면: `error` (`reason` = `manipulator_homing_failed`)
+- 팔 되돌리기에 실패하면: `error` (`reason` = `manipulator_homing_failed`)
 
 수동 모드의 티칭·테스트 조작 중 같은 사유로 멈추면 회신할 Job이 없어 실패 회신 대신 복귀 시작 전이(`pickup`·`dropoff` → `manipulator_homing`)를 A-3로 보고한다(`reason` = 멈춘 사유와 같은 코드). 복귀는 위와 같되 정상으로 마치면 `idle` 대신 조작 시작 전 상태(저전력에서 시작했으면 `low_battery`)로 돌아간다. 팔이 뻗은 채로는 이동도 다음 동작도 못 하므로 원점 복귀는 다음 Job을 이어 받기 위한 전제다.
 
 나머지 실패(집기·놓기 실패, 수행 한도 초과, AMMR HW 고장, 동작 중 물리 충돌, 그 외 Slot 측 사유)는 이 복귀 대상이 아니다. 담당자가 현장을 확인한다.
 
+Pickup에서 Unit을 집어 올린 뒤 사람이 놓을 AMMR Slot을 먼저 채워 Unit을 놓을 수 없게 된 경우(`slot_dest_occupied`·그 점유는 전이 시점에 A-4로 보고된다·§6.4)도 이 복귀 대상이 아니다. 정상 운영에서 생기면 안 되는 상황이라 집어 온 자리에 되돌려 놓지 않고, Unit을 문 채 그 자리에서 `error`로 전이해 실패를 회신한다(`hw_state` = `error`). 담당자가 현장을 확인한 뒤 담당자 원점 복귀(§8.11)를 거쳐 [Reset]으로 해제한다. 티칭·테스트 조작 중이면 회신할 Job이 없어 `error` 전이를 A-3로 보고한다(`reason` = `slot_dest_occupied`).
+
 ### 8.11 담당자 원점 복귀
 
 담당자가 태블릿에서 Manipulator를 원점으로 되돌리는 조작이다. 두 가지를 제공한다.
 
-- **역방향 원점 복귀** — 팔이 원점을 떠나 움직여 온 경로를 거꾸로 따라 원점으로 돌아간다. 거꾸로 따라가며 Gripper를 닫았던 지점에 오면 열고, 열려 있으면 그대로 두고 다시 닫지 않는다. Unit을 물고 있었으면 집어 온 자리에 되돌려 놓는다.
-- **안전 원점 복귀** — 담당자가 팔을 손으로 옮겨 지나온 경로를 따를 수 없을 때, 미리 정한 안전 위치를 거쳐 원점으로 돌아간다. 원점에 도착한 뒤 Gripper가 닫혀 있으면 연다. Unit을 물고 있었으면 담당자가 원점에서 바로 꺼낼 수 있다. 안전 위치는 AMMR 업체가 설비 배치에 맞춰, Unit을 물고 있어도 걸리지 않게 정한다.
+- **원점 복귀** — 평소 쓰는 복귀다. 팔이 원점을 떠나 움직여 온 경로를 거꾸로 따라 원점으로 돌아간다. 거꾸로 따라가며 Gripper를 닫았던 지점에 오면 열고, 열려 있으면 그대로 두고 다시 닫지 않는다. Unit을 물고 있었으면 집어 온 자리에 되돌려 놓는다.
+- **강제 원점 복귀** — 담당자가 팔을 손으로 옮겨 지나온 경로를 따를 수 없을 때, 미리 정한 안전 위치를 거쳐 원점으로 돌아간다. 원점에 도착한 뒤 Gripper가 닫혀 있으면 연다. Unit을 물고 있었으면 담당자가 원점에서 바로 꺼낼 수 있다. 안전 위치는 AMMR 업체가 설비 배치에 맞춰, Unit을 물고 있어도 걸리지 않게 정한다.
+
+강제 원점 복귀는 지나온 경로를 따르지 않아 잘못 누르면 설비와 부딪힐 수 있으므로, 태블릿에서 한 번 더 확인받은 뒤에만 시작한다. 확인 방식은 "AMMR 태블릿 UI 정의 제안"을 따른다.
 
 두 조작을 받는 조건은 이렇다.
 
@@ -2183,7 +2187,7 @@ AMMR HW가 위 12종으로 포괄되지 않는 새로운 물리 상태를 가지
 
 #### A.4 Job 실패 Reason 코드 (`reason`)
 
-§7.1의 분류 체계를 따르는 확정 코드 일람이다. 의미 칸을 '수행 불가 거부'로 맺은 코드가 본문의 수행에 진입하지 않은 거부다.
+§7.1의 분류 체계를 따르는 확정 코드 일람이다. 의미 칸을 '수행 불가 거부'로 맺은 코드가 본문의 수행에 진입하지 않은 거부다. '실패 뒤 AMMR Slot' 칸은 Slot을 다루는 Pickup·Dropoff의 A-8 `slot`에 싣는 값이다. Move·Charge는 Slot을 건드리지 않고 티칭·테스트 조작은 Job이 아니므로, 같은 코드로 실패해도 `job_failed`가 생기지 않고 태블릿 판정이 그대로 남는다. 칸 값은 실패 뒤 Slot 상태를 알 수 있느냐로 갈린다. Slot을 건드리기 전에 멈췄거나 집기·놓기 결과를 Gripper Sensor로 확인한 실패는 판정값을 그대로 싣고, Slot을 다루다 멈춰 상태를 믿을 수 없게 된 실패만 Unit이 남으면 `job_failed`로 싣는다.
 
 | 코드                             | 카테고리   | 의미 | 실패 뒤 AMMR Slot        |
 |----------------------------------|------------|---|--------------------------|
@@ -2206,7 +2210,7 @@ AMMR HW가 위 12종으로 포괄되지 않는 새로운 물리 상태를 가지
 | `ammr_hw_other`                  | AMMR HW 측 | 그 외 AMMR HW 측 사유. AMMR은 `error`로 전이한다 | Unit 남으면 `job_failed` |
 | `slot_source_empty`              | Slot 측    | 출발 Slot이 비어 있음 · Pickup = 도착 뒤 Manipulator Vision으로 확인한 외부 출발 Slot · Dropoff = AMMR 적재 Slot의 slot_state가 empty (§8.10) | 판정값 그대로            |
 | `slot_source_obstructed`         | Slot 측    | Pickup 동작 중 물리 충돌 — 위치 어긋남·이상 상황으로 Manipulator가 부딪힘. 원점 복귀 없이 그 자리에서 `error`로 전이한다 | Unit 남으면 `job_failed` |
-| `slot_dest_occupied`             | Slot 측    | 도착 Slot이 점유됨 · Dropoff = 도착 뒤 Manipulator Vision으로 확인한 외부 목적지 Slot · Pickup = Unit을 놓을 AMMR Slot(집어 올린 뒤 사람이 먼저 채움·§8.10) · 어느 Job이었는지는 같은 payload의 `job_type`이 가른다 | 판정값 그대로            |
+| `slot_dest_occupied`             | Slot 측    | 도착 Slot이 점유됨 · Dropoff = 도착 뒤 Manipulator Vision으로 확인한 외부 목적지 Slot · Pickup = Unit을 놓을 AMMR Slot(집어 올린 뒤 사람이 먼저 채움·Unit을 문 채 `error`로 전이·§8.10) · 어느 Job이었는지는 같은 payload의 `job_type`이 가른다 | 판정값 그대로            |
 | `slot_dest_obstructed`           | Slot 측    | Dropoff 동작 중 물리 충돌 — 위치 어긋남·이상 상황으로 Manipulator가 부딪힘. 원점 복귀 없이 그 자리에서 `error`로 전이한다 | Unit 남으면 `job_failed` |
 | `slot_other`                     | Slot 측    | 그 외 Slot 측 사유. 원인을 가릴 수 없어 AMMR은 그 자리에서 `error`로 전이한다 | Unit 남으면 `job_failed` |
 | `job_invalid_request`            | 지시 측    | 계약에 어긋난 지시 수신 (필수 필드 누락·다른 AMMR의 Slot 지정·맵에 없는 목적지 설비 ID·작업 대상 설비와 다른 설비의 Slot 지정 등) — 수행 불가 거부. 단 수행 조건·시점 사유가 앞선다 (§7.1) | 해당 없음                |
@@ -2313,7 +2317,7 @@ AMMR HW 상태 전이 보고(A-3)가 싣는 전이 사유 일람.
 | `ammr_hw_job_timeout`            | 수동 모드 티칭·테스트 조작의 Move·Pickup·Dropoff 동작이 수행 한도 안에 끝나지 않아 장애 진입 · Job 실패 사유와 같은 코드 · Move 뒤 자율 충전 이동 = §6.6·§8.9 |
 | `slot_source_empty`              | 수동 모드 티칭·테스트 조작의 Pickup·Dropoff 중 출발 Slot이 비어 있어 멈춰 원점 복귀 시작 (Job 실패 사유와 같은 코드·§8.9·§8.10) |
 | `slot_source_obstructed`         | 수동 모드 티칭·테스트 조작의 Pickup 중 물리 충돌로 그 자리에서 장애 진입 (Job 실패 사유와 같은 코드·§8.9) |
-| `slot_dest_occupied`             | 수동 모드 티칭·테스트 조작의 Pickup·Dropoff 중 놓을 자리가 차 있어 원점 복귀 시작 · Job 실패 사유와 같은 코드 · Job별 대상 Slot과 Unit 처리 = §8.10 (§8.9) |
+| `slot_dest_occupied`             | 수동 모드 티칭·테스트 조작 중 놓을 자리가 차 있음 · Dropoff = 원점 복귀 시작 · Pickup = Unit을 문 채 장애 진입 · Job 실패 사유와 같은 코드 · Job별 대상 Slot과 Unit 처리 = §8.10 (§8.9) |
 | `slot_dest_obstructed`           | 수동 모드 티칭·테스트 조작의 Dropoff 중 물리 충돌로 그 자리에서 장애 진입 (Job 실패 사유와 같은 코드·§8.9) |
 | `slot_other`                     | 수동 모드 티칭·테스트 조작 중 그 외 Slot 측 사유로 멈춰 장애 진입 (Job 실패 사유와 같은 코드·§8.9) |
 | `equip_marker_unreadable`        | 위치 기준 Marker 인식 실패로 원점 복귀를 마친 뒤 장애 진입 · Job 실패 사유와 같은 코드 · 자동 모드면 자율 충전 이동 계속 (§6.6) · 수동 모드 티칭·테스트 조작 중이면 원점 복귀 시작(`pickup`·`dropoff` → `manipulator_homing`)에도 싣는다 (§8.9) |
@@ -2411,10 +2415,10 @@ Core 발신 메시지와 broker 자동 발행 LWT는 발행 주체에 운전 모
 | 44 | 수행 중 지시      | 앞선 Job 수행 중(접근 중 중단 뒤 원점 복귀 포함) 수신한 Job = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`job_concurrent_request`·앞선 Job 계속 수행·대기 적재·교체 없음·`slot`은 대상 Slot 특정 시 현재 판정 상태) | §5.2 C-2, §7.1, §8.10, §부록 A.4                      |
 | 45 | 자체 충전 중 지시 | `self_charge` 상태(Job 대기 한도 경과 자율 복귀) 수신 Job = 수신 확인(A-7) + A-8 즉시 실패 회신 (`reason`=`ammr_hw_self_charge_state`·`slot`=대상 Slot 특정 시 현재 판정 상태) | §8.4, §부록 A.4                                       |
 | 46 | 재충전 임계       | 충전 종료 임계치(태블릿 설정·초기값 80%) 도달 시 충전을 끊고 `docked` 유지 · 재충전 임계치(태블릿 설정·초기값 70%) 이하로 내려가면 `charging` 재개 · 도킹 완료 시점도 이 임계로 `charging`·`docked` 가름 | §5.1 A-9, §8.2, §부록 A.1                             |
-| 47 | 안전 정지         | 세 갈래 · Safety Field 감지·범퍼 충돌 = 일시 정지(`paused`)·Job 유지·해제 후 이어서 수행 (Safety Field 자동 해제 / 범퍼는 Buzzer + 태블릿 [Reset]) · 긴급정지 버튼 = 장애(`error`)·Buzzer + [Reset]·Job은 `ammr_hw_emergency_stop`로 실패 회신 · 일시 정지 동안 수행 한도 시계 정지 · 갈래별 상세·자율 충전 이동 중 정지·거부 사유 = §8.8 | §8.8, §부록 A.1·A.4·A.11                              |
+| 47 | 안전 정지         | 세 갈래 · Safety Field 감지·범퍼 충돌 = 일시 정지(`paused`)·Job 유지·해제 후 이어서 수행 (Safety Field 자동 해제 / 범퍼는 Buzzer + [Reset]) · 긴급정지 버튼 = 장애(`error`)·Buzzer + [Reset]·Job은 `ammr_hw_emergency_stop`로 실패 회신 · 일시 정지 동안 수행 한도 시계 정지 · 갈래별 상세·자율 충전 이동 중 정지·거부 사유 = §8.8 | §8.8, §부록 A.1·A.4·A.11                              |
 | 48 | 운전 모드         | 모든 메시지 `header.mode`(`auto`·`manual` · Core 발신·broker LWT는 null) · AMMR 보유값이라 재접속 후 유지·재시작은 수동으로 시작 · 전환 시 일괄 보고(`trigger`=`mode_changed`) 발행 · 수동 모드 중 지시 = `ammr_hw_manual_mode` 거부 · 전환 불가 구간·수동 중 자율 충전 정지·티칭/테스트 실패 처리 = §8.9 | §3.5, §8.9, §8.10, §부록 A.4·A.10·A.11·A.13           |
 | 49 | 최근 명령 재요청  | 담당자 [최근 명령 재요청] = A-10(body = `job_id`·최근 명령 없으면 요청 안 보냄) → 재요청 수신 확인(C-6·body = `job_id`) → 재발행 Job 지시(C-2) 또는 재요청 거절(C-7·body = `resume_job_id`·`reason`·§부록 A.14) · 재발행 = 요청 `job_id`의 Job을 payload 그대로(`job_id`만 새로·목적지·Slot·`unit` 재판정 없음) 그 Job이 속한 짝의 Move부터 · 첫 Job의 `resume_job_id`에 요청 `job_id`를 실음 · 재지시 대기 중 다른 Job 지시 = `ammr_hw_resume_pending` 거부 · 선행 보고·대상 한정·거절 조건·Core 측 보류 = §6.9 · 대기 임계 = §7.3 | §5.1 A-10, §5.2 C-6·C-7, §6.9, §7.3, §7.4, §부록 A.14 |
-| 50 | 원점 복귀         | 접근 중 중단 다섯 사유(출발 Slot 비어 있음·설비 Interlock 확보 실패·위치 기준 Marker 인식 실패·Pickup 적재 AMMR Slot 점유·Dropoff 목적지 Slot 점유) = 멈춘 사유로 실패 먼저 회신(`hw_state`=`manipulator_homing`) 뒤 Manipulator 원점 복귀 · 복귀 계기별 결과와 티칭·테스트 조작 갈래 = §8.10 · 그 밖의 실패와 동작 중 물리 충돌(`slot_source_obstructed`·`slot_dest_obstructed`)은 원점 복귀 없이 그 자리 `error`·담당자 현장 확인 | §8.9, §8.10, §부록 A.1·A.4·A.11                       |
+| 50 | 원점 복귀         | 접근 중 중단 네 사유(출발 Slot 비어 있음·설비 Interlock 확보 실패·위치 기준 Marker 인식 실패·Dropoff 목적지 Slot 점유) = 멈춘 사유로 실패 먼저 회신(`hw_state`=`manipulator_homing`) 뒤 Manipulator 원점 복귀 · 복귀 계기별 결과와 티칭·테스트 조작 갈래 = §8.10 · Pickup 적재 AMMR Slot 점유(Unit을 문 채)·그 밖의 실패와 동작 중 물리 충돌(`slot_source_obstructed`·`slot_dest_obstructed`)은 원점 복귀 없이 그 자리 `error`·담당자 현장 확인 | §8.9, §8.10, §부록 A.1·A.4·A.11                       |
 | 51 | 작업 취소         | 담당자가 태블릿에서 Move 수행 중(도중 일시 정지 포함) 취소 (Move Job에서만) = AMMR이 이동 재개 없이 Job 중단 + 실패 회신(`ammr_hw_job_cancelled`) · 적재 상태면 그 Slot을 `blocked`로 올리고 보관 식별값을 비움 · 미적재면 실패 회신만 · 일시 정지 중이면 Safety Field = `idle`·범퍼 = `paused` 유지 후 [Reset]에 `idle` · 자체 충전 복귀도 같은 버튼으로 끊음 = `idle`(`self_charge_cancelled`)·Job 대기 한도 0부터 · 저전력 자율 충전은 끊을 수 없음 · Core 중단 지시 경로 없음 | §6.10, §8.4, §8.8, §부록 A.4·A.11                     |
-| 52 | 담당자 원점 복귀  | [역방향 원점 복귀](팔 경로 역순·Gripper는 닫았던 지점에서 열고 열려 있으면 유지)·[안전 원점 복귀](안전 위치 경유·원점 도착 뒤 닫혀 있으면 열기·안전 위치는 업체가 Unit을 물고 있어도 걸리지 않게 정함) · 수동 모드(동작 수행 중·`manipulator_homing`·`paused` 제외)이거나 `error`일 때만 · 일시 정지 중 팔 회수 = 긴급정지로 `error` 진입 뒤 원점 복귀·[Reset] · 복귀 중 `hw_state` = `manipulator_homing`·마치면 시작 전 상태로(장애에서 시작했으면 [Reset] 필요) · 실패 시 `error`(`manipulator_homing_failed`) · `job/report` 없음 | §8.11, §부록 A.1·A.11                                 |
+| 52 | 담당자 원점 복귀  | [원점 복귀](평소 복귀·팔 경로 역순·Gripper는 닫았던 지점에서 열고 열려 있으면 유지)·[강제 원점 복귀](안전 위치 경유·원점 도착 뒤 닫혀 있으면 열기·안전 위치는 업체가 Unit을 물고 있어도 걸리지 않게 정함·태블릿 재확인 뒤에만) · 수동 모드(동작 수행 중·`manipulator_homing`·`paused` 제외)이거나 `error`일 때만 · 일시 정지 중 팔 회수 = 긴급정지로 `error` 진입 뒤 원점 복귀·[Reset] · 복귀 중 `hw_state` = `manipulator_homing`·마치면 시작 전 상태로(장애에서 시작했으면 [Reset] 필요) · 실패 시 `error`(`manipulator_homing_failed`) · `job/report` 없음 | §8.11, §부록 A.1·A.11                                 |
 | 53 | 장애 중 자율 충전 | 설비 측 실패 뒤 `error`·Move 수행 한도 초과 `error` = 자동 모드에서 `error` 유지한 채 자체 충전·저전력 자율 충전 수행 · `self_charge`·`low_battery`·`charging`·`docked` 전이 미발행·스트리밍·주기 일괄 보고 유지 · 수동 모드면 정지 · [Reset] 시 실제 상태로 · 그 밖의 `error`는 정지 | §6.6, §8.3, §8.4, §8.8, §부록 A.11                    |

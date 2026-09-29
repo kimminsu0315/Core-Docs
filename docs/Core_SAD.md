@@ -1,7 +1,7 @@
 # Core 아키텍처
 
-> 이 문서는 `Core_SAD_v1_3_0_d736.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-09-21 10:36
+> 이 문서는 `Core_SAD_v1_4_0_d741.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-09-23 10:56
 
 ---
 
@@ -396,7 +396,7 @@ Core 바깥에 독립적으로 존재하는 시스템이다. L3 다이어그램�
   - 두 WIP Adapter 모두 응답 본문이 단순 확인 응답이 아니라 의미 있는 도메인 데이터를 실어 보내는 채널이며, 회신은 세 층위다.
     - Core 마스터 기준으로 확정한 Unit 정보
     - 입고 보고 시점 경로 유효성 검증 결과인 사용 가능 여부 판정
-    - Core 판정으로 그 Slot의 상태가 바뀐 사실과 사유 (사용 보류·출발 Slot 복귀·Pickup 원위치)
+    - Core 판정으로 그 Slot의 상태가 바뀐 사실과 사유 (사용 보류·출발 Slot 복귀)
   - 이 층위는 입고 보고에 한정되지 않아 출고 확인 시점 판정으로 그 Slot이 사용 보류가 된 경우도 함께 싣는다. 판정 주체는 Core이며 WIP 프로그램은 받은 결과를 표시한다.
 - **AMMR Adapter** — 물류 AMMR과의 MQTT 양방향 통신.
   - 수신: 위치, BMS, 상태, 운전 모드, Slot 상태(slot_state), Slot별 적재 정보(Unit 식별값), Job 수행 결과(Move/Pickup/Dropoff/Charge 성공/실패 등), 담당자 조작으로 올라오는 최근 명령 재요청. 받은 사실은 State Service에 전달한다.
@@ -565,7 +565,7 @@ Adapter에 도메인 판단이 섞이면 같은 판단이 Adapter마다 중복·
 | (e) 도착 시점 검증 실패 시 Slot 마킹       | ArrivalValidationFail                                  | AMMR Service  | ArrivalRetryResolved (자동)                            | 목적지 Slot 점유 시 마킹한다. 재탐색·중복 마킹 = 표 아래 주석 |
 | (f) 경로 유효성 검증 실패 시 Slot 마킹     | RecipeRouteMismatch / MachinePending / HandoverPending | State Service | RecipeRouteRestored·MachineRestored·SlotCleared (자동) | 마킹 조건·대상 위치·해제 계기는 경로 유효성 축이 쥔다. 설비 대기 위치는 MachinePending·인계 대기 위치는 HandoverPending이다. |
 
-※ (d) 정합성 불일치 마킹 계기 — CNC 작업대는 Core 두 필드 검사로, AMMR·WIP은 클라이언트 판정 수신으로 마킹한다. 클라이언트가 blocked로 보고하면 IntegrityMismatch로, job_failed로 보고하면 JobFailed로 마킹하며 job_failed는 AMMR 한정이다. 활성 Unit 대조 축은 계열과 무관하며, Core 활성 Unit에 없는 Slot Unit 식별값은 IntegrityMismatch로 마킹한다. Pickup 실패 결과 수신 시 출발 Slot이 점유로 남아 있으면 IntegrityMismatch로 마킹하고, 그 Slot Unit 회수 또는 담당자 정합성 회복 조치로 해제한다(적재 AMMR Slot 점유로 원위치한 갈래는 마킹하지 않는다).
+※ (d) 정합성 불일치 마킹 계기 — CNC 작업대는 Core 두 필드 검사로, AMMR·WIP은 클라이언트 판정 수신으로 마킹한다. 클라이언트가 blocked로 보고하면 IntegrityMismatch로, job_failed로 보고하면 JobFailed로 마킹하며 job_failed는 AMMR 한정이다. 활성 Unit 대조 축은 계열과 무관하며, Core 활성 Unit에 없는 Slot Unit 식별값은 IntegrityMismatch로 마킹한다. Pickup 실패 결과 수신 시 출발 Slot이 점유로 남아 있으면 IntegrityMismatch로 마킹하고, 그 Slot Unit 회수 또는 담당자 정합성 회복 조치로 해제한다.
 
 ※ (e) 도착 시점 검증 실패 재탐색·중복 마킹 — Fallback 재탐색으로 다른 가용 Slot에서 정상 도착하면 ArrivalRetryResolved로 자동 해제하며, 대체 경로로 옮겨 간 자리에서 난 점유 실패도 같은 사유로 마킹·해제한다. 목적지가 이미 다른 사유로 Block이면 새로 마킹하지 않고 같은 재탐색으로 넘어간다.
 
@@ -1161,16 +1161,7 @@ Core 측 유휴 복귀와 성격이 같아 그 뒤 새 Transfer가 생기면 충
 
 이 단락의 핵심 둘은 외부 측 실제를 즉시 반영한다는 것과, CNC 작업대 계열에서 Sensor 보고 시점 차이를 정합성 검사가 자연스럽게 흡수한다는 것이다.
 
-**Pickup 원위치 (적재 AMMR Slot 점유).** Pickup에서 Unit을 집어 올린 뒤 놓을 AMMR Slot을 사람이 먼저 채우면, 태블릿은 그 점유를 전이 시점에 Slot 상태 전이로 보고하고(식별되지 않는 점유라 blocked) AMMR HW는 도착 Slot 점유 사유로 Pickup 실패를 회신한 뒤(AMMR HW 상태 = 원점 복귀) Unit을 집어 온 출발 Slot에 되돌려 놓는다. 앞선 AMMR Slot 전이는 진행 중 Job 대상 Slot 전이라 상태만 반영되고, 이송 처리는 뒤따르는 Pickup 실패 결과가 쥔다.
-
-결과 수신 atomic 안에서 State Service는 출발 Slot Unit 식별값을 그 Unit으로 채우고(추정 등급·들어 올릴 때 비움 보고로 지워졌어도 다시 채움), 딸린 이송은 배정만 풀어 출발 Slot 정합이 회복될 때까지 TransferList 밖에 둔다. 출발 Slot에 Job 결과로 Block을 직접 마킹하지 않는다.
-
-되돌려 놓은 뒤 정합이 회복되는 경로는 출발 Slot 계열에 따라 갈린다.
-
-- WIP·CNC WIP Slot: WIP 프로그램이 그 Unit을 식별하지 못해 blocked로 올리며, State Service는 채운 Unit 식별값과 복귀 사유 LoadSlotOccupied(적재 Slot 점유)를 응답에 실어 회신한다. WIP 프로그램은 그 값으로 자기 상태를 되돌리고 WIP Dashboard가 사유를 담당자에게 보인다.
-- CNC 작업대 Slot: 들어 올릴 때의 Sensor Off와 채운 식별값이 어긋나 Block이 마킹되고, 되돌려 놓은 Sensor On 보고로 정합이 회복되어 자동 해제된다.
-
-출발 Slot의 정합이 회복되는 시점에 그 이송을 TransferList로 되돌려 다시 매칭하며, 들어 올린 흔적이 잡히지 않아 정합이 이미 맞아 있으면 원점 복귀에서 대기로 전이하는 시점에 되돌린다. 그 사이 출발 Slot이 비면 그 이송을 무효화한다. 그 이송이 유지되어 다시 지시되므로 순서 위치는 되돌리지 않는다. 원점 복귀에 실패해 장애로 전이하면 Unit이 어디 있는지 확인되지 않으므로 채운 식별값을 걷고 그 이송을 실패로 종료한다.
+**Pickup 중 적재 AMMR Slot 점유.** Pickup에서 Unit을 집어 올린 뒤 놓을 AMMR Slot을 사람이 먼저 채우면, 태블릿은 그 점유를 전이 시점에 Slot 상태 전이로 보고하고(식별되지 않는 점유라 blocked) AMMR HW는 Unit을 문 채 그 자리에 멈춰 '장애'로 전이하며 도착 Slot 점유 사유로 Pickup 실패를 회신한다. 앞선 AMMR Slot 전이는 진행 중 Job 대상 Slot 전이라 상태만 반영된다. 뒤따르는 실패 결과는 AMMR HW 상태가 '장애'라 분기 1 장애 처리로 받으며, 처리는 Gripper 파지 확인 실패와 같다. Unit이 Gripper에 물려 어느 Slot에도 없으므로 출발 Slot Unit 식별값은 다시 채우지 않는다.
 
 **Dropoff atomic 안 도착 Slot 처리.** Dropoff 성공 통합 보고 수신 atomic 안에서 도착 Slot Unit 식별값은 직전 AMMR Slot Unit 식별값을 옮겨 추정 등급으로 갱신된다. 도착 Slot 상태는 이 atomic에서 갱신되지 않는다. 도착 Slot이 CNC 작업대 Slot이면 SM 폴링 Sensor 신호가 별도 atomic으로 도달해 Sensor On 전이로 갱신된다. 그 사이 시점에는 도착 Slot InMemory가 Sensor Off + Unit 식별값 있음 상태가 되어 정합성 검사가 작동하면서 Block이 마킹된다(IntegrityMismatch). 이 마킹의 Block 요약 이력 DB 기록은 일반 Block 요약 이력 흐름을 그대로 따른다. Sensor On 보고 도달 시점에 정합이 회복되어 Block이 자동 해제된다. Pickup 쪽 출발 Slot 처리와 대칭이다. 도착 Slot이 WIP·CNC WIP Slot이면 WIP 프로그램이 판정한 slot_state 보고로 Slot 상태가 갱신되며 중간 조합이 생기지 않는다.
 
@@ -1193,7 +1184,7 @@ Core 측 유휴 복귀와 성격이 같아 그 뒤 새 Transfer가 생기면 충
 | 3-2 | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = 설비 측 카테고리 | 해당 Job만 실패 종료 · 자동 재지시 없음 · 운영 정보·Slot 상태 유지 · Core Dashboard 경고 (AMMR은 원점 복귀 뒤 '장애'로 전이하며 그 보고가 장애 처리를 연다) |
 | 4   | AMMR HW 상태 장애 아님 + Job 결과 = 성공 | 정상 갱신 → AMMR Service 다음 Job·Transfer 완료 |
 
-수행 조건 거부(저전력·자체 충전·수동 모드·일시 정지·재요청 중)와 담당자 취소는 장애와 달리 payload를 신뢰한다. Gripper 파지 확인 실패(집기·놓기)·AMMR HW 고장 계통·Job 수행 한도 초과는 AMMR이 '장애'로 전이해 보고하므로 분기 1로 처리된다. 수행 조건 거부는 해당 Job만 실패로 닫고 운영 정보·Slot 상태는 유지하며 AMMR은 자율 충전이나 수동 조작을 이어가거나 최근 명령 재요청을 기다린다. 거부된 Job에 딸린 이송은 그 시점 적재 상태로 가르되 갈래마다 뒤가 다르다. 수동 모드와 일시 정지 거부를 AMMR HW 단절·장애와 같은 갈래로 가르는 것은 언제 풀릴지 모르는 사람 조작이기 때문이고, 재요청 중 거부가 적재 여부와 무관한 것은 곧 이어질 최근 명령 재요청이 이송을 다시 세우기 때문이다. 운영 정보 초기화와 6 Slot 광역 Block 마킹은 하지 않는다.
+수행 조건 거부(저전력·자체 충전·수동 모드·일시 정지·재요청 중)와 담당자 취소는 장애와 달리 payload를 신뢰한다. Gripper 파지 확인 실패(집기·놓기)·Pickup 중 적재 AMMR Slot 점유·AMMR HW 고장 계통·Job 수행 한도 초과는 AMMR이 '장애'로 전이해 보고하므로 분기 1로 처리된다. 수행 조건 거부는 해당 Job만 실패로 닫고 운영 정보·Slot 상태는 유지하며 AMMR은 자율 충전이나 수동 조작을 이어가거나 최근 명령 재요청을 기다린다. 거부된 Job에 딸린 이송은 그 시점 적재 상태로 가르되 갈래마다 뒤가 다르다. 수동 모드와 일시 정지 거부를 AMMR HW 단절·장애와 같은 갈래로 가르는 것은 언제 풀릴지 모르는 사람 조작이기 때문이고, 재요청 중 거부가 적재 여부와 무관한 것은 곧 이어질 최근 명령 재요청이 이송을 다시 세우기 때문이다. 운영 정보 초기화와 6 Slot 광역 Block 마킹은 하지 않는다.
 
 ※ 거부·취소 사유별 딸린 이송 처리
 
@@ -1245,7 +1236,7 @@ Reason(AMMR HW 측·Slot 측·지시 측·설비 측)은 서비스 계층 책임
 
 물리적 수행 세부(Manipulator Vision Sensor 감지 등)는 AMMR HW 자체 제어. Core는 Job 수행 결과 통합 보고만 수신.
 
-**※ AMMR 태블릿 표시 (선탑재 + 조건부 정정).** 표시 회신 계열(Slot 변동·Job 결과·상태 전이 회신)은 두지 않는다. 태블릿은 Job 지시(MQTT job/cmd)에 선탑재된 Unit·위치 정보와 자기 slot_state 판정으로 적재 상태·배정 상태를 자체 구성하고, 상단 고정 영역 표시값(HW 상태·최근 명령·설비 Slot·AMMR Slot 등)도 자체 산출한다.
+**※ AMMR 태블릿 표시 (선탑재 + 조건부 정정).** 표시 회신 계열(Slot 변동·Job 결과·상태 전이 회신)은 두지 않는다. 태블릿은 Job 지시(MQTT job/cmd)에 선탑재된 Unit·위치 정보와 자기 slot_state 판정으로 적재 상태 화면을 자체 구성하고, 상단 고정 영역 표시값(HW 상태·최근 명령·설비 Slot·AMMR Slot 등)도 자체 산출한다.
 
 선탑재 Unit 정보에는 Tray 종류가 함께 든다. 물류 AMMR이 Tray 종류에 따라 집고 놓는 방식을 가를 수 있기 때문이다. Move 지시에는 뒤따를 Pickup·Dropoff에서 다룰 Slot을 함께 싣는다. 통합 Slot WIP은 한 설비 안에 Slot이 여러 열로 서 있어, 설비까지만 지시하면 도착한 뒤 Slot 앞으로 다시 움직여야 하기 때문이다. 이동 목적지 지정은 설비 ID 그대로이며 이 Slot 값은 정차 위치 참고다. 발행 시점의 예정이라 도착 시점 검증에서 갈릴 수 있고, 실제로 다룰 Slot은 뒤따르는 Pickup·Dropoff 지시가 쥔다.
 
@@ -1358,17 +1349,16 @@ Transfer는 AMMR Service에서 Job Sequence(Move→Pickup→Move→Dropoff)로 �
 
 이 표의 처리는 payload 분기 Trigger(AMMR HW 상태 + Job 결과 + Reason)의 분기 3·4(AMMR HW 상태 장애 아님 + Job 결과 = 실패/성공)에 해당. 분기 1(AMMR HW 상태 = '장애')은 AMMR HW 장애 atomic 단독 일괄 처리이고, 분기 2(AMMR HW 측 Reason)·2-1(수행 조건 거부)·2-2(담당자 취소)·3-1(지시 측 거부)·3-2(설비 측 Reason)는 해당 Job만 실패로 닫는 처리라 위 분기 표가 쥔다. 두 묶음 모두 이 표 영역 밖이다.
 
-| Event 종류     | Job 결과·payload 조합                                  | 처리 |
-|----------------|--------------------------------------------------------|---|
-| JobResultEvent | Move 성공                                              | 다음 Job 진행 (Pickup / Dropoff) |
-| JobResultEvent | Pickup 성공                                            | 다음 Job 진행 (Move) |
-| JobResultEvent | Pickup 실패 + Reason = 도착 Slot 점유 (적재 AMMR Slot) | 출발 Slot Unit 식별값을 그 Unit으로 채움(원위치·Job 결과 직접 마킹 없음) + 배정 반환 · 출발 Slot 정합 회복 시 TransferList 복귀 |
-| JobResultEvent | Pickup 실패 + 나머지 Slot 측 사유 + 출발 Slot 점유     | 출발 Slot Block 마킹(IntegrityMismatch — Job 결과 직접 마킹) + Transfer 실패 종료 |
-| JobResultEvent | Pickup 실패 + 나머지 Slot 측 사유 + 출발 Slot 비움     | Transfer 실패 종료 (사람 회수 등으로 Unit 소실) |
-| JobResultEvent | Dropoff 성공                                           | Transfer 완료, AmmrList 복귀 |
-| JobResultEvent | Dropoff 실패 + Reason = 목적지 Slot 점유               | 동적 Fallback |
-| JobResultEvent | Dropoff 실패 + Reason = 적재 AMMR Slot 비어 있음       | Transfer 실패 종료 (사람 회수 등으로 Unit 소실) |
-| JobResultEvent | Charge 성공 (도킹 완료 보고)                           | Job 완료 |
+| Event 종류     | Job 결과·payload 조합                            | 처리 |
+|----------------|--------------------------------------------------|---|
+| JobResultEvent | Move 성공                                        | 다음 Job 진행 (Pickup / Dropoff) |
+| JobResultEvent | Pickup 성공                                      | 다음 Job 진행 (Move) |
+| JobResultEvent | Pickup 실패 + Slot 측 사유 + 출발 Slot 점유      | 출발 Slot Block 마킹(IntegrityMismatch — Job 결과 직접 마킹) + Transfer 실패 종료 |
+| JobResultEvent | Pickup 실패 + Slot 측 사유 + 출발 Slot 비움      | Transfer 실패 종료 (사람 회수 등으로 Unit 소실) |
+| JobResultEvent | Dropoff 성공                                     | Transfer 완료, AmmrList 복귀 |
+| JobResultEvent | Dropoff 실패 + Reason = 목적지 Slot 점유         | 동적 Fallback |
+| JobResultEvent | Dropoff 실패 + Reason = 적재 AMMR Slot 비어 있음 | Transfer 실패 종료 (사람 회수 등으로 Unit 소실) |
+| JobResultEvent | Charge 성공 (도킹 완료 보고)                     | Job 완료 |
 
 Transfer 완료·실패 종료는 AMMR Service가 판정하여 State Service에 사실을 전달하면, State Service가 Transfer 이력 DB 기록을 수행한다. 이 두 갈래는 매칭 결정 시점에 TransferList에서 이미 제거되어 재등록이 없으며, 외부 도메인 Event도 발행되지 않는다(완료·실패 종료 정보의 후속 도메인 처리 없음). 개별 Job 수행 결과(Move/Pickup/Dropoff/Charge 성공/실패)는 State Service의 Job 이력 DB 기록으로 별도 보존되며, Charge는 Transfer 경로 밖이라 Transfer 이력 기록 없이 Job 이력만 기록된다.
 
@@ -1578,7 +1568,7 @@ Job Sequence는 Move (목적지로) → Dropoff 2단계다. 첫 Move (출발 Slo
 - 그 Job에 딸린 Unit의 Transfer가 이미 다른 AMMR에 배정된 경우
 - 싣고 옮기던 Unit의 AMMR Slot이 선행 보고 반영 뒤에도 Unit 식별값 없이 IntegrityMismatch Block으로 남아 있는 경우
 
-**Transfer 재구성.** 같은 Unit에 살아 있는 Transfer(TransferList 대기·Pickup 원위치로 TransferList 밖에서 정합 회복 대기·요청한 AMMR에 배정 중)가 있으면 먼저 무효화하고 Transfer 이력에 무효화로 남긴다. 그 Job에 딸린 Transfer의 출발·도착·Slot 값을 그대로 복사해 새 Transfer를 만들어 요청한 AMMR에 직접 배정한다. 그 Transfer가 실패 종료했으면 그 기록을, 살아 있었으면 방금 무효화한 것을 쓴다. AmmrList 매칭을 거치지 않고 Recipe 재판정도 하지 않으며, DB Transfer 이력에는 앞선 Transfer의 종료(실패 종료 또는 무효화)와 신규 1건이 남는다.
+**Transfer 재구성.** 같은 Unit에 살아 있는 Transfer(TransferList 대기·요청한 AMMR에 배정 중)가 있으면 먼저 무효화하고 Transfer 이력에 무효화로 남긴다. 그 Job에 딸린 Transfer의 출발·도착·Slot 값을 그대로 복사해 새 Transfer를 만들어 요청한 AMMR에 직접 배정한다. 그 Transfer가 실패 종료했으면 그 기록을, 살아 있었으면 방금 무효화한 것을 쓴다. AmmrList 매칭을 거치지 않고 Recipe 재판정도 하지 않으며, DB Transfer 이력에는 앞선 Transfer의 종료(실패 종료 또는 무효화)와 신규 1건이 남는다.
 
 **재발행 시작점.** 재발행은 그 Job이 속한 짝의 Move부터이며, 뒤따르는 Sequence는 그대로 이어간다.
 
@@ -1860,11 +1850,11 @@ State Service [수신] atomic 처리
 
 표면화 경로는 Adapter 두절 기반·AMMR HW 단절 기반·AMMR HW 장애(payload '장애' 기반) 세 갈래다. 결과 형태는 권위 측 InMemory 초기화 + 영향 범위에 맞춘 광역 Block 마킹 + 진행 중 Job/Transfer 종료 + Core Dashboard 경고로 공통이되, 영향 범위와 Block enum·복구 경로가 갈래마다 갈린다.
 
-| 갈래         | 영향 범위                                               | Block enum        | 복구 경로                                                                      |
-|--------------|---------------------------------------------------------|-------------------|--------------------------------------------------------------------------------|
-| Adapter 두절 | 권위 측 전체 Slot (WIP은 두절 WIP 프로그램이 맡는 Slot) | AdapterDisconnect | Adapter 재연결로 평상시 입력 경로 자연 재개                                    |
-| AMMR HW 단절 | AMMR 6 Slot                                             | AmmrHwDisconnect  | 그 AMMR의 일괄 보고 수신으로 덮어쓰기                                          |
-| AMMR HW 장애 | AMMR 6 Slot                                             | AmmrHwError       | AMMR HW 측 점검·복구와 태블릿 해제 뒤 장애 복구 일괄 보고에서 Slot별 정합 판정 |
+| 갈래         | 영향 범위                                               | Block enum        | 복구 경로                                                               |
+|--------------|---------------------------------------------------------|-------------------|-------------------------------------------------------------------------|
+| Adapter 두절 | 권위 측 전체 Slot (WIP은 두절 WIP 프로그램이 맡는 Slot) | AdapterDisconnect | Adapter 재연결로 평상시 입력 경로 자연 재개                             |
+| AMMR HW 단절 | AMMR 6 Slot                                             | AmmrHwDisconnect  | 그 AMMR의 일괄 보고 수신으로 덮어쓰기                                   |
+| AMMR HW 장애 | AMMR 6 Slot                                             | AmmrHwError       | AMMR HW 측 점검·복구와 해제 뒤 장애 복구 일괄 보고에서 Slot별 정합 판정 |
 
 **Adapter 두절 표면화**: Adapter가 두절 사실을 State Service에 전달하면, State Service는 [수신] atomic 처리로 해당 Adapter 권위 측 InMemory를 통째 Null 초기화하고 Block 마킹(AdapterDisconnect)·진행 중 Job/Transfer 종료를 일괄 수행한다(권위 일원화 원칙 — 단일 atomic 안에서 처리). Block된 Slot은 Job 직전 검증을 통과하지 못하고 Fallback 판단에서 가용 Slot에서 제외된다. WIP Adapter 두절은 Adapter 측 주기 감시 방식으로 HealthCheck 주기 초과 감지 시점에 이 표면화 경로로 진입하며, 주기 값은 외부 측 가용성 요구 사항이다. HealthCheck는 WIP 프로그램 단위로 도달하므로 두절 적용 범위도 그 프로그램이 맡는 WIP Slot에 한정된다.
 
@@ -1879,7 +1869,7 @@ State Service [수신] atomic이 해당 AMMR InMemory 통째 Null 초기화(AMMR
 
 **AMMR HW 장애 표면화**: MQTT 경로는 살아 있으나 AMMR HW 보고를 그대로 쓸 수 없는 경우다. 진입은 payload가 '장애'를 실은 경우 하나로, Job 수행 결과 통합 보고에 실려 오거나 자체 전이 보고로 오거나, 단절 뒤 재연결이나 Core 재시작 때 일괄 보고에 실려 온다. State Service [수신] atomic이 AMMR HW 상태 갱신(보고된 '장애' 값)·해당 AMMR InMemory Null 초기화(위치·BMS·6 Slot 상태·6 Slot 식별값·Core 논리 AMMR 상태)·해당 AMMR Slot 전체 Block 마킹(AmmrHwError)을 일괄 수행한다. 진행 중 Job/Transfer 종료도 동일 atomic 안에서 처리된다.
 
-MQTT 경로는 여전히 살아 있으므로 이 절 "복구 — 채널별 재동기화 경로"를 거치지 않고, 복구는 AMMR HW 측에서 진행된다. 사람이 AMMR HW를 점검·물리 복구한 뒤 태블릿에서 해제하고, 필요 시 AMMR 업체 측에서 AMMR HW를 재시작한다(정지·재시작 등 HW 생명주기 제어는 업체 영역). 해제로 AMMR HW 상태가 '장애'에서 정상으로 돌아오면 AMMR은 전이 보고를 낸 뒤 일괄 보고를 발행하므로, AMMR HW 상태와 6 Slot 상태·Unit 식별값이 그 보고로 함께 회복된다. 장애 중 원점 복귀는 마쳐도 다시 '장애'로 돌아오므로 정상 복귀로 보지 않는다.
+MQTT 경로는 여전히 살아 있으므로 이 절 "복구 — 채널별 재동기화 경로"를 거치지 않고, 복구는 AMMR HW 측에서 진행된다. 사람이 AMMR HW를 점검·물리 복구한 뒤 해제하고, 필요 시 AMMR 업체 측에서 AMMR HW를 재시작한다(정지·재시작 등 HW 생명주기 제어는 업체 영역). 해제로 AMMR HW 상태가 '장애'에서 정상으로 돌아오면 AMMR은 전이 보고를 낸 뒤 일괄 보고를 발행하므로, AMMR HW 상태와 6 Slot 상태·Unit 식별값이 그 보고로 함께 회복된다. 장애 중 원점 복귀는 마쳐도 다시 '장애'로 돌아오므로 정상 복귀로 보지 않는다.
 
 Slot Block 해제는 그 보고의 판정을 따른다. 태블릿이 occupied와 Unit 식별값을 함께 올리거나 empty를 올리면 Block이 해제된다. blocked 판정이 이어지면 IntegrityMismatch 사유로 바뀌며, 사람이 Slot에서 Unit을 회수하거나 담당자가 태블릿에서 적재 정보를 저장하거나 일괄 재로드를 해 값을 갱신해야 해제된다. job_failed 판정이 이어지면 JobFailed 사유로 바뀌며, 담당자가 치우거나 태블릿에서 적재 정보를 저장하거나 최근 명령 재요청을 해 다시 보고해야 해제된다. AMMR HW 측 Reason은 '장애'와 함께 오고 설비 측 Reason은 원점 복귀 뒤 '장애' 전이가 이어 오므로 둘 다 이 해제를 따르며, 그 사이 들어온 보고로는 풀지 않는다. '장애' 중에 들어오는 위치·BMS 보고는 Core Dashboard 표시에만 반영하고 배정·Block 해제 판단에는 쓰지 않는다. 장애 복구 계기가 아닌 일괄 보고는 반영하지 않고 정정 응답도 보내지 않으며, AMMR HW 상태·6 Slot 상태·Unit 식별값은 해제 뒤 장애 복구 일괄 보고로만 회복한다.
 
