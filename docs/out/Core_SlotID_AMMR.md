@@ -1,7 +1,7 @@
 # 물류 AMMR 설비 ID · Slot ID 목록
 
-> 이 문서는 `Core_설비SlotID_AMMR_v1_2_1_d43.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-09-20 23:18
+> 이 문서는 `Core_설비SlotID_AMMR_v1_2_2_d45.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-10-01 13:25
 
 ---
 
@@ -9,7 +9,7 @@
 
 ### 1.1 목적
 
-이 문서는 물류 AMMR이 Core와 주고받는 설비 ID와 Slot ID, 그리고 물류 AMMR 자체의 식별자와 Slot ID 전체 목록을 정의한다. "Core ↔ 물류 AMMR Interface Control Document"가 설치 시점에 Core 측이 제공한다고 정한 그 목록이 이 문서다. AMMR 업체는
+이 문서는 물류 AMMR이 Core와 주고받는 설비 ID와 Slot ID, 그리고 물류 AMMR 자체의 식별자와 Slot ID 전체 목록을 정의한다. "Core ↔ 물류 AMMR Interface Control Document"가 설치 시점에 Core가 제공한다고 정한 그 목록이 이 문서다. AMMR 업체는
 이 문서의 값으로 자기 맵의 목적지와 Slot을 대응시킨다.
 
 이 문서의 모든 값은 Core가 확정한 것이며, AMMR 측 구현이 이 값에 맞춘다.

@@ -1,7 +1,7 @@
 # Core 아키텍처
 
-> 이 문서는 `Core_SAD_v1_4_0_d741.md` 기준으로 작성되었습니다.
-> 최종 업데이트: 2026-09-23 10:56
+> 이 문서는 `Core_SAD_v1_4_0_d751.md` 기준으로 작성되었습니다.
+> 최종 업데이트: 2026-10-01 10:09
 
 ---
 
@@ -466,10 +466,11 @@ Core의 핵심 비즈니스 로직을 담당하는 3개의 서비스로 데이�
 | State Service 입력 Channel | Adapter→서비스 경계 + 서비스→State Service 경계에 놓인 입력·갱신 요청 직렬화 장치 | 다수 Writer(Adapter 6종 — GM/SM/General Process WIP/Restack Process WIP/AMMR/Command API + Transfer Service·AMMR Service 갱신 요청) + 단일 Reader(State Service) | Writer 측·Reader 측 각각 별개 추상으로 노출                   | 인프라 계층                          |
 | TransferList               | Transfer 정렬 대기 자료구조 (InMemory 권위) | State Service 단일 쓰기 권위, AMMR Service·Transfer Service가 읽기 전용 참조 | State Service 내부 자료, 읽기 전용 참조만 외부 노출           | 서비스 계층 (State Service InMemory) |
 | AmmrList                   | AMMR Slot 배정 대기 자료구조 (InMemory 권위) | State Service 단일 쓰기 권위, AMMR Service가 읽기 전용 참조 | State Service 내부 자료, 읽기 전용 참조만 AMMR Service에 노출 | 서비스 계층 (State Service InMemory) |
+| 보류 목록                  | 담당자 확인까지 세워 둔 Transfer 자료구조 (InMemory 권위) | State Service 단일 쓰기 권위, AMMR Service·Transfer Service가 읽기 전용 참조 | State Service 내부 자료, 읽기 전용 참조만 외부 노출           | 서비스 계층 (State Service InMemory) |
 
-세 장치 모두 직렬화 패턴을 공유하나, **소속 계층 결정은 역할 성격이 좌우**한다. State Service 입력 Channel은 복수 Adapter(다수 Writer)와 단일 서비스(단일 Reader) 사이에 놓인 경계 장치라 어느 한 서비스 내부에 두면 다른 Writer들이 해당 서비스에 직접 결합되는 계층 역전이 발생한다. 독립된 계층 경계 장치로 두고 양쪽이 쓰기 측·읽기 측 추상에 각각 의존하게 하는 것이 의존성 역전·인터페이스 분리·테스트 용이성 모두 유리하다.
+네 장치 모두 직렬화 패턴을 공유하나, **소속 계층 결정은 역할 성격이 좌우**한다. State Service 입력 Channel은 복수 Adapter(다수 Writer)와 단일 서비스(단일 Reader) 사이에 놓인 경계 장치라 어느 한 서비스 내부에 두면 다른 Writer들이 해당 서비스에 직접 결합되는 계층 역전이 발생한다. 독립된 계층 경계 장치로 두고 양쪽이 쓰기 측·읽기 측 추상에 각각 의존하게 하는 것이 의존성 역전·인터페이스 분리·테스트 용이성 모두 유리하다.
 
-TransferList와 AmmrList는 InMemory 권위 일원화 원칙에 따라 State Service InMemory에 둔다. 쓰기 권위는 State Service 단일이고 다른 서비스는 읽기 전용 참조로 접근하며, 생성·정렬·매칭 결정은 Transfer Service·AMMR Service가 수행하고 State Service에 갱신을 요청한다. 모든 InMemory 권위가 State Service 한 곳에 모이면서 동시성·정합성 부담이 단일 atomic 경계에 집약된다.
+TransferList·AmmrList·보류 목록은 InMemory 권위 일원화 원칙에 따라 State Service InMemory에 둔다. 쓰기 권위는 State Service 단일이고 다른 서비스는 읽기 전용 참조로 접근하며, 생성·정렬·매칭 결정은 Transfer Service·AMMR Service가 수행하고 State Service에 갱신을 요청한다. 모든 InMemory 권위가 State Service 한 곳에 모이면서 동시성·정합성 부담이 단일 atomic 경계에 집약된다. 보류 목록은 매칭 대상에서 빼 세워 둔 Transfer를 담는 자리다. 매칭은 TransferList만 보므로 목록에 들어간 Transfer는 다시 지시되지 않고, 담당자가 Core Dashboard에서 풀면 TransferList로 복귀한다. 목록에 있는 Transfer도 미수행 Transfer로 세므로 같은 Unit에 새 Transfer가 생기지 않는다. Unit을 이미 실은 이송은 넘길 곳이 없어 그 AMMR에 묶인 채 보류하며, 그동안 그 Slot은 점유로 남는다.
 
 ### 4.6 인프라 계층
 
@@ -492,7 +493,7 @@ TransferList와 AmmrList는 InMemory 권위 일원화 원칙에 따라 State Ser
 
   State Service가 atomic 안에서 보안 Log 항목 영속화를 동반 수행한다.
 
-  이력 데이터는 두 Table로 분리된다. **Transfer 이력**에는 Transfer Lifecycle Event(생성·무효화·완료·실패 종료)와 이상 신호 Event(멱등 skip 등)가 적재된다. **Job 이력**에는 단위 Job(Move/Pickup/Dropoff/Charge)의 발행 시점과 결과 시점에 각각 1행이 추가된다(EventType으로 행 구분, 같은 JobID로 두 행이 연결됨). 두 행 공통 적재는 시점·AMMR·Slot·Transfer ID이며, 결과 행에는 성공/실패·실패 Reason·Job 종료 시점 위치가 추가 적재된다. Transfer에서 파생된 Job은 Transfer ID로 Transfer 이력과 매칭된다(매칭 대상은 skip 플래그 False 레코드 한정). Charge로 자체 생성된 Job 및 skip 플래그 True 레코드는 매칭 대상이 아니다.
+  이력 데이터는 두 Table로 분리된다. **Transfer 이력**에는 Transfer Lifecycle Event(생성·무효화·보류 진입·보류 해제·완료·실패 종료)와 이상 신호 Event(멱등 skip 등)가 적재된다. **Job 이력**에는 단위 Job(Move/Pickup/Dropoff/Charge)의 발행 시점과 결과 시점에 각각 1행이 추가된다(EventType으로 행 구분, 같은 JobID로 두 행이 연결됨). 두 행 공통 적재는 시점·AMMR·Slot·Transfer ID이며, 결과 행에는 성공/실패·실패 Reason·Job 종료 시점 위치가 추가 적재된다. Transfer에서 파생된 Job은 Transfer ID로 Transfer 이력과 매칭된다(매칭 대상은 skip 플래그 False 레코드 한정). Charge로 자체 생성된 Job 및 skip 플래그 True 레코드는 매칭 대상이 아니다.
 
   모든 이력 데이터의 **InMemory 갱신·DB 영속화는 Core 내부 DB 접근의 단일 게이트웨이인 State Service가 처리한다**. Transfer Service·AMMR Service는 Transfer Lifecycle 사건·Job 수행 결과를 State Service에 전달하여 영속화를 요청한다. 본체에는 두 Table 외 다수 이력이 등장하나, 처리 주체는 모두 State Service로 동일하다.
 
@@ -989,7 +990,7 @@ Core는 되담기 완료 시점에 빈 공정 Tray Unit의 남은 제품 공정�
        - 위치 (node_id, x, y, a) — 1초 스트리밍
        - BMS — 10초 스트리밍 (AMMR ID·Battery ID·Battery·전류·온도·전압·BMU 오류)
        - Job 수행 결과 통합 보고 (Job 결과 보고, Move/Pickup/Dropoff/Charge) — Job 종료 시. payload: AMMR HW 상태(현재) + Job 결과(성공/실패) + Reason(실패) + Job 종료 시점 위치 + slot_state·Unit 식별값(Pickup/Dropoff 시)
-       ※ 일괄 보고 발행 시점 = Core 연결 인지·주기(초기값 60초·Core 연결 유효 중)·재전송 요청(예비)·담당자 수동 발행·운전 모드 전환·장애 복구
+       ※ 일괄 보고 발행 시점 = Core 연결 인지·주기(초기값 60초·Core 연결 유효 중)·재전송 요청(예비)·담당자 수동 발행(재로드)·최근 명령 재요청 직전·운전 모드 전환·장애 복구
 AMMR Adapter (수신 + 도메인 객체 변환)
     ↓
 State Service 입력 Channel (단일 Consumer FIFO 구조)
@@ -1145,7 +1146,7 @@ Core 측 유휴 복귀와 성격이 같아 그 뒤 새 Transfer가 생기면 충
 | AMMR HW 상태 갱신 (Move/Pickup/Dropoff/Charge/원점 복귀/대기/충전 중/도킹/저전력/자체 충전/일시 정지/장애) | 일괄 보고 또는 AMMR HW 자체 전이 Event | AMMR HW 상태 | 상태 전이 이력 기록 | AmmrStateChangedEvent |
 | 운전 모드 갱신 (자동·수동) | 모든 수신 메시지 header (전환 시 일괄 보고가 즉시 실어 올림) | AMMR 운전 모드 (덮어쓰기) | (바뀐 시점에만) 상태 전이 이력 기록 | (바뀐 시점에만) AmmrStateChangedEvent |
 | Slot slot_state 전이 | 전이 시 1 Slot (Job 동작·사람 개입 무관) | AMMR Slot slot_state·Slot Unit 식별값 (클라이언트 판정·보고 값 반영) · 진행 중 Pickup·Dropoff 대상 Slot은 slot_state만 반영하고 식별값은 그 Job 결과로 정함 · '장애'에 든 뒤 해제되기 전 수신은 반영하지 않음 (해제 뒤 장애 복구 일괄 보고로 회복) | Slot 상태 전이 이력 기록 (직전값과 다를 때만) | AmmrSlotStateEvent · 진행 중 Job 대상 Slot이 아닌 비움 전이면 SlotEmptiedEvent 동반 |
-| 일괄 보고 수신 (6 Slot 전체) | Core 연결 인지·주기(초기값 60초·Core 연결 유효 중)·재전송 요청(예비)·담당자 수동 발행·운전 모드 전환·장애 복구 | 마스터 배정과 대조해 차이 난 Slot의 slot_state·Unit 식별값을 한 atomic 안에서 갱신하고 입력 Unit의 경로 유효성을 함께 판정하며, 옮겨야 할 Unit에 미수행 Transfer가 없으면 누락으로 판정해 TransferMissingEvent를 발행 (예외는 표 아래 주석) | 차이 난 Slot의 상태 전이 이력 기록 | 차이마다 해당 전이 Event (slot_state 전이 = AmmrSlotStateEvent · 비움 = SlotEmptiedEvent · Unit 식별값 정해짐 = AmmrSlotUnitIdConfirmedEvent(Slot Unit 식별값 정해짐) · 이송 누락 = TransferMissingEvent) |
+| 일괄 보고 수신 (6 Slot 전체) | Core 연결 인지·주기(초기값 60초·Core 연결 유효 중)·재전송 요청(예비)·담당자 수동 발행(재로드)·최근 명령 재요청 직전·운전 모드 전환·장애 복구 | 마스터 배정과 대조해 차이 난 Slot의 slot_state·Unit 식별값을 한 atomic 안에서 갱신하고 입력 Unit의 경로 유효성을 함께 판정하며, 옮겨야 할 Unit에 미수행 Transfer가 없으면 누락으로 판정해 TransferMissingEvent를 발행 (예외는 표 아래 주석) | 차이 난 Slot의 상태 전이 이력 기록 | 차이마다 해당 전이 Event (slot_state 전이 = AmmrSlotStateEvent · 비움 = SlotEmptiedEvent · Unit 식별값 정해짐 = AmmrSlotUnitIdConfirmedEvent(Slot Unit 식별값 정해짐) · 이송 누락 = TransferMissingEvent) |
 | Job 수행 결과 통합 보고 (Move) | Job 종료 시 통합 보고 | AMMR HW 상태 갱신 | 상태 전이 이력·Job 이력 기록 (종료 시점 위치·실패 시 원인 포함) | AmmrStateChangedEvent·JobResultEvent |
 | Job 수행 결과 통합 보고 (Pickup) | Job 종료 시 통합 보고 | AMMR HW 상태 갱신·AMMR Slot 상태 occupied 반영 (성공)·AMMR Slot Unit 식별값 추정 등급 갱신 (성공 시 출발 Slot 직전 Unit 식별값을 AMMR Slot에 이전, 출발 Slot Unit 식별값 Null 갱신 동반) | 상태 전이 이력·Slot 상태 전이 이력 (성공)·Unit 위치 = AMMR Slot N (성공)·Job 이력 기록 (상세 = 표 아래 주석) | AmmrStateChangedEvent·AmmrSlotStateEvent (성공)·JobResultEvent |
 | Job 수행 결과 통합 보고 (Dropoff) | Job 종료 시 통합 보고 | AMMR HW 상태 갱신·AMMR Slot 상태 empty 반영 (성공)·AMMR Slot Unit 식별값 Null 갱신 (성공)·도착 Slot Unit 식별값 추정 등급 갱신 (성공 시 직전 AMMR Slot Unit 식별값을 도착 Slot으로 이전) | 상태 전이 이력·Slot 상태 전이 이력 (성공)·Unit 위치 = WIP/CNC 작업대 Slot (성공)·Job 이력 기록 (상세 = 표 아래 주석) | AmmrStateChangedEvent·AmmrSlotStateEvent (성공)·JobResultEvent |
@@ -1176,15 +1177,15 @@ Core 측 유휴 복귀와 성격이 같아 그 뒤 새 Transfer가 생기면 충
 | #   | payload 조합 | 처리 방식 |
 |-----|---|---|
 | 1   | AMMR HW 상태 = '장애' (Job 결과·Reason 무관) | AMMR HW 장애 atomic 단독 일괄 |
-| 2   | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = AMMR HW 측 카테고리 (수행 조건 거부·담당자 취소 제외) | 보고 값 그대로 — 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 |
+| 2   | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = AMMR HW 측 카테고리 (수행 조건 거부·담당자 취소 제외) | 보고 값 그대로 — 해당 Job만 실패 종료 · 딸린 이송은 보류 목록 · 운영 정보·Slot 상태 유지 · Core Dashboard 경고 |
 | 2-1 | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = 수행 조건 거부(자율 충전 상태·수동 모드·일시 정지·재요청 중) | payload 신뢰 · 해당 Job만 실패 종료 · 운영 정보·Slot 상태 유지 · 자율 충전·수동 조작 진행 또는 최근 명령 재요청 대기 |
 | 2-2 | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = 담당자 취소 | payload 신뢰 · 해당 Job 실패 종료 · 딸린 이송은 표 아래 사유별 소표 |
 | 3   | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = Slot 측 카테고리 | payload slot_state InMemory 갱신 → AMMR Service 운영 결정 (Fallback 진입) |
 | 3-1 | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = 지시 측 카테고리 | payload 신뢰 · 해당 Job 실패 종료 · 운영 정보·Slot 상태 유지 · 자동 재지시 없음 · Core Dashboard 경고 |
-| 3-2 | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = 설비 측 카테고리 | 해당 Job만 실패 종료 · 자동 재지시 없음 · 운영 정보·Slot 상태 유지 · Core Dashboard 경고 (AMMR은 원점 복귀 뒤 '장애'로 전이하며 그 보고가 장애 처리를 연다) |
+| 3-2 | AMMR HW 상태 장애 아님 + Job 결과 = 실패 + Reason = 설비 측 카테고리 | 해당 Job만 실패 종료 · 자동 재지시 없음 · 딸린 이송은 보류 목록 · 운영 정보·Slot 상태 유지 · Core Dashboard 경고 (AMMR은 원점 복귀 뒤 '대기'로 돌아가 다음 작업을 받는다) |
 | 4   | AMMR HW 상태 장애 아님 + Job 결과 = 성공 | 정상 갱신 → AMMR Service 다음 Job·Transfer 완료 |
 
-수행 조건 거부(저전력·자체 충전·수동 모드·일시 정지·재요청 중)와 담당자 취소는 장애와 달리 payload를 신뢰한다. Gripper 파지 확인 실패(집기·놓기)·Pickup 중 적재 AMMR Slot 점유·AMMR HW 고장 계통·Job 수행 한도 초과는 AMMR이 '장애'로 전이해 보고하므로 분기 1로 처리된다. 수행 조건 거부는 해당 Job만 실패로 닫고 운영 정보·Slot 상태는 유지하며 AMMR은 자율 충전이나 수동 조작을 이어가거나 최근 명령 재요청을 기다린다. 거부된 Job에 딸린 이송은 그 시점 적재 상태로 가르되 갈래마다 뒤가 다르다. 수동 모드와 일시 정지 거부를 AMMR HW 단절·장애와 같은 갈래로 가르는 것은 언제 풀릴지 모르는 사람 조작이기 때문이고, 재요청 중 거부가 적재 여부와 무관한 것은 곧 이어질 최근 명령 재요청이 이송을 다시 세우기 때문이다. 운영 정보 초기화와 6 Slot 광역 Block 마킹은 하지 않는다.
+수행 조건 거부(저전력·자체 충전·수동 모드·일시 정지·재요청 중)와 담당자 취소는 장애와 달리 payload를 신뢰한다. Gripper 파지 확인 실패(집기·놓기)·Pickup 중 적재 AMMR Slot 점유·AMMR HW 고장 계통·Pickup·Dropoff 수행 한도 초과는 AMMR이 '장애'로 전이해 보고하므로 분기 1로 처리된다. Move 수행 한도 초과는 AMMR이 '대기'로 돌아가므로 분기 2로 처리한다. 수행 조건 거부는 해당 Job만 실패로 닫고 운영 정보·Slot 상태는 유지하며 AMMR은 자율 충전이나 수동 조작을 이어가거나 최근 명령 재요청을 기다린다. 거부된 Job에 딸린 이송은 그 시점 적재 상태로 가르되 갈래마다 뒤가 다르다. 수동 모드와 일시 정지 거부를 AMMR HW 단절·장애와 같은 갈래로 가르는 것은 언제 풀릴지 모르는 사람 조작이기 때문이고, 재요청 중 거부가 적재 여부와 무관한 것은 곧 이어질 최근 명령 재요청이 이송을 다시 세우기 때문이다. 운영 정보 초기화와 6 Slot 광역 Block 마킹은 하지 않는다.
 
 ※ 거부·취소 사유별 딸린 이송 처리
 
@@ -1202,7 +1203,7 @@ Core 측 유휴 복귀와 성격이 같아 그 뒤 새 Transfer가 생기면 충
 - 원점 복귀 (접근 중 중단 뒤 복귀): 그 결과로 정한 다음 Job·Fallback 재지시를 원점 복귀에서 대기로 전이할 때까지 보류한다.
 - 장애: 장애 처리로 넘긴다.
 
-설비 측 실패는 해당 Job을 실패로 닫고 같은 지시를 자동으로 다시 내지 않는다. 운영 정보와 Slot 상태는 보고된 값을 그대로 둔다. 사유는 Core Dashboard 경고와 애플리케이션 Log로 남긴다. AMMR은 원점 복귀를 마친 뒤 '장애'로 전이하고, 그 보고가 도달하는 시점에 장애 처리가 열린다. 복귀가 끝날 때까지는 다음 Job을 지시하지 않는다.
+설비 측 실패는 해당 Job을 실패로 닫고 같은 지시를 자동으로 다시 내지 않는다. 운영 정보와 Slot 상태는 보고된 값을 그대로 둔다. 사유는 Core Dashboard 경고와 애플리케이션 Log로 남긴다. AMMR은 원점 복귀를 마친 뒤 '대기'로 돌아가며, 복귀가 끝날 때까지는 다음 Job을 지시하지 않는다. 딸린 이송은 보류 목록으로 옮겨 담당자 확인까지 세워 둔다.
 
 Reason(AMMR HW 측·Slot 측·지시 측·설비 측)은 서비스 계층 책임으로 분류한다(Adapter 책임 원칙). Reason 코드 값 자체는 Core가 확정한다. 어느 물리 고장을 어느 코드로 올릴지의 Mapping은 코드 레벨·AMMR HW 사양 합의 영역이다.
 
@@ -1360,7 +1361,7 @@ Transfer는 AMMR Service에서 Job Sequence(Move→Pickup→Move→Dropoff)로 �
 | JobResultEvent | Dropoff 실패 + Reason = 적재 AMMR Slot 비어 있음 | Transfer 실패 종료 (사람 회수 등으로 Unit 소실) |
 | JobResultEvent | Charge 성공 (도킹 완료 보고)                     | Job 완료 |
 
-Transfer 완료·실패 종료는 AMMR Service가 판정하여 State Service에 사실을 전달하면, State Service가 Transfer 이력 DB 기록을 수행한다. 이 두 갈래는 매칭 결정 시점에 TransferList에서 이미 제거되어 재등록이 없으며, 외부 도메인 Event도 발행되지 않는다(완료·실패 종료 정보의 후속 도메인 처리 없음). 개별 Job 수행 결과(Move/Pickup/Dropoff/Charge 성공/실패)는 State Service의 Job 이력 DB 기록으로 별도 보존되며, Charge는 Transfer 경로 밖이라 Transfer 이력 기록 없이 Job 이력만 기록된다.
+Transfer 완료·실패 종료는 AMMR Service가 판정하여 State Service에 사실을 전달하면, State Service가 Transfer 이력 DB 기록을 수행한다. 이 두 갈래는 매칭 결정 시점에 TransferList에서 이미 제거되어 재등록이 없으며, 외부 도메인 Event도 발행되지 않는다(완료·실패 종료 정보의 후속 도메인 처리 없음). 보류는 이 두 갈래와 다르다 — 이송이 살아 있어 담당자가 풀면 TransferList로 복귀한다. 개별 Job 수행 결과(Move/Pickup/Dropoff/Charge 성공/실패)는 State Service의 Job 이력 DB 기록으로 별도 보존되며, Charge는 Transfer 경로 밖이라 Transfer 이력 기록 없이 Job 이력만 기록된다.
 
 **처리 주체 분기**: 이 표의 처리 주체는 payload 분기 Trigger(AMMR HW 상태 + Job 결과 + Reason)의 조합 판정에 따라 자연스럽게 분기한다.
 
@@ -1568,7 +1569,7 @@ Job Sequence는 Move (목적지로) → Dropoff 2단계다. 첫 Move (출발 Slo
 - 그 Job에 딸린 Unit의 Transfer가 이미 다른 AMMR에 배정된 경우
 - 싣고 옮기던 Unit의 AMMR Slot이 선행 보고 반영 뒤에도 Unit 식별값 없이 IntegrityMismatch Block으로 남아 있는 경우
 
-**Transfer 재구성.** 같은 Unit에 살아 있는 Transfer(TransferList 대기·요청한 AMMR에 배정 중)가 있으면 먼저 무효화하고 Transfer 이력에 무효화로 남긴다. 그 Job에 딸린 Transfer의 출발·도착·Slot 값을 그대로 복사해 새 Transfer를 만들어 요청한 AMMR에 직접 배정한다. 그 Transfer가 실패 종료했으면 그 기록을, 살아 있었으면 방금 무효화한 것을 쓴다. AmmrList 매칭을 거치지 않고 Recipe 재판정도 하지 않으며, DB Transfer 이력에는 앞선 Transfer의 종료(실패 종료 또는 무효화)와 신규 1건이 남는다.
+**Transfer 재구성.** 같은 Unit에 살아 있는 Transfer(TransferList 대기·요청한 AMMR에 배정 중·보류 목록)가 있으면 먼저 무효화하고 Transfer 이력에 무효화로 남긴다. 보류 목록에 있던 Transfer는 무효화와 함께 목록에서 뺀다. 그 Job에 딸린 Transfer의 출발·도착·Slot 값을 그대로 복사해 새 Transfer를 만들어 요청한 AMMR에 직접 배정한다. 그 Transfer가 실패 종료했으면 그 기록을, 살아 있었으면 방금 무효화한 것을 쓴다. AmmrList 매칭을 거치지 않고 Recipe 재판정도 하지 않으며, DB Transfer 이력에는 앞선 Transfer의 종료(실패 종료 또는 무효화)와 신규 1건이 남는다.
 
 **재발행 시작점.** 재발행은 그 Job이 속한 짝의 Move부터이며, 뒤따르는 Sequence는 그대로 이어간다.
 
@@ -1746,7 +1747,7 @@ State Service는 WIP Slot 상태가 바뀌는 시점마다 공정별 통합 Slot
   · Slot 상태·Slot Unit 식별값·Block 상태·사유
   · CNC 작업대 장비 상태
   · AMMR 도메인 객체 (AMMR HW 상태·운전 모드·Core 논리 AMMR 상태·6 Slot·위치·BMS)
-  · TransferList·AmmrList 정렬 상태
+  · TransferList·AmmrList 정렬 상태·보류 목록
               │
               ↓
      State Service (SignalR Hub 단일 호출)
@@ -1758,18 +1759,19 @@ State Service는 WIP Slot 상태가 바뀌는 시점마다 공정별 통합 Slot
 
 세 서비스의 모든 상태 변화는 SignalR Hub를 통해 Core Dashboard에 실시간으로 전달된다. Core Dashboard는 폴링 없이 Push로 최신 상태를 받는다.
 
-**※ Push 주체 원칙.** 모든 Core Dashboard push의 SignalR Hub 호출은 **State Service가 단일 게이트웨이**로 수행한다(외부 인터페이스 게이트웨이 원칙의 push 측 적용이며 Adapter·Command API와 동일하다). 권위 일원화 원칙으로 모든 InMemory 권위(Slot·AMMR·Unit·TransferList·AmmrList)가 State Service에 일원화되어, Transfer Service·AMMR Service의 생성·정렬·매칭 결정도 State Service에 갱신 요청 → State Service atomic 처리 안에서 InMemory 갱신 + SignalR Hub 호출이 일괄 진행된다(별도 위임 호출 경로 없음). 도메인 Event 버스(Channel)는 경유하지 않는다. 도메인 Event 버스는 서비스 경계를 넘는 사건 전달에 한정되며(도메인 Event 발행 원칙), Core Dashboard 통지는 atomic 처리의 부가 단계다. 이 원칙으로 같은 상태 변화에 대한 중복 push가 발생하지 않으며, Core Dashboard 입장에서는 SignalR 진입점이 단일이다.
+**※ Push 주체 원칙.** 모든 Core Dashboard push의 SignalR Hub 호출은 **State Service가 단일 게이트웨이**로 수행한다(외부 인터페이스 게이트웨이 원칙의 push 측 적용이며 Adapter·Command API와 동일하다). 권위 일원화 원칙으로 모든 InMemory 권위(Slot·AMMR·Unit·TransferList·AmmrList·보류 목록)가 State Service에 일원화되어, Transfer Service·AMMR Service의 생성·정렬·매칭 결정도 State Service에 갱신 요청 → State Service atomic 처리 안에서 InMemory 갱신 + SignalR Hub 호출이 일괄 진행된다(별도 위임 호출 경로 없음). 도메인 Event 버스(Channel)는 경유하지 않는다. 도메인 Event 버스는 서비스 경계를 넘는 사건 전달에 한정되며(도메인 Event 발행 원칙), Core Dashboard 통지는 atomic 처리의 부가 단계다. 이 원칙으로 같은 상태 변화에 대한 중복 push가 발생하지 않으며, Core Dashboard 입장에서는 SignalR 진입점이 단일이다.
 
 **※ 실시간 InMemory 권위자 및 Push 주체**
 
-| 실시간 상태 | InMemory 권위자                                            | Push 주체     |
-|---|------------------------------------------------------------|---------------|
-| WIP Slot 상태·CNC 작업대 Slot Sensor 식별값·WIP/CNC 작업대 Slot Unit 식별값(확정/추정 등급)·Block 상태·사유 | State Service                                              | State Service |
-| AMMR Slot 상태·AMMR Slot Unit 식별값(추정 등급)·만재 라벨·Block 상태·사유 | State Service                                              | State Service |
-| CNC 작업대 장비 상태 | State Service                                              | State Service |
-| AMMR HW 상태·운전 모드·Core 논리 AMMR 상태·위치 (node_id, x, y, a)·BMS | State Service                                              | State Service |
-| TransferList 정렬 상태 | State Service (Transfer Service 결정 → State Service 갱신) | State Service |
-| AmmrList 정렬 상태 | State Service (AMMR Service 결정 → State Service 갱신)     | State Service |
+| 실시간 상태 | InMemory 권위자                                                    | Push 주체     |
+|---|--------------------------------------------------------------------|---------------|
+| WIP Slot 상태·CNC 작업대 Slot Sensor 식별값·WIP/CNC 작업대 Slot Unit 식별값(확정/추정 등급)·Block 상태·사유 | State Service                                                      | State Service |
+| AMMR Slot 상태·AMMR Slot Unit 식별값(추정 등급)·만재 라벨·Block 상태·사유 | State Service                                                      | State Service |
+| CNC 작업대 장비 상태 | State Service                                                      | State Service |
+| AMMR HW 상태·운전 모드·Core 논리 AMMR 상태·위치 (node_id, x, y, a)·BMS | State Service                                                      | State Service |
+| TransferList 정렬 상태 | State Service (Transfer Service 결정 → State Service 갱신)         | State Service |
+| 보류 목록 | State Service (AMMR Service 판정·담당자 해제 → State Service 갱신) | State Service |
+| AmmrList 정렬 상태 | State Service (AMMR Service 결정 → State Service 갱신)             | State Service |
 
 **※ 사건별 DB 이력 기록** (모두 State Service 단일 주체, atomic 처리의 일부로 변경점 push)
 
@@ -1779,7 +1781,7 @@ State Service는 WIP Slot 상태가 바뀌는 시점마다 공정별 통합 Slot
 | Block 마킹·해제 | Block 요약 이력 1건 (마킹·해제 각 별도 row, append-only)   |
 | AMMR 상태 전이 (HW 상태 전이·운전 모드 전환·Core 논리 변화·Battery 분류 진입 포함) | 상태 전이 이력 1건                                         |
 | Job 수행 결과 (Move/Pickup/Dropoff/Charge 완료/실패) | Job 이력 1건 + Unit 위치 변경 이력 1건 (Pickup·Dropoff 시) |
-| Transfer Lifecycle Event (생성/무효화/완료/실패 종료) + 이상 신호 Event (멱등 skip 등) | Transfer 이력 사건마다 1건                                 |
+| Transfer Lifecycle Event (생성/무효화/보류 진입/보류 해제/완료/실패 종료) + 이상 신호 Event (멱등 skip 등) | Transfer 이력 사건마다 1건                                 |
 | Job 발행 (Move/Pickup/Dropoff/Charge 지시) | Job 이력 1건 (Charge는 Transfer 미경유)                    |
 
 ### 5.10 운영 단말 → Core 명령 처리
@@ -1871,7 +1873,7 @@ State Service [수신] atomic이 해당 AMMR InMemory 통째 Null 초기화(AMMR
 
 MQTT 경로는 여전히 살아 있으므로 이 절 "복구 — 채널별 재동기화 경로"를 거치지 않고, 복구는 AMMR HW 측에서 진행된다. 사람이 AMMR HW를 점검·물리 복구한 뒤 해제하고, 필요 시 AMMR 업체 측에서 AMMR HW를 재시작한다(정지·재시작 등 HW 생명주기 제어는 업체 영역). 해제로 AMMR HW 상태가 '장애'에서 정상으로 돌아오면 AMMR은 전이 보고를 낸 뒤 일괄 보고를 발행하므로, AMMR HW 상태와 6 Slot 상태·Unit 식별값이 그 보고로 함께 회복된다. 장애 중 원점 복귀는 마쳐도 다시 '장애'로 돌아오므로 정상 복귀로 보지 않는다.
 
-Slot Block 해제는 그 보고의 판정을 따른다. 태블릿이 occupied와 Unit 식별값을 함께 올리거나 empty를 올리면 Block이 해제된다. blocked 판정이 이어지면 IntegrityMismatch 사유로 바뀌며, 사람이 Slot에서 Unit을 회수하거나 담당자가 태블릿에서 적재 정보를 저장하거나 일괄 재로드를 해 값을 갱신해야 해제된다. job_failed 판정이 이어지면 JobFailed 사유로 바뀌며, 담당자가 치우거나 태블릿에서 적재 정보를 저장하거나 최근 명령 재요청을 해 다시 보고해야 해제된다. AMMR HW 측 Reason은 '장애'와 함께 오고 설비 측 Reason은 원점 복귀 뒤 '장애' 전이가 이어 오므로 둘 다 이 해제를 따르며, 그 사이 들어온 보고로는 풀지 않는다. '장애' 중에 들어오는 위치·BMS 보고는 Core Dashboard 표시에만 반영하고 배정·Block 해제 판단에는 쓰지 않는다. 장애 복구 계기가 아닌 일괄 보고는 반영하지 않고 정정 응답도 보내지 않으며, AMMR HW 상태·6 Slot 상태·Unit 식별값은 해제 뒤 장애 복구 일괄 보고로만 회복한다.
+Slot Block 해제는 그 보고의 판정을 따른다. 태블릿이 occupied와 Unit 식별값을 함께 올리거나 empty를 올리면 Block이 해제된다. blocked 판정이 이어지면 IntegrityMismatch 사유로 바뀌며, 사람이 Slot에서 Unit을 회수하거나 담당자가 태블릿에서 적재 정보를 저장하거나 일괄 재로드를 해 값을 갱신해야 해제된다. job_failed 판정이 이어지면 JobFailed 사유로 바뀌며, 담당자가 치우거나 태블릿에서 적재 정보를 저장하거나 최근 명령 재요청을 해 다시 보고해야 해제된다. AMMR HW 측 Reason은 '장애'와 함께 오므로 이 해제를 따르며, 그 사이 들어온 보고로는 풀지 않는다. '장애' 중에 들어오는 위치·BMS 보고는 Core Dashboard 표시에만 반영하고 배정·Block 해제 판단에는 쓰지 않는다. 장애 복구 계기가 아닌 일괄 보고는 반영하지 않고 정정 응답도 보내지 않으며, AMMR HW 상태·6 Slot 상태·Unit 식별값은 해제 뒤 장애 복구 일괄 보고로만 회복한다.
 
 **※ Adapter별 두절 영향 범위**
 
